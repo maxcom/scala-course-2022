@@ -38,3 +38,10 @@ layout: default
 12. Тестирование акторов Akka.
 13. Akka Http.
 14. Подведение итогов.
+
+# Предыдущие курсы
+
+* [Курс программирования на языке Scala, 2020](https://maxcom.github.io/scala-course-2020/)
+  * Видео: [Плейлист на YouTube](https://youtube.com/playlist?list=PLr3MOSSJVvAFDW8sY3qbowgMa-eFplLcG) 
+* [Scala-лазание. (2018)](https://maxcom.github.io/scala-course-2018/)
+  * Видео: [Плейлиск на YouTube](https://youtube.com/playlist?list=PLr3MOSSJVvAF55813OARE-338kx7w-Ebl)

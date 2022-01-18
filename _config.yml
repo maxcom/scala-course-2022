@@ -13,12 +13,12 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Курс программирования на языке Scala, 2020
+title: Курс программирования на языке Scala, 2022
 email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
   Разработка на языке Scala. Введение в язык. Потоки и асинхронное программирование.
   HTTP и REST.
-baseurl: "/scala-course-2020" # the subpath of your site, e.g. /blog
+baseurl: "/scala-course-2022" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 #twitter_username: jekyllrb
 github_username:  maxcom
