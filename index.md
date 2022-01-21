@@ -50,7 +50,7 @@ layout: default
 ## Дополнительные темы (под вопросом)
 
 * Akka Persistence и CQRS
-* SQL
+* SQL - работа с БД из Scala
 * Анализ JFR и Heap dump
 
 # Материалы для большого практического задания
