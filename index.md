@@ -52,6 +52,7 @@ layout: default
 * Akka Persistence и CQRS
 * SQL - работа с БД из Scala
 * Анализ JFR и Heap dump
+* Общетехнические темы: pipeline по разработке фичи
 
 # Материалы для большого практического задания
 
