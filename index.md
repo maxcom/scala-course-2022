@@ -25,6 +25,7 @@ layout: default
 
 0. Орг вопросы
   * Семинар: Проверяем звук в Zoom. IDEA, компиляция Hello World, проверка IDEA Code With Me (ведущий - Максим)
+  * Видео: [Ставим JDK и Intellij IDEA](https://www.youtube.com/watch?v=Z6Dgqc3EdXc)
 1. Введение в Scala. Case классы и pattern matching.
   * Семинар: Создаем первый проект. Юнит тесты на Specs2 и ScalaCheck. (ведущий - Саша)
 2. Иммутабельность и базовые структуры данных. Работа со списками.
