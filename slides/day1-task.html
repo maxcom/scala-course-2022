@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Введение в Scala. Case классы и pattern matching</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Часть 1. Домашнее задание</h2>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<h3>Задание 1: merge sort</h3>
+					Реализуем сортировку слиянием<br> для Vector[Int]
+
+					<p>Описание алгоритма: <a target="_blank" href="https://ru.wikipedia.org/wiki/%D0%A1%D0%BE%D1%80%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BA%D0%B0_%D1%81%D0%BB%D0%B8%D1%8F%D0%BD%D0%B8%D0%B5%D0%BC">на wikipedia</a> 
+					<p>Неплохая <a target="_blank" href="https://www.cs.usfca.edu/~galles/visualization/ComparisonSort.html">визуализация</a><br> (надо выбрать "merge sort")
+				</section>
+
+				<section>
+					<h3>Задание 2: top-n sort</h3>
+					<p>Ищем N самых меньших значений, не выполняя полной сортировки. Повторяющиеся значения не теряем.
+
+					<p>Один проход по вектору, собираем N результатов по ходу движения.
+
+					<p>Используем всё что найдем в стандартной библиотеке.
+				</section>
+
+				<section>
+					<p>Решение должно давать те же результаты что и
+					<pre><code class="scala">
+topn(input: Vector[Int], n: Int) = input.sorted.take(n)
+					</code></pre>
+					<p>только без полной пересортировки
+				</section>
+
+				<section>
+					<h3>Задание 3: уникальный merge sort</h3>
+					<p>Модифицируем merge sort так, чтобы он выдавал только уникальные
+					значения.
+					<p>Дубли убираем в при merge.
+				</section>
+
+				<section>
+					<p>В git только исходники; код должен работать!
+					<p class="fragment">Инструкция как передать решение на проверку в почте. Вопросы в чате.
+				</section>
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>

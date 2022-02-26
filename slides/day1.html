@@ -26,20 +26,18 @@
 			<div class="slides">
 				<section>
 					<h2>Часть 1. Введение в Scala. Case классы и<br> pattern matching</h2>
-					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2020/">https://maxcom.github.io/scala-course-2020/</small></a>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
 				</section>
 
 				<section>
 					<h3>План</h2>
 					<ol>
-						<li>Орг. вопросы.
 						<li>Почему Scala? Обзор курса.
-						<li>Средства разработки.
+						<li>Структура проекта sbt.
 						<li>Обзор синтаксиса.
 						<li>Case-классы.
 						<li>Алгебраические типы. 
 						<li>Pattern matching.
-						<li>Домашнее задание.
 					</ol>
 				</section>
 
@@ -47,44 +45,16 @@
 					<p>Максим Валянский
 					<p>окончил ВМиК МГУ в 2001 году;
 					<p>занимаюсь разработкой ПО сколько себя помню;
+					<p>веду курс по Scala уже 3-й раз;
 					<p>работаю архитектором в компании<br>«Ростелеком-Солар».
 				</section>
 
 				<section>
-					<p>Лекции
-					<ul>
-						<li>Каждую пятницу в 17:30<br>(переговорка наша с 17:00).
-						<li>Две части по ~40минут, перерыв 5 минут.
-						<li>Видео будет на youtube через 1-2 дня.
-					</ul>
-				</section>
-
-				<section>
-					<p>Семинары
-					<ul>
-						<li>Каждую среду в 17:30.
-						<li>Свои ноутбуки!
-						<li>Заранее установить ПО (расскажу).
-					</ul>
-				</section>
-
-				<section>
-					<h3>Материалы курса и чат</h3>
+					<h3>Материалы курса</h3>
 					<p>Слайды, примеры программ и другие файлы доступны в репозитарии 
-					<a href="https://github.com/maxcom/scala-course-2020">https://github.com/maxcom/scala-course-2020</a>.
+					<a href="https://github.com/maxcom/scala-course-2022">https://github.com/maxcom/scala-course-2022</a>.
 					Содержимое будет пополняться по ходу курса.
 					</p>
-					<p>Для обсуждений и вопросов по курсу используем Telegram чат 
-					<a target="_blank" href="https://t.me/joinchat/EWDmyxc8B332zBepkffzBw">@scalacourse2020</a> (доступ по ссылке).</p>
-				</section>
-
-				<section>
-					Небольшой опрос:
-					<ul>
-						<li class="fragment">Кто уже пишет на Scala?
-						<li class="fragment">Кто работает Scala разработчиком?
-						<li class="fragment">Кто принес ноутбук с IDEA + Scala?
-					</ul>
 				</section>
 
 				<section>
@@ -141,7 +111,7 @@
 					<h3>Состав курса</h3>
 					<ol>
 						<li>Введение в программирование на Scala
-						<li>Потоки и асинхронное программирование.
+						<li>Многопоточность и асинхронное программирование.
 						<li>Разработка и использование веб-сервисов
 					</ol>
 				</section>
@@ -153,20 +123,7 @@
 					Есть много вариантов, мы будем использовать<br>
 					Intellij IDEA Community Edition + Scala plugin
 					
-					<p><a target="_blank" href="https://www.jetbrains.com/idea/download/">https://www.jetbrains.com/idea/download/</a>
-				</section>
-
-				<section>
-					<ol>
-						<li>Ставим IDEA, запускаем
-						<li>Добавляем Scala plugin (configure -&gt; plugins)
-						<li>Создаем новый проект Scala
-						<li>Выбираем sbt; версии самые новые <br>(Scala 2.13.1; sbt 1.3.7)
-					</ol>
-				</section>
-
-				<section>
-					<h2>Live demo</h2>
+					<p>Видео: <a target="_blank" href="https://www.youtube.com/watch?v=Z6Dgqc3EdXc">Ставим JDK и Intellij IDEA</a>
 				</section>
 
 				<section>
@@ -182,7 +139,6 @@ src/test        -- исходные файлы и ресурсы тестов
 src/test/scala  -- код тестов на Scala
 target          -- результат компиляции
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
@@ -205,30 +161,17 @@ object HelloWorld extends App {
   println("Hello, world!")
 }
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
 					<pre><code class="scala">
-// класс для JVM
+// класс-синглтон для JVM
 // наследование от App
 object HelloWorld extends App {
+  // код инициализации класса
   println("Hello, world!")
 }
 					</code></pre>
-					<p>(live demo)
-				</section>
-
-
-				<section>
-					<p>Не удается запустить в IDEA?
-
-					<p>Отключите Gradle plugin<br>
-					<a href="https://youtrack.jetbrains.com/issue/IDEA-228180">https://youtrack.jetbrains.com/issue/IDEA-228180</a>
-				</section>
-
-				<section>
-					<h2>Live demo</h2>
 				</section>
 
 				<section>
@@ -240,7 +183,6 @@ object HelloWorld extends App {
   })
 }
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
@@ -250,13 +192,14 @@ object HelloWorld extends App {
     var str = "Hello, " // переменная
     val add = "world!" // константа
 
+    // val короче чем "final int" или "const int"
+
     str += add
 
     str // "возвращается" последнее значение в блоке
   })
 }
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
@@ -268,21 +211,17 @@ object HelloWorld extends App {
 				</section>
 
 				<section>
-					<h2>Live demo</h2>
-				</section>
-
-				<section>
 					<p>объявляем функцию
 					<pre><code class="scala">
 object HelloWorld extends App {
   println({
+    // функцию можно объявить где угодно
     def square(x: Int) = x * x
 
     square(10)
   })
 }
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
@@ -305,6 +244,7 @@ def abs(x: Int) = {
   } // и никакого "return"!
 }
 					</code></pre>
+					<p class="fragment">return не используем</p>
 				</section>
 
 				<section>
@@ -319,12 +259,9 @@ def abs(x: Int) = {
 				<section>
 					<p>Рекомендуется указывать типы:
 					<ul>
-						<li>публичных API
-						<li>var
-				</section>
-
-				<section>
-					<h2>Live demo</h2>
+						<li>в публичных API
+						<li>в var - без него могут быть неожиданности
+					</ul>
 				</section>
 
 				<section>
@@ -337,7 +274,8 @@ while (a&lt;10) {
   println(a)
 }  // бывает еще do { ... } while
 					</code></pre>
-					<p>(live demo)
+					<p class="fragment">break/continue нет, но если очень хочется то есть<br>
+					util.control.Breaks</p>
 				</section>
 
 				<section>
@@ -348,7 +286,6 @@ for (i &lt;- 0 to 10) {
 }
 					</code></pre>
 					<br><small>подробнее о for на третьем занятии</small>
-					<p>(live demo)
 				</section>
 
 				<section>
@@ -357,30 +294,30 @@ for (i &lt;- List(1, 2, 3)) {
   println(i)
 }
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
 					<p>for .. yield - "List comprehension" из Python
 					<pre><code class="scala">
-println(for (v &lt;- List(1, 2, 3)) yield {
-  v * v
-})
+println(for (v &lt;- 1 until 10) yield v * v)
 
+// аналог на Python:
+// print([i * i for i in range(1, 10)])
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
 					<p>с условием
 					<pre><code class="scala">
-for {
-  v &lt;- List(1, 2, 3, 4) if v%2 == 0
+for { // фигурные скобки дают более сложный синтаксис
+  v &lt;- 1 until 10 if v%2 == 0
 } yield {
   v * v
 }
+
+// Python:
+// [i*i for i in range(1, 10) if i%2==0]
 					</code></pre>
-					<p>(live demo)
 				</section>
 
 				<section>
@@ -389,12 +326,6 @@ for {
 
 				<section>
 					<h2>Перерыв 5 минут</h2>
-				</section>
-
-				<section>
-					<p>Домашние задания:<br> независимые или
-					"большой" проект?
-					<p>решим вместе на второй лекции
 				</section>
 
 				<section>
@@ -723,114 +654,9 @@ vector.count(x =&gt; x.isSuccess)
 				</section>
 				
 				<section>
-					<h2>Домашнее задание</h2>
-				</section>
-
-				<section>
-					<h3>Задание 1: merge sort</h3>
-					Реализуем сортировку слиянием<br> для Vector[Int]
-
-					<p>Описание алгоритма: <a target="_blank" href="https://ru.wikipedia.org/wiki/%D0%A1%D0%BE%D1%80%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BA%D0%B0_%D1%81%D0%BB%D0%B8%D1%8F%D0%BD%D0%B8%D0%B5%D0%BC">на wikipedia</a> 
-					<p>Неплохая <a target="_blank" href="https://www.cs.usfca.edu/~galles/visualization/ComparisonSort.html">визуализация</a><br> (надо выбрать "merge sort")
-				</section>
-
-				<section>
-					<h3>Задание 2: top-n sort</h3>
-					<p>Ищем N самых меньших значений, не выполняя полной сортировки. Повторяющиеся значения не теряем.
-
-					<p>Один проход по вектору, собираем N результатов по ходу движения.
-
-					<p>Используем всё что найдем в стандартной библиотеке.
-				</section>
-
-				<section>
-					<p>Решение должно давать те же результаты что и
-					<pre><code class="scala">
-topn(input: Vector[Int], n: Int) = input.sorted.take(n)
-					</code></pre>
-					<p>только без полной пересортировки
-				</section>
-
-				<section>
-					<h3>Задание 3: уникальный merge sort</h3>
-					<p>Модифицируем merge sort так, чтобы он выдавал только уникальные
-					значения.
-					<p>Дубли убираем в при merge.
-				</section>
-
-				<section>
-					<p>Семинар 29-го января
-
-					<p>Тема: разбор решений и проблем.<br> Unit-тесты и scalacheck.
-				</section>
-
-				<section>
-					<p>Решение ждем в понедельник, в крайнем случае к семинару.
-					<p class="fragment">Простой вариант - <a href="mailto:m.valyanskiy@solarsecurity.ru">m.valyanskiy@solarsecurity.ru</a>.
-					<p class="fragment">Присылайте только исходники; код должен работать!
-				</section>
-
-				<section>
-					<p>"Сложный" вариант - используем gitlab.com:
-					<ul>
-						<li>Зарегистрируйтесь на gitlab.com (это бесплатно)
-						<li>Заводите приватный репозиторий (свой под каждое задание)
-						<li>Дайте доступ @maximvalyanskiy и @nsolely
-						<li>Киньте ссылку на gitlab мне на почту
-					</ul>
-				</section>
-
-				<section>
 					<p>Напоминаю:
 					<ul>
-						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2020/">https://maxcom.github.io/scala-course-2020/</a>
-						<li>Семинар в среду в 17:30
-						<li>Подключайтесь к чату в Telegram
-						<a target="_blank" href="https://t.me/joinchat/EWDmyxc8B332zBepkffzBw">@scalacourse2020</a> (доступ по ссылке).</p>
-
-					</ul>
-				</section>
-
-
-				<section>
-					<h2>Пара слов о Судоку<sup>*</sup></h2>
-					<p><small>дополнительная часть, если успеем</small>
-				</section>
-
-				<section>
-					<blockquote>
-					<p>
-						“Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live”</p>
-<footer>― <cite>John Woods</cite></footer>
-					</blockquote>
-				</section>
-
-				<section>
-					<p>Всегда думайте о том, что<br> будет дальше с вашим кодом.
-				</section>
-
-				<section>
-					<p>Две проблемы:
-					<ol>
-						<li class="fragment">Сложный и запутанный код
-						<li class="fragment">Лишние абстракции
-					</ol>
-				</section>
-
-				<section>
-					<h2>KISS («Keep it simple, stupid»)</h2>
-					<p>Большинство систем работают лучше всего, если они остаются простыми, а не усложняются.
-
-					<p class="fragment">Видео: <a href="https://www.youtube.com/watch?v=oytL881p-nQ">Simple Made Easy 2012 - Rich Hickey</a>
-				</section>
-
-				<section>
-					<p>Напоминаю:
-					<ul>
-						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2020/">https://maxcom.github.io/scala-course-2020/</a>
-						<li>Семинар в среду в 17:30
-						<li>Подключайтесь к чату в Telegram
-						<a target="_blank" href="https://t.me/joinchat/EWDmyxc8B332zBepkffzBw">@scalacourse2020</a> (доступ по ссылке).</p>
+						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
 					</ul>
 				</section>
 

@@ -27,7 +27,8 @@ layout: default
   * Семинар: Орг вопросы. Проверяем звук в Zoom. IDEA, компиляция Hello World, проверка IDEA Code With Me (ведущий - Максим)
   * Видео: [Ставим JDK и Intellij IDEA](https://www.youtube.com/watch?v=Z6Dgqc3EdXc)
 1. Введение в Scala. Case классы и pattern matching.
-  * Слайды (в работе): [Часть 1. Введение в Scala. Case классы и pattern matching](slides/day1.html). [Версия для печати](slides/day1.html?print-pdf).
+  * Слайды (в работе): [Часть 1. Введение в Scala. Case классы и pattern matching](slides/day1.html).
+  * Домашнее задание (в работе): [Часть 1. Домашнее задание](slides/day1-task.html).
   * Семинар: Создаем первый проект. Юнит тесты на Specs2 и ScalaCheck. (ведущий - Саша)
 2. Иммутабельность и базовые структуры данных. Работа со списками.
   * Семинар: Измеряем скорость операций над коллекциями при помощи JMH. (ведущий - Никита)
