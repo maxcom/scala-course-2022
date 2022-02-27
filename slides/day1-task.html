@@ -30,6 +30,56 @@
 				</section>
 
 				<section>
+					<h3>Немного о коллекциях</h3>
+					<p>(минимум необходимый для выполнения ДЗ).
+
+					<p>Подробно устройство коллекций рассмотрим на втором занятии.
+				</section>
+
+				<section>
+					<p>Seq[T] – общий тип для коллекций, имеющих определенный порядок
+					<p>ArrayBuffer[T] – на базе массива, аналог ArrayList из Java
+					<p>Vector[T] – неизменяемый аналог ArrayList
+					<p>List[T] пока не используем.
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val buffer = ArrayBuffer[Int](1, 2, 3)
+// тип указывать не обязательно
+
+buffer += 4 // добавление элемента
+// в Scala можно переопределять операторы
+					</code></pre>
+					<pre class=fragment><code class="scala">
+buffer(1) // получение элемента
+// exception при выходе за границу
+
+// buffer еще и функция
+val f: (Int ⇒ Int) = buffer
+					</code></pre>
+				</section>
+
+				<section>
+					<p>У стандартных коллекций много полезных функций
+					<p>Справка на Vector: <a target="_blank" href="https://www.scala-lang.org/api/current/scala/collection/immutable/Vector.html">scaladoc</a>.
+				</section>
+
+				<section>
+					Пример: разделение Vector на две части
+					<pre><code class="scala">
+val v = Vector(1, 2, 3, 4)
+
+val (first, second) = v.splitAt(v.length / 2)
+
+// first == Vector(1,2)
+// second == Vector(3,4)
+					</code></pre>
+					(пригодится для ДЗ)
+				</section>
+
+
+				<section>
 					<h3>Задание 1: merge sort</h3>
 					Реализуем сортировку слиянием<br> для Vector[Int]
 
