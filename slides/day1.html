@@ -447,23 +447,30 @@ userService.addUserToGroup(uuid1, uuid2)
 				</section>
 
 				<section>
-					<p>Что есть в case class?
-					<ul>
-						<li>toString</li>
-						<li>сравнение по значениям<br>(реализация equals)</li>
-						<li>hashcode<br>(поддержка для множеств и хеш-таблиц)</li>
+					<p>Создание без new</p>
+					<p>у обычных классов identity,<br> тут только содержимое
 				</section>
-
 				<section>
-					Создание без new:
 					<pre><code class="scala">
-object Address {
-  // генерируется автоматически, можно переопределить
+ // объект компарьон класса Address
+
+object Address {  
+  // apply генерируется автоматически, можно переопределить
+  // например отдавать значения из кеша
   def apply(`type`: String, value: String) = 
     new Address(`type`, value)
 }
 					</code></pre>
-					<small>* объект-компаньон, заменяет static декларации Java</small>
+					<small>* объект-компаньон заменяет static декларации Java</small>
+				</section>
+
+				<section>
+					<p>Что есть в case class?
+					<ul>
+						<li>toString</li>
+						<li>сравнение по содержимому<br>(реализация equals, ==)<br>
+                                                    у обычных классов - сравнение по identity
+						<li>hashcode<br>(поддержка для множеств и хеш-таблиц)</li>
 				</section>
 
 
@@ -476,16 +483,17 @@ val value = address.value
 
 					<p>Экстрактор</p>
 					<pre><code class="scala">
+// похоже на деконструкцию пары
 val Address(_, email) = address
 // "дырка" позволяет пропустить ненужное объявление
 					</pre></code>
-					<p>можно переопределить</p>
+					<p>можно переопределить - функция unapply</p>
 				</section>
 
 				<section>
 					<h2>Алгебраические типы</h2>
 					<p>Case классы можно объединить в иерархию</p>
-					<pre><code class="scala">
+					<pre><code class="scala">// пример - калькулятор
 sealed trait Expr
 
 case class Number(value: Int) extends Expr
@@ -498,13 +506,14 @@ case class Minus(lhs: Expr, rhs: Expr) extends Expr
 				<section>
 					<h2>Pattern matching</h2>
 					<pre><code class="scala">def value(expression: Expr): Int = expression match {
-  case Number(value)   ⇒ value
-  case Plus(lhs, rhs)  ⇒ value(lhs) + value(rhs)
-  case Minus(lhs, rhs) ⇒ value(lhs) - value(rhs)
+  case Number(value)   =&gt; value
+  case Plus(lhs, rhs)  =&gt; value(lhs) + value(rhs)
+  case Minus(lhs, rhs) =&gt; value(lhs) - value(rhs)
 }				
 
 val result = value(Plus(Number(2), Number(2)))
 					</code></pre>
+					<p>match перебирает экстракторы
 				</section>
 
 				<section>
@@ -521,15 +530,18 @@ case class Plus(lhs: Expr, rhs: Expr) extends Expr {
 case class Minus(lhs: Expr, rhs: Expr) extends Expr {
   override def eval = lhs.eval - rhs.eval
 }
+
 Plus(Number(2), Number(2)).eval</code></pre>
 				</section>
 
 				<section>
 					<p>Две модели:
 					<ol>
-						<li>Фиксированная "схема" данных, произвольные операции – PM
-						<li>Фиксированные операции, большое разнообразие объектов – ООП
-
+						<li>Фиксированная "схема" данных, произвольные операции – PM.<br>
+						легко добавлять операции, сложно расширять типы
+						<li class=fragment>Фиксированные операции, большое разнообразие объектов – ООП<br>
+						легко добавлять типы, сложно добавлять операции
+					</ol>
 				</section>
 
 				<section>
@@ -546,27 +558,24 @@ val buffer = ArrayBuffer(Number(1), expr)
 // не компилируется
 buffer += number
 					</code></pre>
-					<p class="fragment">потому что тип buffer вот такой:
-					<pre class="fragment"><code class="scala">
+					<div class="fragment">потому что тип buffer вот такой:
+					<pre><code class="scala">
 ArrayBuffer[Product with Serializable with Expr]
 					</code></pre>
-					<p class="fragment">а изменяемые коллекции - инвариантные
+					<p>а изменяемые коллекции - инвариантные
+					</div>
 				</section>
 
 				<section>
-					Проблема 2: Наследование
-					<p class="fragment">запрещаем наследование - "final case class"
-				</section>
-
-
-				<section>
-					<h3>Более правильная версия примера</h3>
+					<p>Более правильная версия примера
 					<pre><code class="scala">
 sealed trait Expr extends Product with Serializable
 
 final case class Number(value: Int) extends Expr
 final case class Plus(lhs: Expr, rhs: Expr) extends Expr
 final case class Minus(lhs: Expr, rhs: Expr) extends Expr
+
+// дополнительно запретили наследование
 					</code></pre>
 				</section>
 
