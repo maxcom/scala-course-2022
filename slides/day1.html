@@ -325,21 +325,32 @@ for { // фигурные скобки дают более сложный син
 				</section>
 
 				<section>
-					<h2>Перерыв 5 минут</h2>
-				</section>
-
-				<section>
 					<h2>Пара (tuple)</h2>
 
 					Комбинация из двух значений:
 					<pre><code class="scala">
 val pair: (Int, Int) = (1, 2)
+val pair2 = "key" -&gt; "value"
 // Tuple2[Int, Int]
 					</code></pre>
-					<p>деконструкция</p>
+					<p class=fragment>возврат нескольких значений из функций</p>
+					<p class=fragment>преобразование коллекций</p>
+</section>
+<section>
+					<p>Деконструкция</p>
+					<p>плохой способ:
+					<pre><code class="scala">
+val first = pair._1
+val second = pair._2
+					</code></pre>
+					<div class=fragment>хороший:
 					<pre><code class="scala">
 val (first, second) = pair
 					</code></pre>
+					</div>
+				</section>
+
+				<section>
 					<p>бывают еще "тройки" и более - до 22
 				</section>
 
@@ -351,8 +362,7 @@ val (first, second) = pair
 
 				<section>
 					<p>Seq[T] – общий тип для коллекций, имеющих определенный порядок
-					   (списки, массивы, вектора и т.п.)
-					<p>ArrayBuffer[T] – аналог ArrayList из Java
+					<p>ArrayBuffer[T] – на базе массива, аналог ArrayList из Java
 					<p>Vector[T] – неизменяемый аналог ArrayList
 				</section>
 
@@ -414,7 +424,8 @@ case class Address(`type`: String, value: String) {
 					<pre><code class="scala">case class UserId(uuid: UUID)</code></pre> 
 					<pre><code class="scala">case class GroupId(uuid: UUID)</code></pre> 
 
-					<p>типы позволяют не путать значения между собой
+					<p>типы позволяют не путать значения между собой<br>
+					(но это не всегда эффективно)
 				</section>
 
 				<section>
@@ -556,8 +567,10 @@ final case class Minus(lhs: Expr, rhs: Expr) extends Expr
 val v = Vector(1, 2, 3, 4, 5)
 
 val r: Option[Int] = v.find(x =&gt; x > 2)
-
 // r = Some(3)				
+
+val rr: Option[Int] = v.get(0)
+// rr = Some(1)
 					</code></pre>
 
 					<p class="fragment">плохой вариант работы с Option:
