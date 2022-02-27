@@ -356,23 +356,29 @@ val (first, second) = pair
 
 				<section>
 					<h3>Немного о коллекциях</h3>
+					<p>(минимум необходимый для выполнения ДЗ).
 
-					Подробно устройство коллекций рассмотрим на втором занятии.
+					<p>Подробно устройство коллекций рассмотрим на втором занятии.
 				</section>
 
 				<section>
 					<p>Seq[T] – общий тип для коллекций, имеющих определенный порядок
 					<p>ArrayBuffer[T] – на базе массива, аналог ArrayList из Java
 					<p>Vector[T] – неизменяемый аналог ArrayList
+					<p>List[T] пока не используем.
 				</section>
 
 				<section>
 					<pre><code class="scala">
 val buffer = ArrayBuffer[Int](1, 2, 3)
+// тип указывать не обязательно
 
 buffer += 4 // добавление элемента
-
+// в Scala можно переопределять операторы
+					</code></pre>
+					<pre class=fragment><code class="scala">
 buffer(1) // получение элемента
+// exception при выходе за границу
 
 // buffer еще и функция
 val f: (Int ⇒ Int) = buffer
@@ -394,11 +400,12 @@ val (first, second) = v.splitAt(v.length / 2)
 // first == Vector(1,2)
 // second == Vector(3,4)
 					</code></pre>
+					(пригодится для ДЗ)
 				</section>
 
 				<section>
 					<h2>Case-классы</h2>
-					<p>Механизм для создания собственных<br> типов для данных.
+					<p>Свой тип для данных.
 					<pre><code class="scala">
 case class Address(`type`: String, value: String) {
   def toStringAddress = s"${`type`}:$value"
@@ -410,58 +417,69 @@ case class Address(`type`: String, value: String) {
 				<section>
 					<p>Собственный тип лучше, чем просто значения:
 
-					<pre><code class="scala">Address(`type`, value)</code></pre> 
+					<pre><code class="scala">
+case class Address(`type`: String, value: String)
+val address = Address("email", "someone@gmail.com")
+// type - ключевое слово, по этому в апострофах
+</code></pre> 
 				
 					<p>против пары
 
-					<pre><code class="scala">(String, String)</code></pre> 
+					<pre><code class="scala">
+val address: (String, String) = ("email", "someone@gmail.com")
+</code></pre> 
 				</section>
 
 				<section>
-					<p>Собственный тип можно заводить и для простых значений,
-					   например:
+					<p>Собственный тип можно заводить и для простых значений
 
+					<pre><code class="scala">// где тут user, а где group?
+userService.addUserToGroup(uuid1, uuid2)
+
+</code></pre> 
+					<div class=fragment>
 					<pre><code class="scala">case class UserId(uuid: UUID)</code></pre> 
 					<pre><code class="scala">case class GroupId(uuid: UUID)</code></pre> 
 
 					<p>типы позволяют не путать значения между собой<br>
 					(но это не всегда эффективно)
+					</div>
 				</section>
 
 				<section>
 					<p>Что есть в case class?
 					<ul>
-						<li>геттеры для полей</li>
-						<li class="fragment">toString</li>
-						<li class="fragment">equals и hashcode</li>
-						<li class="fragment">создание без "new"</li>
-						<li class="fragment">экстрактор</li>
-						<li class="fragment">сериализация, product и еще...
+						<li>toString</li>
+						<li>сравнение по значениям<br>(реализация equals)</li>
+						<li>hashcode<br>(поддержка для множеств и хеш-таблиц)</li>
 				</section>
 
 				<section>
-					<h2>Экстракторы</h2>
-					<p>Можно разобрать класс обратно:</p>
-					<pre><code class="scala">
-val address = Address("email", "abuse@sportloto.ru")
-
-val Address(_, email) = address
-					</pre></code>
-				</section>
-
-				<section>
-					Статическая фабрика и экстрактор:
+					Создание без new:
 					<pre><code class="scala">
 object Address {
+  // генерируется автоматически, можно переопределить
   def apply(`type`: String, value: String) = 
     new Address(`type`, value)
-  
-  def unapply(address: Address): Option[(String, String)] =
-    Some((address.`type`, address.value))
 }
 					</code></pre>
 					<small>* объект-компаньон, заменяет static декларации Java</small>
-					<small>* для case классов apply/unapply создаются автоматически</small>
+				</section>
+
+
+				<section>
+					Геттеры
+					<pre><code class="scala">
+val address = Address("email", "abuse@sportloto.ru")
+val value = address.value
+					</pre></code>
+
+					<p>Экстрактор</p>
+					<pre><code class="scala">
+val Address(_, email) = address
+// "дырка" позволяет пропустить ненужное объявление
+					</pre></code>
+					<p>можно переопределить</p>
 				</section>
 
 				<section>
