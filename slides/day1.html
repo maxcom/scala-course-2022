@@ -601,12 +601,15 @@ val rr: Option[Int] = v.get(0)
 // rr = Some(1)
 					</code></pre>
 
-					<p class="fragment">плохой вариант работы с Option:
-					<pre class="fragment"><code class="scala">
+					<div class="fragment">плохой вариант работы с Option:
+					<pre><code class="scala">
 if (r.isDefined) {
   println(r.get) // бросает исключение если значения нет
 }					
-					</code></pre>
+
+// компилятор не верифицирует r.get
+</code></pre>
+					</div>
 				</section>
 
 				<section>
@@ -614,8 +617,8 @@ if (r.isDefined) {
 					<pre><code class="scala">
 // 1
 r match {
-  case Some(k) ⇒ println(k)
-  case None    ⇒ println("None")  
+  case Some(k) =&gt; println(k)
+  case None    =&gt; println("None")  
 }
 
 // 
@@ -632,6 +635,7 @@ println(r.getOrElse("None"))
 try {
   1 / 0
 } catch {
+  // это pattern matching по типу
   case ex: ArithmeticException ⇒
     println(ex.getMessage)
     1
@@ -650,7 +654,7 @@ try {
 				</section>
 
 				<section>
-					<p>Тип Try
+					<p>Тип Try - ADT
 					<ul>
 						<li>Success - содержит значение
 						<li>Failure - содержит исключение
@@ -667,22 +671,26 @@ try {
 					<pre><code class="scala">
 import scala.util.{Random, Try}
 
-// fill - функция с двумя блоками параметров
-// fill[A](n: Int)(elem: =&gt; A)
 val vector = Vector.fill(10) {
   Try {
     1 / Random.nextInt(5)
   }
 }
 
+// число успешных значений
 vector.count(x =&gt; x.isSuccess)				
+
+// fill - функция с двумя блоками параметров
+// fill[A](n: Int)(elem: =&gt; A)
+// "elem: =&gt; A" будет на лекции про ленивые вычисления
 					</code></pre>
 				</section>
 
 				<section>
 					<p>Могут ли функции возвращать Try?
 
-					<p class="fragment">Да, но это "антипаттерн".
+					<p class="fragment">да, но это делает все сложнее.<br>
+					функция может и упасть, и вернуть Failure
 				</section>
 
 				<section>
