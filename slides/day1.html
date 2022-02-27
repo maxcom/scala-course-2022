@@ -629,6 +629,17 @@ println(r.getOrElse("None"))
 				</section>
 
 				<section>
+					<p>Option заменяет null, <br>но null в JVM нельзя избежать
+					<pre><code class="scala">
+val opt1: Option[String] = null // упс
+val opt2: Option[String] = Some(null) // упс
+
+val opt3: Option[String] = Option(null) // правильно
+					</code></pre>
+
+				</section>
+
+				<section>
 					<h3>Try[T]</h3>
 					Обработка исключений в Scala похожа на Java:
 					<pre><code class="scala">
