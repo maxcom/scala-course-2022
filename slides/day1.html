@@ -347,6 +347,7 @@ val second = pair._2
 					<div class=fragment>хороший:
 					<pre><code class="scala">
 val (first, second) = pair
+// ввели константы "first" и "second"
 					</code></pre>
 					</div>
 				</section>
@@ -357,6 +358,20 @@ val (first, second) = pair
 
 				<section>
 					<h3>Конец первой части</h3>
+				</section>
+
+				<section>
+					<h2>Классы в ООП</h2>
+					<p>ООП похоже на Java</p>
+				</section>
+
+				<section>
+					<ul>
+						<li>Объект с изменяемым состоянием
+						<li class=fragment>Состояние приватное
+						<li class=fragment>Создание через new и identity<br>
+						сравнение через identity по умолчанию
+					</ul>
 				</section>
 
 				<section>
@@ -408,7 +423,7 @@ userService.addUserToGroup(uuid1, uuid2)
 				</section>
 				<section>
 					<pre><code class="scala">
- // объект компарьон класса Address
+ // объект компаньон класса Address
 
 object Address {  
   // apply генерируется автоматически, можно переопределить
@@ -424,8 +439,7 @@ object Address {
 					<p>Что есть в case class?
 					<ul>
 						<li>toString</li>
-						<li>сравнение по содержимому<br>(реализация equals, ==)<br>
-                                                    у обычных классов - сравнение по identity
+						<li>сравнение по содержимому<br>(реализация equals, ==)
 						<li>hashcode<br>(поддержка для множеств и хеш-таблиц)</li>
 				</section>
 
@@ -440,10 +454,11 @@ val value = address.value
 					<p>Экстрактор</p>
 					<pre><code class="scala">
 // похоже на деконструкцию пары
+// ввели новую константу - "email"
 val Address(_, email) = address
 // "дырка" позволяет пропустить ненужное объявление
 					</pre></code>
-					<p>можно переопределить - функция unapply</p>
+					<p class=fragment>можно переопределить - функция unapply</p>
 				</section>
 
 				<section>
@@ -469,7 +484,8 @@ case class Minus(lhs: Expr, rhs: Expr) extends Expr
 
 val result = value(Plus(Number(2), Number(2)))
 					</code></pre>
-					<p>match перебирает экстракторы
+					<p>match перебирает экстракторы<br>
+					(экстрактор может не подойти)
 				</section>
 
 				<section>
@@ -635,8 +651,7 @@ try {
 				</section>
 
 				<section>
-					<pre><code class="scala">
-import scala.util.{Random, Try}
+					<pre><code class="scala">import scala.util.{Random, Try}
 
 val vector = Vector.fill(10) {
   Try {
@@ -675,6 +690,7 @@ vector.count(x =&gt; x.isSuccess)
 					<p>Напоминаю:
 					<ul>
 						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+						<li>Домашнее задание в отдельном видео
 					</ul>
 				</section>
 
