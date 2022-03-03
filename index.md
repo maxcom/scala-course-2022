@@ -29,9 +29,12 @@ layout: default
   * Видео: [Ставим JDK и Intellij IDEA](https://www.youtube.com/watch?v=Z6Dgqc3EdXc)
 1. Введение в Scala. Case классы и pattern matching. 
   * Лекция: 9 марта. Семинар 16 марта.
-  * Слайды (в работе): [Часть 1. Введение в Scala. Case классы и pattern matching](slides/day1.html).
+  * Слайды: [Часть 1. Введение в Scala. Case классы и pattern matching](slides/day1.html).
   * Домашнее задание (в работе): [Часть 1. Домашнее задание](slides/day1-task.html).
   * Семинар: Создаем первый проект. Юнит тесты на Specs2 и ScalaCheck. (ведущий - Саша)
+  * Видео: [Часть 1. Введение в Scala](https://www.youtube.com/watch?v=HBvd9PjYBcs)
+  * Видео: Часть 2. Case-классы и pattern matching
+  * Видео: Домашнее задание
 2. Иммутабельность и базовые структуры данных. Работа со списками. 
   * Лекция: 16 марта. Семинар: 23 марта.
   * Семинар: Измеряем скорость операций над коллекциями при помощи JMH. (ведущий - Никита)
