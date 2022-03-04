@@ -55,8 +55,8 @@ buffer += 4 // добавление элемента
 buffer(1) // получение элемента
 // exception при выходе за границу
 
-// buffer еще и функция
-val f: (Int ⇒ Int) = buffer
+buffer.get(1) // получение элемента
+// возвращает Option
 					</code></pre>
 				</section>
 
@@ -75,9 +75,7 @@ val (first, second) = v.splitAt(v.length / 2)
 // first == Vector(1,2)
 // second == Vector(3,4)
 					</code></pre>
-					(пригодится для ДЗ)
 				</section>
-
 
 				<section>
 					<h3>Задание 1: merge sort</h3>
@@ -145,6 +143,8 @@ git checkout -b work
 				<section>
 					<p>Напоминаю:
 					<ul>
+						<li>К семинару должен быть результат. 
+						<li>Сможете сделать раньше -- мы раньше проверим.
 						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
 					</ul>
 				</section>
