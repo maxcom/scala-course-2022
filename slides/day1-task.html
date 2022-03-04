@@ -112,8 +112,34 @@ topn(input: Vector[Int], n: Int) = input.sorted.take(n)
 				</section>
 
 				<section>
-					<p>В git только исходники; код должен работать!
-					<p class="fragment">Инструкция как передать решение на проверку в почте. Вопросы в чате.
+					<h3>Как выкладывать ДЗ</h3>
+					<ul>
+						<li>Регистрируемся на gitlab.com
+						<li class=fragment>Создаем один приватный проект на все 3 задачи,<br>
+						    называем scala-2022-task1 ("Create blank project").<br>
+						    "Initialize repository with a README" должен быть включен
+					</ul>
+				</section>
+
+				<section>
+					Вытаскиваем репозитарий и делаем в нем ветку work
+					<pre><code class="shell">
+git clone git@gitlab.com:yourname/scala-2022-task1.git
+cd scala-2022-task1
+git checkout -b work
+					</code></pre>
+				</section>
+
+				<section>
+					<p>В ветку помещаем код решения, коммитим и git push
+					<p class=fragment>В git только исходники!
+				</section>
+				<section>
+					<p>Добавляем права на репозитарий проверяющим (роль maintainer).<br>
+						Список будет опубликован в telegram.
+					<p class=fragment>Создаем merge request на master, <br>
+					assignee на maximvalyanskiy
+					<p class=fragment>Сами не принимайте merge request!
 				</section>
 
 				<section>
