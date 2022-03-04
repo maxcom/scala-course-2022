@@ -25,7 +25,7 @@ layout: default
 
 0. Орг вопросы. 
   * Семинар: 3 марта
-  * Семинар: Орг вопросы. Проверяем звук в Zoom. IDEA, компиляция Hello World, проверка IDEA Code With Me (ведущий - Максим)
+  * Семинар: Орг вопросы. Проверяем звук в Discord. Проверка IDEA Code With Me (ведущий - Максим)
   * Видео: [Ставим JDK и Intellij IDEA](https://www.youtube.com/watch?v=Z6Dgqc3EdXc)
 1. Введение в Scala. Case классы и pattern matching. 
   * Лекция: 9 марта. Семинар 16 марта.
