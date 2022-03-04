@@ -20,7 +20,6 @@ layout: default
 
 Курс будет состоять из лекций, семинаров и домашних заданий. На семинаре будем совместно решать задачи по пройденной на лекции теме.
 
-
 # Лекции
 
 0. Орг вопросы. 
@@ -30,7 +29,7 @@ layout: default
 1. Введение в Scala. Case классы и pattern matching. 
   * Лекция: 9 марта. Семинар 16 марта.
   * Видео: [Часть 1. Введение в Scala](https://www.youtube.com/watch?v=HBvd9PjYBcs)
-  * Видео: Часть 2. Case-классы и pattern matching
+  * Видео: [Часть 2. Case-классы и pattern matching](https://www.youtube.com/watch?v=qF_ARyjz1oU)
   * Видео: Домашнее задание
   * Слайды: [Введение в Scala. Case классы и pattern matching](slides/day1.html).
   * Слайды домашнего задания (в работе): [Часть 1. Домашнее задание](slides/day1-task.html).
