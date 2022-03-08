@@ -30,7 +30,7 @@ layout: default
   * Лекция: 9 марта. Семинар 16 марта.
   * Видео: [Часть 1. Введение в Scala](https://www.youtube.com/watch?v=HBvd9PjYBcs)
   * Видео: [Часть 2. Case-классы и pattern matching](https://www.youtube.com/watch?v=qF_ARyjz1oU)
-  * Видео: Домашнее задание
+  * Видео: [Домашнее задание](https://youtu.be/6h3c6FY6Q9w)
   * Слайды: [Введение в Scala. Case классы и pattern matching](slides/day1.html).
   * Слайды домашнего задания: [Часть 1. Домашнее задание](slides/day1-task.html).
   * Семинар: Создаем первый проект. Юнит тесты на Specs2 и ScalaCheck. (ведущий - Саша)
