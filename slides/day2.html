@@ -34,11 +34,12 @@
 					<ol>
 						<li>Почему мы говорим о List?
 						<li>Функциональный подход и иммутабельность. 
-						<li>Персистентные структуры данных на примере List.
-						<li>Работа со списками: "классика" и ListBuffer.
-						<li>filter, map и fold.
-						<li>NonEmptyList
-						<li>Операции над Option
+						<li>Персистентные структуры данных. Устройство List
+						<li>Рекурсия
+						<li>filter, map, flatMap и foldLeft.
+						<li>ListBuffer.
+						<li>NonEmptyList.
+						<li>Операции над Option.
 					</ol>
 				</section>
 
@@ -114,7 +115,7 @@
     }
   }
 
-  def getUsers(): ListBuffer[String] = users
+  def getUsers(): Buffer[String] = users
 } </code></pre>
 					</section>
 					<section>
@@ -129,13 +130,20 @@ UserRepository.getUsers().append("hacker")
 				</section>
 
 				<section>
-					В Java такие проблемы обычно решают "защитными" копиями:
+					В Java можно запретить модификацию через wrapper<br>
+					Collection.unmodifiableList(list)
+					<p>Но это не решает проблему полностью,<br>
+					и еще в Java интерфейс коллекция изменяемый
+				</section>
+
+				<section>
+					Еще такие проблемы решаются "защитными" копиями:
 
 					<pre><code class="scala">
 def getUsers(): Seq[String] = users.toVector
 					</code></pre>
 
-					В Scala это работает лучше Java, так как попытки модифицировать не компилируются
+					но это не эффективно
 				</section>
 
 				<section>
@@ -146,7 +154,7 @@ object UserRepository {
 
   def login(user: String, password: String): Unit = {
     if (checkPasword(user, password)) {
-      users = users :+ user
+      users = users :+ user // новый Vector
     } else {
       throw new BadPasswordException(user)
     }
@@ -182,8 +190,8 @@ object UserRepository {
 					<p>List[T] - алгебраический тип с двумя вариантами:
 
 					<ul>
-						<li> ::(head: T, tail: List[T]) - элемент списка, обычно называют "cons"
-						<li> Nil - пустой список
+						<li>case class ::(head: T, tail: List[T]) - элемент списка, обычно называют "cons"
+						<li>case object Nil - пустой список
 					</ul>
 
 					<p><small>в Scheme используют просто "пару"</small>
@@ -195,8 +203,8 @@ object UserRepository {
 					<pre><code class="scala">
 val l: List[Int] = 42 :: 69 :: 613 :: Nil
 val l: List[Int] = 42 +: 69 +: 613 +: Nil
+// (вычисляется справа налево - право-ассоциативный оператор)
 // для удобства есть конструктор List(42, 69, 613)
-// (вычисляется справа налево)
 					</code></pre>
 					<p><small>* картинка Yonkeltron at English Wikipedia</small></p>
 				</section>
@@ -244,12 +252,13 @@ l match {
 l match {
   // через конструктор - точное число элементов
   case Seq(one) =&gt;
-     s"exactly $one"
+     s"only $one"
   // как минимум один элемент
-  case one +: _ =&gt; 
-    s"at least one element $one"
+  case $element +: _ =&gt; 
+    s"first $element and more"
   // второй элемент 10; выкинем его и преобразуем в строку
   case head +: 10 +: tail =&gt;
+    // в этот вариант никогда не попадем
     (head +: tail).mkString
 }
 					</code></pre>
@@ -268,16 +277,18 @@ def sum(list: List[Int]): Int = {
     case Nil =&gt; 
       0
     case head :: tail =&gt;
+      // декомпозиция эффективна - не создает новых объектов
       head + sum(tail)
   }
 }
 					</code></pre>
 					<p class="fragment">сборщик мусора собирает список прямо в процессе итерации
 					(если на него нет ссылок)
+					<p class=fragment>проблема: рекурсия тут ограничивает длину списка
 				</section>
 
 				<section>
-					<p>Хвостовая рекурсия — частный случай рекурсии, при котором любой рекурсивный вызов является последней операцией перед возвратом из функции.</p>
+					<p>Хвостовая рекурсия — рекурсивный вызов является последней операцией перед возвратом из функции.</p>
 				</section>
 
 				<section>
@@ -291,13 +302,8 @@ def drop(list: List[Int], n: Int): List[Int] = {
   }
 }
 					</code></pre>
+					<p class=fragment>хвостовая рекусия это как goto :-)
 				</section>
-
-				<section>
-					Хвостовая рекурсия автоматически заменяется на цикл компилятором
-					(в границах одного файла!)
-				</section>
-
 
 				<section>
 					Тут рекурсию можно заменить на цикл:
@@ -312,6 +318,12 @@ def dropLoop(list: List[Int], n: Int): List[Int] = {
   these
 }
 					</code></pre>
+				</section>
+
+				<section>
+					<p>Хвостовая рекурсия автоматически заменяется на цикл компилятором
+					(в границах одного файла!)
+					<p>JVM сама это не умеет, к сожалению
 				</section>
 
 				<section>
@@ -334,7 +346,7 @@ def drop(list: List[Int], n: Int): List[Int] = {
 					<pre><code class="scala">
 // упрощенная версия кода библиотеки Scala 2.12.4
 def apply(n: Int): Int = {
-  val rest = drop(n)
+  val rest = drop(n) // drop не хуже итерации по списку
 
   if (n &lt; 0 || rest.isEmpty) 
     throw new IndexOutOfBoundsException(n.toString)
@@ -343,11 +355,12 @@ def apply(n: Int): Int = {
 }
 					</code></pre>
 
-					<p>количество операций пропорционально N
+					<p class=fragment>количество операций пропорционально N<br>
+					не надо обходить список используя номер элемента
 				</section>
 
 				<section>
-					<p>Добавление в хвост - только с созданием полной копии.
+					<p>Добавление в хвост - только с созданием<br>полной копии.
 					<pre><code class="scala">
 def append(list: List[Int], v: Int): List[Int] = {
   list match {
@@ -359,20 +372,23 @@ def append(list: List[Int], v: Int): List[Int] = {
 }
 					</code></pre>
 					<p>число операция пропорционально длине списка
-				</section>
-
-				<section>
-					<p>Проблемы этого кода:
-					<ul>
-						<li>Быстро переполняется стек
-						<li class="fragment">На цикл заменить нельзя 
-					</ul>
+					<p>и еще рекурсия не хвостовая
 				</section>
 
 				<section>
 					<p>Как работает этот код?
-					<p class="fragment">Список раскручивается в стек
-					<p class="fragment">Стек собирается в новый список
+					<pre><code class="scala">
+def append(list: List[Int], v: Int): List[Int] = {
+  list match {
+    case Nil =&gt; 
+      v :: Nil
+    case head :: tail =&gt;
+      head :: append(tail, v)
+  }
+}
+					</code></pre>
+					<p>список раскручивается в стек<br>
+					стек собирается в новый список
 				</section>
 
 				<section>
@@ -381,6 +397,7 @@ def append(list: List[Int], v: Int): List[Int] = {
 def append(list: List[Int], v: Int): List[Int] = 
   (v :: list.reverse).reverse
 					</code></pre>
+					<p>Не собирайте списки через append!
 				</section>
 
 				<section>
@@ -423,7 +440,7 @@ val l: List[Int] = List.fill(10)(Random.nextInt(10))
 l.filter(x =&gt; x % 2 == 0)					
 					</code></pre>
 
-					<div class="fragment">
+					<div>
 					<p>более компактный синтаксис
 					<pre><code class="scala">
 l.filter(_ % 2 == 0)					
@@ -479,7 +496,7 @@ def filter(list: List[Int], f: Int =&gt; Boolean): List[Int] = {
 				<section>
 					<p>Классическое решение - сборка списка в обратном порядке и reverse.
 
-					<p class="fragment">Но в стандартной библиотеке Scala (и многих других) код оптимизирован.
+					<p class="fragment">Но в стандартной библиотеке Scala (и многих других) код оптимизирован. Оптимизацию покажу позже.
 				</section>
 
 				<section>
@@ -500,8 +517,10 @@ list.map(Math.sqrt) // для List[Double]
 					<pre><code class="scala">
 val list = List(1, 2, 3)
 
+list.map(x =&gt; List.fill(2)(x))
+
 list.map(List.fill(2))
-// list.map(x =&gt; List.fill(2)(x))
+
 // List[List[Int]] = List(List(1, 1), List(2, 2), List(3, 3))
 					</code></pre>
 				</section>
@@ -511,7 +530,7 @@ list.map(List.fill(2))
 					<pre><code class="scala">
 val list = List(1, 2, 3)
 
-list.map(x =&gt; List.fill(2)(x)).flatten
+list.map(List.fill(2)).flatten
 // List(1, 1, 2, 2, 3, 3)
 					</code></pre>
 				</section>
@@ -520,12 +539,10 @@ list.map(x =&gt; List.fill(2)(x)).flatten
 					<p>flatMap - комбинация map и flatten
 
 					<pre><code class="scala">
-list.flatMap(x =&gt; List.fill(2)(x))
-					</code></pre>
-
-					<pre><code class="scala">
 list.flatMap(List.fill(2))
 					</code></pre>
+
+					<p>flatten и flatMap есть у многих интересных типов
 				</section>
 
 				<section>
@@ -578,14 +595,15 @@ def foldLeft[B](z: B)(op: (B, A) =&gt; B): B
 				<section>
 					<p>Сумма элементов списка:
 					<pre><code class="scala">
-list.foldLeft(0)(_ + _)
-					</code></pre>
-					<p class="fragment">отдельно функция:
-					<pre class="fragment"><code class="scala">
 def op(acc: Int, v: Int) = acc + v
 
 list.foldLeft(0)(op)
 					</code></pre>
+					<div class="fragment">компактный синтаксис:
+					<pre><code class="scala">
+list.foldLeft(0)(_ + _)
+					</code></pre>
+					</div>
 				</section>
 
 				<section>
@@ -606,14 +624,19 @@ op(op(op(op(0, list(0)), list(1)), list(2)), list(3))
 				<section>
 					Пример: убираем повторяющиеся подряд элементы:
 					<pre><code class="scala">
+// List.empty[Int] вместо Nil так как нужен тип элемента
 list.foldLeft(List.empty[Int]) { (acc, v) =&gt;
+  // .headOption как .head, но возвращает Option
+  // .contains у Option проверяет наличие в нем значения
   if (acc.headOption.contains(v)) {
     acc
   } else {
+    // собираем в обратном порядке
     v :: acc
   }
 }.reverse
-// можно использовать Builder, об этом дальше
+
+// как избавиться от reverse будет дальше
 					</code></pre>
 				</section>
 
@@ -628,13 +651,15 @@ list.count(_ &gt; 50)
 				</section>
 
 				<section>
-					<p>Реализация через filter:
+					<p>Плохая реализация через filter:
 
 					<pre><code class="scala">
 def count(list: List[Int], f: Int =&gt; Boolean): Int = 
   list.filter(f).length
 					</code></pre>
-					<p><small>Не эффективно, создает временный список</small>
+					<p>Не эффективно, создает временный список<br>
+					т.к. операции над коллекциями не меняют тип
+					<p>(оптимизация цепочек будет на следующей лекции)
 				</section>
 
 				<section>
@@ -709,7 +734,8 @@ builder.result()
 				</section>
 
 				<section>
-					<p>Специальный тип, реализованный в библиотеках Cats, Scalaz и др.
+					<p>Специальный тип, реализованный в<br> библиотеке Cats и 
+					многих других
 
 					<pre><code class="scala">
   // код библиотеки Cats
@@ -768,7 +794,7 @@ def process(request: Request):
 				</section>
 
 				<section>
-					<p>Что делать если обработчик вернул Left[Nil]?
+					<p>Что делать если обработчик вернул Left(Nil)?
 					<div class="fragment">
 						<pre><code class="scala">
 def process(request: Request): 
@@ -779,7 +805,7 @@ def process(request: Request):
 				</section>
 
 				<section>
-					<h3>Операции map/filter/flatMap у Option</h3>
+					<h3>map/filter/flatMap у Option</h3>
 				</section>
 
 				<section>
