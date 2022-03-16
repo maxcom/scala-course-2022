@@ -41,6 +41,7 @@ layout: default
   * Слайды: [Работа со списками](slides/day2.html)
   * Слайды домашнего задания: [Часть 2. Домашнее задание](slides/day2-task.html).
   * Семинар: Измеряем скорость операций над коллекциями при помощи JMH. (ведущий - Никита)
+  * Семинар: [Стартовый проект и слайды](https://gitlab.com/djattah/lessonone). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lessonone](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lessonone)
 3. Vector. Ленивые вычисления. LazyList и View. Монады. 
   * Лекция: 23 марта. Семинар: 30 марта.
   * Семинар: Решаем задачи с использованием LazyList. (ведущий - Роман)
