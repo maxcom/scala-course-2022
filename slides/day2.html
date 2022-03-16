@@ -254,7 +254,7 @@ l match {
   case Seq(one) =&gt;
      s"only $one"
   // как минимум один элемент
-  case $element +: _ =&gt; 
+  case element +: _ =&gt; 
     s"first $element and more"
   // второй элемент 10; выкинем его и преобразуем в строку
   case head +: 10 +: tail =&gt;
