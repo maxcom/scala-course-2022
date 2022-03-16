@@ -34,6 +34,7 @@ layout: default
   * Слайды: [Введение в Scala. Case классы и pattern matching](slides/day1.html).
   * Слайды домашнего задания: [Часть 1. Домашнее задание](slides/day1-task.html).
   * Семинар: Создаем первый проект. Юнит тесты на Specs2 и ScalaCheck. (ведущий - Саша)
+  * Семинар: [Стартовый проект и слайды](https://gitlab.com/djattah/lessonone). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lessonone](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lessonone)
 2. Иммутабельность и базовые структуры данных. Работа со списками. 
   * Лекция: 16 марта. Семинар: 23 марта.
   * Видео: [Работа со списками](https://www.youtube.com/watch?v=zxYTkN55bUk)
@@ -41,7 +42,6 @@ layout: default
   * Слайды: [Работа со списками](slides/day2.html)
   * Слайды домашнего задания: [Часть 2. Домашнее задание](slides/day2-task.html).
   * Семинар: Измеряем скорость операций над коллекциями при помощи JMH. (ведущий - Никита)
-  * Семинар: [Стартовый проект и слайды](https://gitlab.com/djattah/lessonone). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lessonone](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lessonone)
 3. Vector. Ленивые вычисления. LazyList и View. Монады. 
   * Лекция: 23 марта. Семинар: 30 марта.
   * Семинар: Решаем задачи с использованием LazyList. (ведущий - Роман)
