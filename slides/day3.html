@@ -1,0 +1,740 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Vector. Ленивые вычисления. LazyList и View. Монады.</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Часть 3. Vector. Ленивые вычисления. LazyList и View. Монады.</h2>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<h3>План</h2>
+					<ol>
+						<li>Критика List
+						<li>Vector и HashMap
+						<li>"call by value" и "call by name"; lazy
+						<li>LazyList: ленивый список.
+						<li>View.
+						<li>Монады и for.
+						<li>Пример: Eval из библиотеки cats (доп.)
+					</ol>
+				</section>
+
+				<section>
+					<h3>Критика List</h3>
+				</section>
+
+				<section>
+					<ul>
+						<li>Вставка в конец - только с полным копированием
+						<li>Время выполнения многих операций пропорционально длине
+						<li>Там где есть O(N), легко получается O(N^2)
+					</ul>
+				</section>
+				<section>
+					<ul>
+						<li>Занимает в два раза больше массива
+						<li class="fragment">Много элементов - нагрузка на сборщик мусора
+					</ul>
+				</section>
+
+				<section>
+						java.lang.OutOfMemoryError:<br>GC overhead limit exceeded
+				</section>
+
+				<section>
+					<p>Посмотрите на исследование
+					производительность коллекций Scala: <a target="_blank" href="http://www.lihaoyi.com/post/BenchmarkingScalaCollections.html">Benchmarking Scala Collections</a>.
+				</section>
+
+
+				<section>
+					<h3>Vector</h3>
+				</section>
+
+				<section>
+					<p>Vector - современная персистентная коллекция,<br> без этих недостатков.
+
+					<p class="fragment">Используется и в Scala, и в Clojure
+				</section>
+
+				<section>
+					<p>До 32 элементов
+					<img src="Paper.Scala.1.png">
+				</section>
+
+				<section>
+					<p>До 1024 элементов (32*32)
+					<img src="Paper.Scala.2.png">
+				</section>
+
+				<section>
+					<p>Очередной уровень
+					<img src="Paper.Scala.3.png">
+				</section>
+
+				<section>
+					<p>Добавление элемента - два уровня
+					<img src="Paper.Scala.4.png">
+				</section>
+
+				<section>
+					<p>Добавление элемента - три уровня
+					<img src="Paper.Scala.6.png">
+				</section>
+
+				<section>
+					<p>Добавление в начало - аналогично;<br>
+					Vector хранит смещение первого элемента
+				</section>
+
+				<section>
+					<p>Стоимость операций - effectively constant:
+					<ul>
+						<li>получение элемента по индексу
+						<li>добавление в конец
+						<li>добавление в начало
+					</ul>
+				</section>
+
+				<section>
+					<p>Почему effectively constant?
+
+					<p class="fragment">Максимум 6 уровней, это достаточно
+				</section>
+
+				<section>
+					<p>Vector - не List:
+
+					<ul>
+						<li>Итератор вместо декомпозиции для обхода всех элементов
+						<li>Сборка не добавлением, а через VectorBuilder
+						<li>Используем готовые функции - они уже оптимизированы
+					</ul>
+				</section>
+
+				<section>
+					<h3>HashMap</h3>
+				</section>
+
+				<section>
+					<p>для пользователя:
+					<pre><code class="scala">
+Map("one" -&gt; "first", "two" -&gt; "second", "three" -&gt; "third")
+
+m.get("one") // Some("first")
+
+val m1 = m + ("five" -&gt; "fifth") // добавление
+
+val m2 = m - "one" // удаление
+					</code></pre>
+				</section>
+
+				<section>
+					<p>map/flatMap/filter/fold - аналогично<br>
+					Seq[(K,V)]
+					<pre><code class="scala">
+m.map(p ⇒ p._1.toUpperCase -&gt; p._2)
+					</code></pre>
+					<p>В Scala эти операции не меняют тип исходной коллекции
+				</section>
+
+				<section>
+					<p>Map - еще и частично определенная функция:
+					<pre><code class="scala">
+val m = Map("one" -&gt; 1, "two" -&gt; 2)
+
+List("one", "two", "three").collect(m)
+
+// List(1, 2)
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Ключ - неизменяемый объект любого типа
+
+					<div class="fragment">
+					<p>Метод hashCode возвращает Int для любого объекта
+					<ul>
+						<li>У равных (equals) объектов они одинаковые
+						<li>У неравных - различные, насколько это возможно
+						<li>У case class и пар создается автоматически
+					</ul>
+					</div>
+				</section>
+
+				<section>
+					<p>Реализация в Scala 2.12 - <br>префиксное дерево с основанием 32
+
+					<p class="fragment">Похоже на вектор, только индексом<br> выступает hashCode
+
+					<p class="fragment">Структура разряженная, на каждом уровне могут быть
+					и данные, и ссылки на подуровни.
+				</section>
+
+				<section>
+					<p><small>(картинка с слайда про Vector)</small>
+					<img src="Paper.Scala.3.png">
+				</section>
+
+				<section>
+					<p>Добавление и удаление - <br>effectively constant, как у Vector.
+
+					<p class="fragment">Поиск - effectively constant,<br> если хеш-функция хорошая.<br>
+					Значения с одинаковым<br> хеш-кодом хранятся в списке.
+				</section>
+
+				<section>
+					<h3>Ленивые вычисления</h3>
+				</section>
+
+				<section>
+					<p>Откладываем вычисления до момента<br> когда нужен результат
+				</section>
+
+				<section>
+					<p>Параметры функции могут:
+					<ul>
+						<li>Вычисляться до вызова функции - "call by value"
+						<li>Вычисляются внутри функции при обращении - "call by name"
+					</ul>
+				</section>
+
+				<section>
+					<p>Пример: Option.getOrElse
+					<pre><code class="scala">
+// реализация из Scala 2.13.1
+@inline final def getOrElse[B &gt;: A](default: =&gt; B): B =
+    if (isEmpty) default else this.get
+
+// пример 
+Option(v).getOrElse(throw new RuntimeException("Oops!"))
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Значение вычисляется заново каждый раз
+					<pre><code class="scala">
+// метод List[A]
+  def fill[A](n: Int)(elem: =&gt; A): List[A]
+					</code></pre>
+					<p>Создает новый список с разными элементами
+					<pre><code class="scala">
+List.fill(10)(Random.nextInt)
+					</code></pre>
+				</section>
+
+				<section>
+					<p>такие вызовы похожи на передачу функции без аргументов
+				</section>
+
+				<section>
+					<h3>lazy val</h3>
+					<p>"Ленивые" значения - вычисляются один раз,
+					результат сохраняется (memoization)
+				</section>
+
+				<section>
+					<pre><code class="scala">
+import java.time.{Duration, Instant}
+
+lazy val lazyCurrent = Instant.now
+val current = Instant.now
+
+Thread.sleep(1000)
+
+Duration.between(lazyCurrent, current) 
+// разница больше секунды
+					</code></pre>
+					<p>При отладке помним об "эффекте наблюдателя".
+				</section>
+
+				<section>
+					<p>lazy работает и в классах, и внутри функций
+				</section>
+
+				<section>
+					<p>Превращаем call by name в lazy:
+					<pre><code class="scala">
+def repeat(n: Int, v: =&gt; Int) {
+  lazy val cached = v // вычисляется 0 или 1 раз
+  
+  List.fill(n)(cached)
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Еще пример - регистронезависимый id
+					<pre><code class="scala">final case class UserId(id: String) {
+  private lazy val loId: String = id.toLowerCase()
+
+  override def equals(obj: Any) = {
+    obj match {
+      case other: UserId ⇒
+        other.loId == loId
+      case _ ⇒
+        false
+    }
+  }
+
+  override def hashCode() = loId.hashCode
+}</code></pre>
+					<p><small>демо-код, с некоторыми "локалями" будут проблемы</small>
+				</section>
+
+				<section>
+					<h3>Stream/LazyList: ленивый список</h3>
+					<p>Stream - старая реализация из 2.12 и ранее<br>
+					LazyList - 2.13+, исправлены некоторые недостатки
+				</section>
+
+				<section>
+					<p>Структура похожа на List
+					<pre><code class="scala">
+val s: LazyList[Int] = 3 #:: 2 #:: 1 #:: LazyList.empty
+					</code></pre>
+				</section>
+
+				<section>
+					<p>У Stream два вида ячеек:
+					<ul>
+						<li>Stream.Cons[+A](hd: A, tl: =&gt; Stream[A])
+						<li>Stream.Empty
+					</ul>
+					<p>У LazyList аналогично, но реализация скрыта.
+				</section>
+
+				<section>
+					<p>Cons ячека вычисляет "хвост" при обращении,<br>
+					и сохраняет его. Только до следующего звена.
+				</section>
+
+				<section>
+					<p>Функции тоже работают лениво, например map:
+					<pre><code class="scala">
+var n: Int = 0
+val s: LazyList[Int] = LazyList.fill(100000) {
+  n += 1
+  Random.nextInt
+}
+
+println(n) // 0
+
+s.map(_ * 2).take(1).toVector
+
+println(n) // 1
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Пример реализации map:
+					<pre><code class="scala">
+def map(s: Stream[Int], f: Int ⇒ Int): Stream[Int] = {
+  if (s.isEmpty) {
+    s
+  } else {
+    f(s.head) #:: map(s.tail, f)
+  }
+}
+					</code></pre>
+					<p><small>для LazyList чуть сложнее</small>
+				</section>
+
+				<section>
+					<p>Функции, обходящие весь список "форсируют" его.<br>
+					Например length или foldLeft.
+				</section>
+
+				<section>
+					<p>Stream может быть бесконечным
+				</section>
+
+				<section>
+					<p>Фибоначчи: каждое последующее число равно сумме двух предыдущих чисел
+
+					<pre><code class="scala">
+import scala.math.BigInt
+
+val fibs: LazyList[BigInt] =
+  BigInt(0) #::
+    BigInt(1) #::
+      fibs.zip(fibs.tail).map { n =&gt;
+        n._1 + n._2
+      }
+
+
+fibs.take(5).toVector
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Отличие Stream и LazyList:
+
+					<p class="fragment">Stream: первый элемент всегда вычислен,<br> LazyList - полностью ленивый.
+				</section>
+
+				<section>
+					<p>Пример: <a href="https://kpacha.github.io/2014/10/26/solving-sudoku-puzzles-with-scala-streams.html" target=_blank">решение</a> Судоку.
+					<p>Пример: поиск кратчайшего решения "лабиринта".
+				</section>
+
+				<section>
+					<p>Посмотрим на семинаре.
+				</section>
+
+				<section>
+					<p>Основное практическое применение:
+					<ul>
+						<li><s>Оптимизация серий трансформаций коллекций</s>
+					</ul>
+				</section>
+
+				<section>
+					<p>Минусы:
+					<ul>
+						<li>Плохо сочетаются с исключениями и побочными эффектами
+						<li>Задержки - иногда тоже побочный эффект
+						<li>Бесконечные последовательности легко случайно форсировать
+					</ul>
+				</section>
+
+				<section>
+					<h3>View</h3>
+					<p>Временное представление коллекция для цепочек преобразований.
+					<p class="fragment">В Scala 2.12 и ранее были проблемы.
+				</section>
+
+				<section>
+					<pre><code class="scala">
+case class Person(id: Int, name: String, student: Boolean)
+
+def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
+  persons.filter(_.student).map(p =&gt; p.id -&gt; p).toMap
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+case class Person(id: Int, name: String, student: Boolean)
+
+def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
+  persons.view.filter(_.student).map(p =&gt; p.id -&gt; p).toMap
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Два вида View для коллекций:
+					<ul>
+						<li>SeqView - последовательный доступ
+						<li class=fragment>IndexedSeqView - доступ по индексу
+					</ul>
+				</section>
+
+				<section>
+					<p>SeqView
+					<ul>
+						<li>Ленивые map/filter/... без мемоизации
+						<li class=fragment>drop/tail/...
+						<li class=fragment>append/prepend/concat
+					</ul>
+				</section>
+
+				<section>
+					<p>IndexedSeqView
+					<ul>
+						<li>Доступ по индексу
+						<li class=fragment>slice/splitAt/... делают подколлекции без копирования
+					</ul>
+				</section>
+
+				<section>
+					<p>«Монада — всего лишь моноид из категории эндофункторов, что может быть проще?»
+					<p><small>(c) <a target="_blank" href="http://james-iry.blogspot.ru/2009/05/brief-incomplete-and-mostly-wrong.html">A Brief, Incomplete, and Mostly Wrong History of Programming Languages</a></small>
+				</section>
+
+				<section>
+					<p>К монадам можно придти двумя путями:
+					<ul>
+						<li>Используя их, они повсюду
+						<li>Через теорию категорий, это на следующей лекции
+					</ul>
+				</section>
+
+				<section>
+					<p>Для нас монада - шаблон проектирования.
+
+					<p>Много типов из разных областей являются монадами.
+				</section>
+
+				<section>
+					<p>Монада - значение, помещенное в контекст.
+					<div class="fragment">
+					<p>Операции:
+					<ul>
+						<li>создания (обычно "pure") - помещает значение в контекст
+						<li>flatMap - применяет к значению функцию, возвращающую новые значение и контекст
+							("монадическая функция")
+					</ul>
+					</div>
+				</section>
+
+				<section>
+					Альтернативное определение:
+					<ul>
+						<li>создание (pure)
+						<li>map - применяет к значению функцию, возвращающую новые значение
+						<li>flatten - раскрывает вложенный контекст
+					</ul>
+				</section>
+
+				<section>
+					<p>Рассмотрим на примере Option
+					<pre><code class="scala">
+def findUserId(name: String): Option[Int] = ???
+def loadUserById(id: Int): Option[User] = ???
+
+val opt = Option("username") // создание
+
+opt.flatMap(findUserId).flatMap(loadUserById)
+					</code></pre>
+					<p>Последовательное вычисление<br> пока не встретится None
+				</section>
+
+				<section>
+					<p>for в Scala – не цикл
+				</section>
+
+				<section>
+					<p>for { ... } yield { ... }</p>
+
+					<p>Комбинирует flatMap и map<br>
+					(и еще filter, но это не для монад)
+
+					<p class="fragment">for без yield использует<br> forearch вместо последнего map
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val jobTitle: Option[String] = for {
+  name &lt;- opt // первая операция определяет тип
+  id   &lt;- findUserId(name)
+  user &lt;- loadUserById(id)
+} yield {
+  user.jobTitle
+}
+					</code></pre>
+					<p><small>Посмотрите "desugar for" в IDEA</small>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+opt.flatMap(name =&gt; 
+  findUserId(name).flatMap(id =&gt; 
+    loadUserById(id).map(user =&gt; 
+      user.jobTitle)))
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">opt match {
+  case Some(name) ⇒
+    findUserId(name) match {
+      case Some(id) ⇒
+        loadUserById(id) match {
+          case Some(user) ⇒ user.jobTitle
+          case None       ⇒ None  
+        }
+      case None ⇒
+        None
+    }
+  case None ⇒
+    None
+}</code></pre>
+				</section>
+
+				<section>
+					<p>Монада - абстракция цепочки связанных вычислений.
+
+					<p class="fragment">Монада контролирует выполнение этой цепочки.
+				</section>
+
+				<section>
+					<p>Законы, которые должны выполнять монады
+				</section>
+
+				<section>
+					<p>"Left Identity"
+
+					<p>Для любой монадической функции f
+
+					<pre><code class="scala">
+pure(x).flatMap(f) == f(x)
+					</code></pre>
+
+					<p>применение функции к значению в монаде
+					эквивалентно применению функции к значению
+				</section>
+
+				<section>
+					<p>"Right Identity"
+
+					<pre><code class="scala">
+m.flatMap(pure) == m
+					</code></pre>
+
+					<p>применение функции создания не меняет монаду
+				</section>
+
+				<section>
+					<p>ассоциативность
+
+					<pre><code class="scala">
+m.flatMap(f).flatMap(g) == m.flatMap(x =&gt; f(x).flatMap(g))
+					</code></pre>
+
+					<p>уравнивает разные способы комбинации функций
+				</section>
+
+				<section>
+					<p>Try - тоже монада; вычисляется пока не возникнет
+					исключение
+				</section>
+
+				<section>
+					<p>Either - монада. Вычисляется правая сторона,
+					левая сторона - остановка вычисления.
+				</section>
+
+				<section>
+					<p>Вычисления не обязательно должны происходить
+					прямо сейчас и в текущем потоке.
+				</section>
+
+				<section>
+					<p>Future - монада, выполняющая
+					вычисление в другом потоке.
+					<p><small>Рассмотрим её устройство на 5-й встрече.</small>
+				</section>
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Eval из Cats</h2>
+				</section>
+
+				<section>
+					<p>Рассмотрим Eval из Cats - монаду, выполняющую
+					ленивые вычисления.
+				</section>
+
+				<section>
+					<pre><code class="scala">import cats.Eval
+
+case class User(id: Int, info: String)
+def loadUserById(id: Int): User = ???
+
+// строим pipeline
+val result = for {
+  v &lt;- Eval.now(10)
+  user &lt;- Eval.later(loadUserById(v))
+} yield {
+  user.info
+}
+
+// вычисление происходит тут
+result.value</code></pre>
+				</section>
+
+				<section>
+					<ul>
+						<li>Eval.now - "жадное" выполнение
+						<li>Eval.later - "ленивое" с мемоизацией
+						<li>Eval.always - "ленивое" без мемоизации
+
+				</section>
+
+				<section>
+				stack safe рекурсия с использованием Eval
+					<pre><code class="scala">def merge(seq1: List[Int], seq2: List[Int]): Eval[List[Int]] = {
+  (seq1, seq2) match {
+    case (Nil, _) =&gt; Eval.now(seq2)
+    case (_, Nil) =&gt; Eval.now(seq1)
+    case (x::xs, y::ys) =&gt;
+      if (x&lt;y) {
+        Eval.Unit &gt;&gt; merge(xs,seq2).map(x +: _)
+      } else {
+        Eval.Unit &gt;&gt; merge(seq1,ys).map(y +: _)
+      }
+  }
+}
+
+merge(List.fill(10000)(0), List.fill(10000)(1)).value</code></pre>
+					<small>решение не эффективное, приведено для примера</small>
+				</section>
+
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>

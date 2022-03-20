@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Vector. Ленивые вычисления. LazyList и View. Монады.</title>
+		<title>Пишем классификатор</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h3>Домашнее задание: пишем классификатор</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<p>Классификатор - алгоритм, относящий входные данные к одному
+					из предопределенных классов.
+
+					<p class="fragment">Разработаем классификатор, определяющий
+					является ли короткий текст позитивным, негативным или нейтральным.
+				</section>
+
+				<section>
+					<p>На старте программы обучим классификатор на готовых текстах с оценками.
+
+					<p class="fragment">После на основе статистики будем оценивать произвольный текст.
+				</section>
+
+				<section>
+					<p>Реализуем наивный байесовский классификатор
+
+					<ul>
+						<li>Один из наиболее часто используемых
+						<li class="fragment">Прост в реализации и отладке
+						<li class="fragment">Я нашел хорошее описание с примером на Scala
+					</ul>
+				</section>
+
+				<section>
+					<p>Денис Баженов: <a target="_blank" href="http://bazhenov.me/blog/2012/06/11/naive-bayes.html">Наивный байесовский классификатор</a>
+					<p>В статье есть:
+					<ul>
+						<li>Описание в применении к текстам
+						<li>Описание как запрограммировать
+						<li>Пример расчета - подойдет для тестов
+						<li>Пример реализации на Scala (2.8!)
+					</ul>
+				</section>
+
+				<section>
+					<p>Для обучения классификатора используем готовый корпус:
+
+					<p><a target="_blank" href="http://study.mokoron.com/">Корпус коротких текстов для настройки классификатора</a>
+					<p><small>При использовании корпуса, просьба ссылаться на
+  следующую работу: <a target="_blank" href="https://elibrary.ru/item.asp?id=20399632">Автоматическое построение и анализ корпуса коротких текстов (постов микроблогов) для задачи разработки и тренировки тонового классификатора</a></small>
+				</section>
+
+				<section>
+					<p>Что делаем:
+					<ul>
+						<li>Классификатор с тестами
+						<li>Разбиение текста на слова с зачисткой
+						<li>Чтение корпуса твитов из CSV
+						<li>Программу, классифицирующую введенный текст
+					</ul>
+				</section> 
+
+				<section>
+					<p>В примере реализации есть проблемы с производительностью!
+					<p>Классификатор должен работать быстро,<br> максимум секунды.
+				</section>
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
