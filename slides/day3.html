@@ -34,9 +34,9 @@
 					<ol>
 						<li>Критика List
 						<li>Vector и HashMap
+						<li>View.
 						<li>"call by value" и "call by name"; lazy
 						<li>LazyList: ленивый список.
-						<li>View.
 						<li>Монады и for.
 						<li>Пример: Eval из библиотеки cats (доп.)
 					</ol>
@@ -44,19 +44,22 @@
 
 				<section>
 					<h3>Критика List</h3>
+					<p>Реализация Seq по-умолчанию - List
 				</section>
 
 				<section>
 					<ul>
-						<li>Вставка в конец - только с полным копированием
-						<li>Время выполнения многих операций пропорционально длине
-						<li>Там где есть O(N), легко получается O(N^2)
+						<li>Вставка в конец - только с полным копированием<br>
+						но все про это забываю когда пишут бизнес-логику
+						<li class=fragment>Время выполнения многих операций пропорционально длине<br>
+						Там где есть O(N), легко получается O(N^2)
 					</ul>
 				</section>
 				<section>
 					<ul>
 						<li>Занимает в два раза больше массива
 						<li class="fragment">Много элементов - нагрузка на сборщик мусора
+						<li class=fragment>Средства диагностики heap dump плохо работают
 					</ul>
 				</section>
 
@@ -67,6 +70,7 @@
 				<section>
 					<p>Посмотрите на исследование
 					производительность коллекций Scala: <a target="_blank" href="http://www.lihaoyi.com/post/BenchmarkingScalaCollections.html">Benchmarking Scala Collections</a>.
+					<p>(исследование старое,<br> Vector сейчас лучше чем там измерено)
 				</section>
 
 
@@ -81,7 +85,13 @@
 				</section>
 
 				<section>
-					<p>До 32 элементов
+					<p>Реализация до Scala 2.13.2 на базе аналогичной структуры Clojure
+					<p>В 2.13.2 и далее - новая реализация
+					<p>Расскажу о "классической" реализации<br> так как она проще
+				</section>
+
+				<section>
+					<p>До 32 элементов - массив
 					<img src="Paper.Scala.1.png">
 				</section>
 
@@ -96,18 +106,22 @@
 				</section>
 
 				<section>
-					<p>Добавление элемента - два уровня
+					<p>Добавление элемента - два уровня<br>
+					линии показывают переиспользование элементов
 					<img src="Paper.Scala.4.png">
 				</section>
 
 				<section>
-					<p>Добавление элемента - три уровня
+					<p>Добавление элемента - три уровня<br>
+					(на картинке заполнены все листы исходного дерева)
 					<img src="Paper.Scala.6.png">
 				</section>
 
 				<section>
 					<p>Добавление в начало - аналогично;<br>
 					Vector хранит смещение первого элемента
+					<p>Добавление в хвост и в готову
+					одинаково эффективно
 				</section>
 
 				<section>
@@ -129,14 +143,18 @@
 					<p>Vector - не List:
 
 					<ul>
-						<li>Итератор вместо декомпозиции для обхода всех элементов
-						<li>Сборка не добавлением, а через VectorBuilder
-						<li>Используем готовые функции - они уже оптимизированы
+						<li>Декомпозиция на хвост/голову дорогая операция<br>
+						для обхода используем итератор или встроенные функции
+						<li class=fragment>Сборка не добавлением, а через VectorBuilder<br>
+						ListBuffer это полноценная коллекция, а VectorBuilder - только builder
+						<li class=fragment>Используем готовые функции - они уже оптимизированы
 					</ul>
 				</section>
 
 				<section>
 					<h3>HashMap</h3>
+					<p>реализация - префиксное дерево с 32 ветвями,<br>
+					похоже на "разряженный" Vector
 				</section>
 
 				<section>
@@ -153,12 +171,13 @@ val m2 = m - "one" // удаление
 				</section>
 
 				<section>
-					<p>map/flatMap/filter/fold - аналогично<br>
+					<p>map/flatMap/filter/fold <br>аналогично
 					Seq[(K,V)]
 					<pre><code class="scala">
-m.map(p ⇒ p._1.toUpperCase -&gt; p._2)
+m.map(p =&gt; p._1.toUpperCase -&gt; p._2)
 					</code></pre>
-					<p>В Scala эти операции не меняют тип исходной коллекции
+					<p>операции не меняют тип исходной коллекции
+					<p>если результат не пара то результат будет Seq
 				</section>
 
 				<section>
@@ -166,7 +185,11 @@ m.map(p ⇒ p._1.toUpperCase -&gt; p._2)
 					<pre><code class="scala">
 val m = Map("one" -&gt; 1, "two" -&gt; 2)
 
+// определена там где есть данные по ключу
 List("one", "two", "three").collect(m)
+
+// эквивалентно
+List("one", "two", "three").flatMap(m.get)
 
 // List(1, 2)
 					</code></pre>
@@ -180,23 +203,9 @@ List("one", "two", "three").collect(m)
 					<ul>
 						<li>У равных (equals) объектов они одинаковые
 						<li>У неравных - различные, насколько это возможно
-						<li>У case class и пар создается автоматически
+						<li>У case class, строк и пар создается автоматически
 					</ul>
 					</div>
-				</section>
-
-				<section>
-					<p>Реализация в Scala 2.12 - <br>префиксное дерево с основанием 32
-
-					<p class="fragment">Похоже на вектор, только индексом<br> выступает hashCode
-
-					<p class="fragment">Структура разряженная, на каждом уровне могут быть
-					и данные, и ссылки на подуровни.
-				</section>
-
-				<section>
-					<p><small>(картинка с слайда про Vector)</small>
-					<img src="Paper.Scala.3.png">
 				</section>
 
 				<section>
@@ -204,6 +213,71 @@ List("one", "two", "three").collect(m)
 
 					<p class="fragment">Поиск - effectively constant,<br> если хеш-функция хорошая.<br>
 					Значения с одинаковым<br> хеш-кодом хранятся в списке.
+				</section>
+
+				<section>
+					<h3>View</h3>
+					<p>Временное представление коллекция для цепочек преобразований.
+					<p class="fragment">В Scala 2.12 и ранее были проблемы.
+				</section>
+
+				<section>
+					<pre><code class="scala">
+case class Person(id: Int, name: String, student: Boolean)
+
+def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
+  // каждая операция - новая структура
+  persons.filter(_.student).map(p =&gt; p.id -&gt; p).toMap
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+case class Person(id: Int, name: String, student: Boolean)
+
+def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
+  // похожи на "stream" из Java
+  persons.view.filter(_.student).map(p =&gt; p.id -&gt; p).toMap
+}
+					</code></pre>
+					<p>вычисление происходит в "toMap"
+				</section>
+
+				<section>
+					<p>Два вида View для коллекций:
+					<ul>
+						<li>SeqView - последовательный доступ<br>
+						на базе Iterator
+						<li class=fragment>IndexedSeqView - доступ по индексу
+					</ul>
+				</section>
+
+				<section>
+					<p>SeqView
+					<ul>
+						<li>map/filter/... выполняются при обращении
+						<li class=fragment>tail не вычисляет то что не нужно
+						<li class=fragment>drop вычисляет до начала, потом по необходимости
+						<li class=fragment>append/prepend/concat
+					</ul>
+				</section>
+
+				<section>
+					<p>IndexedSeqView
+					<ul>
+						<li>Доступ по индексу
+						<li class=fragment>slice/splitAt/take/drop... делают подколлекции без копирования
+						<li class=fragment>head/tail, в том числе декомпозиция
+					</ul>
+				</section>
+
+				<section>
+					<p>MapView для Map
+				</section>
+
+				<section>
+					<p>View - не коллекция
 				</section>
 
 				<section>
@@ -418,57 +492,6 @@ fibs.take(5).toVector
 						<li>Плохо сочетаются с исключениями и побочными эффектами
 						<li>Задержки - иногда тоже побочный эффект
 						<li>Бесконечные последовательности легко случайно форсировать
-					</ul>
-				</section>
-
-				<section>
-					<h3>View</h3>
-					<p>Временное представление коллекция для цепочек преобразований.
-					<p class="fragment">В Scala 2.12 и ранее были проблемы.
-				</section>
-
-				<section>
-					<pre><code class="scala">
-case class Person(id: Int, name: String, student: Boolean)
-
-def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
-  persons.filter(_.student).map(p =&gt; p.id -&gt; p).toMap
-}
-					</code></pre>
-				</section>
-
-				<section>
-					<pre><code class="scala">
-case class Person(id: Int, name: String, student: Boolean)
-
-def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
-  persons.view.filter(_.student).map(p =&gt; p.id -&gt; p).toMap
-}
-					</code></pre>
-				</section>
-
-				<section>
-					<p>Два вида View для коллекций:
-					<ul>
-						<li>SeqView - последовательный доступ
-						<li class=fragment>IndexedSeqView - доступ по индексу
-					</ul>
-				</section>
-
-				<section>
-					<p>SeqView
-					<ul>
-						<li>Ленивые map/filter/... без мемоизации
-						<li class=fragment>drop/tail/...
-						<li class=fragment>append/prepend/concat
-					</ul>
-				</section>
-
-				<section>
-					<p>IndexedSeqView
-					<ul>
-						<li>Доступ по индексу
-						<li class=fragment>slice/splitAt/... делают подколлекции без копирования
 					</ul>
 				</section>
 
