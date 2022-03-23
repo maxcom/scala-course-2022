@@ -1,5 +1,8 @@
 package com.lesson.two
 
+import org.openjdk.jmh.annotations.{BenchmarkMode, Fork, Measurement, Mode, OutputTimeUnit, Warmup}
+
+import java.util.concurrent.TimeUnit
 import scala.util.Random
 
 // ЗАДАНИЕ 1
