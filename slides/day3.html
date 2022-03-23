@@ -38,7 +38,7 @@
 						<li>"call by value" и "call by name"; lazy
 						<li>LazyList: ленивый список.
 						<li>Монады и for.
-						<li>Пример: Eval из библиотеки cats (доп.)
+						<li>Пример: Eval из библиотеки cats
 					</ol>
 				</section>
 
@@ -286,6 +286,7 @@ def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
 
 				<section>
 					<p>Откладываем вычисления до момента<br> когда нужен результат
+					<p>(View - это тоже ленивые вычисления)
 				</section>
 
 				<section>
@@ -314,7 +315,7 @@ Option(v).getOrElse(throw new RuntimeException("Oops!"))
 // метод List[A]
   def fill[A](n: Int)(elem: =&gt; A): List[A]
 					</code></pre>
-					<p>Создает новый список с разными элементами
+					<p>создает новый список с разными элементами
 					<pre><code class="scala">
 List.fill(10)(Random.nextInt)
 					</code></pre>
@@ -322,6 +323,13 @@ List.fill(10)(Random.nextInt)
 
 				<section>
 					<p>такие вызовы похожи на передачу функции без аргументов
+				</section>
+
+				<section>
+					<p>Библиотеки могут таким образом<br>расширять "синтаксис".
+					<p>Например Try вместо try, или свой цикл (List.fill) и тп
+					<p class=fragment>В Java часто нужны аннотации + фреймворки<br>
+					(например @Transactional)
 				</section>
 
 				<section>
@@ -342,26 +350,28 @@ Thread.sleep(1000)
 Duration.between(lazyCurrent, current) 
 // разница больше секунды
 					</code></pre>
-					<p>При отладке помним об "эффекте наблюдателя".
+					<p>при отладке помним об "эффекте наблюдателя".
 				</section>
 
 				<section>
 					<p>lazy работает и в классах, и внутри функций
+					<p>(но помним про overhead,<br> особенно у глобальных lazy val)
 				</section>
 
 				<section>
 					<p>Превращаем call by name в lazy:
 					<pre><code class="scala">
 def repeat(n: Int, v: =&gt; Int) {
-  lazy val cached = v // вычисляется 0 или 1 раз
-  
+// вычисляется 0 раз если n = 0, 1 раз в остальных случаях
+  lazy val cached = v  
   List.fill(n)(cached)
 }
 					</code></pre>
 				</section>
 
 				<section>
-					<p>Еще пример - регистронезависимый id
+					<p>Еще пример - регистронезависимый id,<br>
+					хотим сохранить исходное написание
 					<pre><code class="scala">final case class UserId(id: String) {
   private lazy val loId: String = id.toLowerCase()
 
@@ -395,10 +405,12 @@ val s: LazyList[Int] = 3 #:: 2 #:: 1 #:: LazyList.empty
 				<section>
 					<p>У Stream два вида ячеек:
 					<ul>
-						<li>Stream.Cons[+A](hd: A, tl: =&gt; Stream[A])
-						<li>Stream.Empty
+						<li>Stream.Cons[+A](hd: A, tl: =&gt; Stream[A])<br>
+						обращения к tail происходят через lazy val
+						<li>Stream.Empty - аналог Nil
 					</ul>
-					<p>У LazyList аналогично, но реализация скрыта.
+					<p>У LazyList аналогично, но реализация скрыта<br>
+					(еще отличия будут дальше).
 				</section>
 
 				<section>
@@ -411,6 +423,8 @@ val s: LazyList[Int] = 3 #:: 2 #:: 1 #:: LazyList.empty
 					<pre><code class="scala">
 var n: Int = 0
 val s: LazyList[Int] = LazyList.fill(100000) {
+  // побочны эффекты и ленивые вычисления лучше не совмещать
+  // это код только для демонстрации работы
   n += 1
   Random.nextInt
 }
@@ -454,10 +468,10 @@ import scala.math.BigInt
 
 val fibs: LazyList[BigInt] =
   BigInt(0) #::
-    BigInt(1) #::
+    BigInt(1) #:: // zip из двух списков делаем список пар
       fibs.zip(fibs.tail).map { n =&gt;
         n._1 + n._2
-      }
+      } // список объявлен "рекурсивно"
 
 
 fibs.take(5).toVector
@@ -466,7 +480,7 @@ fibs.take(5).toVector
 
 				<section>
 					<p>Отличие Stream и LazyList:
-
+					<p>Stream - не удачное название
 					<p class="fragment">Stream: первый элемент всегда вычислен,<br> LazyList - полностью ленивый.
 				</section>
 
@@ -476,22 +490,12 @@ fibs.take(5).toVector
 				</section>
 
 				<section>
-					<p>Посмотрим на семинаре.
-				</section>
-
-				<section>
-					<p>Основное практическое применение:
-					<ul>
-						<li><s>Оптимизация серий трансформаций коллекций</s>
-					</ul>
-				</section>
-
-				<section>
 					<p>Минусы:
 					<ul>
 						<li>Плохо сочетаются с исключениями и побочными эффектами
 						<li>Задержки - иногда тоже побочный эффект
 						<li>Бесконечные последовательности легко случайно форсировать
+						<li>Overhead - память и блокировки
 					</ul>
 				</section>
 
