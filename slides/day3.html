@@ -49,8 +49,8 @@
 
 				<section>
 					<ul>
-						<li>Вставка в конец - только с полным копированием<br>
-						но все про это забываю когда пишут бизнес-логику
+						<li>Вставка в конец - только с полным копированием,<br>
+						но все про это забывают когда пишут бизнес-логику
 						<li class=fragment>Время выполнения многих операций пропорционально длине<br>
 						Там где есть O(N), легко получается O(N^2)
 					</ul>
@@ -257,7 +257,7 @@ def makeIndex(persons: Vector[Person]): Map[Int, Person] = {
 					<p>SeqView
 					<ul>
 						<li>map/filter/... выполняются при обращении
-						<li class=fragment>tail не вычисляет то что не нужно
+						<li class=fragment>take не вычисляет то что не нужно
 						<li class=fragment>drop вычисляет до начала, потом по необходимости
 						<li class=fragment>append/prepend/concat
 					</ul>
