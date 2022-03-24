@@ -38,7 +38,6 @@
 						<li>"call by value" и "call by name"; lazy
 						<li>LazyList: ленивый список.
 						<li>Монады и for.
-						<li>Пример: Eval из библиотеки cats
 					</ol>
 				</section>
 
@@ -505,15 +504,14 @@ fibs.take(5).toVector
 				</section>
 
 				<section>
-					<p>К монадам можно придти двумя путями:
+					<p>Монада это:
 					<ul>
-						<li>Используя их, они повсюду
-						<li>Через теорию категорий, это на следующей лекции
+						<li>Шаблон проектирования - об этом сегодня
+						<li>Элемент теории категорий - об этом потом
 					</ul>
 				</section>
 
 				<section>
-					<p>Для нас монада - шаблон проектирования.
 
 					<p>Много типов из разных областей являются монадами.
 				</section>
@@ -588,6 +586,7 @@ opt.flatMap(name =&gt;
 				</section>
 
 				<section>
+					без flatMap
 					<pre><code class="scala">opt match {
   case Some(name) ⇒
     findUserId(name) match {
@@ -607,7 +606,7 @@ opt.flatMap(name =&gt;
 				<section>
 					<p>Монада - абстракция цепочки связанных вычислений.
 
-					<p class="fragment">Монада контролирует выполнение этой цепочки.
+					<p>Монада контролирует выполнение этой цепочки.
 				</section>
 
 				<section>
@@ -648,12 +647,18 @@ m.flatMap(f).flatMap(g) == m.flatMap(x =&gt; f(x).flatMap(g))
 				</section>
 
 				<section>
-					<p>Try - тоже монада; вычисляется пока не возникнет
+					<p>Законы не всегда выполняются даже у реализаций
+					из Scala-библиотеки
+				</section>
+
+				<section>
+					<p>Try - тоже монада
+					<p>Вычисляется пока не возникнет
 					исключение
 				</section>
 
 				<section>
-					<p>Either - монада. Вычисляется правая сторона,
+					<p>Either - монада.<br> Вычисляется правая сторона,
 					левая сторона - остановка вычисления.
 				</section>
 
@@ -665,70 +670,8 @@ m.flatMap(f).flatMap(g) == m.flatMap(x =&gt; f(x).flatMap(g))
 				<section>
 					<p>Future - монада, выполняющая
 					вычисление в другом потоке.
-					<p><small>Рассмотрим её устройство на 5-й встрече.</small>
+					<p><small>Рассмотрим её устройство на 5-й лекции.</small>
 				</section>
-
-				<section>
-					<p>Напоминаю:
-					<ul>
-						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
-					</ul>
-				</section>
-
-				<section>
-					<h2>Eval из Cats</h2>
-				</section>
-
-				<section>
-					<p>Рассмотрим Eval из Cats - монаду, выполняющую
-					ленивые вычисления.
-				</section>
-
-				<section>
-					<pre><code class="scala">import cats.Eval
-
-case class User(id: Int, info: String)
-def loadUserById(id: Int): User = ???
-
-// строим pipeline
-val result = for {
-  v &lt;- Eval.now(10)
-  user &lt;- Eval.later(loadUserById(v))
-} yield {
-  user.info
-}
-
-// вычисление происходит тут
-result.value</code></pre>
-				</section>
-
-				<section>
-					<ul>
-						<li>Eval.now - "жадное" выполнение
-						<li>Eval.later - "ленивое" с мемоизацией
-						<li>Eval.always - "ленивое" без мемоизации
-
-				</section>
-
-				<section>
-				stack safe рекурсия с использованием Eval
-					<pre><code class="scala">def merge(seq1: List[Int], seq2: List[Int]): Eval[List[Int]] = {
-  (seq1, seq2) match {
-    case (Nil, _) =&gt; Eval.now(seq2)
-    case (_, Nil) =&gt; Eval.now(seq1)
-    case (x::xs, y::ys) =&gt;
-      if (x&lt;y) {
-        Eval.Unit &gt;&gt; merge(xs,seq2).map(x +: _)
-      } else {
-        Eval.Unit &gt;&gt; merge(seq1,ys).map(y +: _)
-      }
-  }
-}
-
-merge(List.fill(10000)(0), List.fill(10000)(1)).value</code></pre>
-					<small>решение не эффективное, приведено для примера</small>
-				</section>
-
 
 				<section>
 					<p>Напоминаю:
