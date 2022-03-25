@@ -46,7 +46,7 @@ layout: default
 3. Vector. Ленивые вычисления. LazyList и View. Монады. 
   * Лекция: 23 марта. Семинар: 30 марта.
   * Видео: [Часть 1. Vector, Map и View](https://www.youtube.com/watch?v=e-2Td91B7gw).
-  * Видео: Часть 2. Ленивые вычисления и монады
+  * Видео: [Часть 2. Ленивые вычисления и монады](https://youtu.be/PYvtV4AapgM).
   * Слайды: [Vector. Ленивые вычисления. LazyList и View. Монады.](slides/day3.html)
   * Семинар: Решаем задачи с использованием LazyList. (ведущий - Роман)
 4. Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json. 
