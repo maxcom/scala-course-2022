@@ -68,7 +68,7 @@
 
 				<section>
 					<p>Посмотрите на исследование
-					производительность коллекций Scala: <a target="_blank" href="http://www.lihaoyi.com/post/BenchmarkingScalaCollections.html">Benchmarking Scala Collections</a>.
+					производительности коллекций Scala: <a target="_blank" href="http://www.lihaoyi.com/post/BenchmarkingScalaCollections.html">Benchmarking Scala Collections</a>.
 					<p>(исследование старое,<br> Vector сейчас лучше чем там измерено)
 				</section>
 
@@ -119,7 +119,7 @@
 				<section>
 					<p>Добавление в начало - аналогично;<br>
 					Vector хранит смещение первого элемента
-					<p>Добавление в хвост и в готову
+					<p>Добавление в хвост и в голову
 					одинаково эффективно
 				</section>
 
@@ -216,7 +216,7 @@ List("one", "two", "three").flatMap(m.get)
 
 				<section>
 					<h3>View</h3>
-					<p>Временное представление коллекция для цепочек преобразований.
+					<p>Временное представление коллекции для цепочек преобразований.
 					<p class="fragment">В Scala 2.12 и ранее были проблемы.
 				</section>
 
@@ -413,7 +413,7 @@ val s: LazyList[Int] = 3 #:: 2 #:: 1 #:: LazyList.empty
 				</section>
 
 				<section>
-					<p>Cons ячека вычисляет "хвост" при обращении<br>
+					<p>Cons ячейка вычисляет "хвост" при обращении<br>
 					и сохраняет его. Только до следующего звена.
 				</section>
 
@@ -560,7 +560,7 @@ opt.flatMap(findUserId).flatMap(loadUserById)
 					<p>Комбинирует flatMap и map<br>
 					(и еще filter, но это не для монад)
 
-					<p class="fragment">for без yield использует<br> forearch вместо последнего map
+					<p class="fragment">for без yield использует<br> foreach вместо последнего map
 				</section>
 
 				<section>
