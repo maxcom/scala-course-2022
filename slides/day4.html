@@ -31,21 +31,18 @@
 
 				<section>
 					<h3>План</h3>
+					<p>Последняя лекция про язык Scala
 					<ol>
 						<li>Imlicit значения
-						<li>Передача контекста и конфигурации; 
-						<li>“pimp my library”. 
-						<li>Тайпклассы
+						<li>Передача контекста и конфигурации
+						<li>“pimp my library”
+						<li>Тайпклассы (примеры из Cats)
 						<li>Сериализация и type classes на примере Play-JSON
-						<li>Задание: разбор JSON из API vk.com.
 					</ol>
 				</section>
 
 				<section>
-					<h3>"Неявные" значения и преобразования</h3>
-				</section>
-
-				<section>
+					<p>"Неявные" значения и преобразования</p>
 					<ul>
 						<li>Уникальная конструкция, существующая только в Scala.
 						<li class=fragment>Множество разных применений
@@ -69,17 +66,24 @@ def getUser(id: Int)(implicit session: DatabaseSession): User
 					<p>Без implicit значения пришлось бы
 					<ul>
 						<li>Явно передавать значения
-						<li>Передавать неявно через thread local и "магию" фреймворков
+						<li>Передавать неявно через thread local и "магию" Java-фреймворков
 					</ul>
 				</section>
 
 				<section>
 					<p>Значение должно существовать в области видимости
 					<pre><code class="scala">
-DB localTx { implicit session ⇒ 
+DB localTx { implicit session =&gt;
   getUser(10)
 }					
 					</code></pre>
+					<p>при необходимости можно передать явно
+					<pre><code class="scala">// implicit тут не нужен, но не мешает
+DB localTx { implicit session =&gt;
+  getUser(10)(session)
+}					
+					</code></pre>
+
 				</section>
 
 				<section>
@@ -87,22 +91,27 @@ DB localTx { implicit session ⇒
 					<ul>
 						<li>Сессия/транзакция БД
 						<li>Конфигурация
-						<li>Свойства пользователя (права, язык, таймзона и т.п.)
+						<li>Свойства запроса (права, язык, таймзона и т.п.)
 						<li>...
 					</ul>
 				</section>
 
 				<section>
-					<p>implicit значения ищутся в
-					<ul>
-						<li>Объявлениях в текущем контексте
-						<li>В import'ах - сначала в точных, потом в wildcard
-						<li>В companion object связанных типов
-					</ul>
+					<p>for может использовать flatMap/map с<br> implicit параметром
 				</section>
 
 				<section>
-					<p>Неоднозначности в поиске - ошибка компиляции
+					<p>implicit значения ищутся в
+					<ul>
+						<li>области видимости
+						<li>import'ах - сначала в точных, потом в wildcard
+						<li>companion object связанных типов
+					</ul>
+					<p>implicit контекст обычно в области видимости
+				</section>
+
+				<section>
+					<p>Неоднозначности при поиске на одном уровне - ошибка компиляции
 				</section>
 
 				<section>
@@ -124,7 +133,7 @@ implicit class RichString(str: String)
 				<section>
 					<p>В Ruby код может "улучшить" любой класс, даже стандартную библиотеку
 					
-					<p class="fragment">Это называется "Monkey patch", и является опасной техникой
+					<p>"Monkey patching" - весьма опасная техника
 				</section>
 
 				<section>
@@ -133,6 +142,8 @@ implicit class RichString(str: String)
 						<li>Нарушение инкапсуляции
 						<li class="fragment">Проблемы при обновлении - неявные зависимости на реализацию
 						<li class="fragment">Конфликты разных "улучшателей"
+						<li class="fragment">"Ад зависимостей" - даже минорное обновление
+						может всё сломать
 						<li class="fragment">Сложности отладки
 					</ul>
 				</section>
@@ -144,19 +155,18 @@ implicit class RichString(str: String)
 				<section>
 					<p>Пример - добавляем метод в String
 					<pre><code class="scala">
+// дальше будет более эффективная реализация
+// название класса значения не имеет
 implicit class RichString(str: String) {
   def letters = str.count(_.isLetter)
 }
 
 "scala 2.12".letters // = 5
 					</code></pre>
-				</section>
-
-				<section>
-					<p>В отличие от monkey patching
 					<ul>
-						<li>Разрешается в процессе компиляции
-						<li>Не влияет на существующий код
+						<li>для использования должен быть в области видимости
+						<li>разрешается в процессе компиляции
+						<li>не влияет на существующий код
 					</ul>
 				</section>
 
@@ -167,7 +177,9 @@ implicit class RichString(val str: String) extends AnyVal {
   def letters = str.count(_.isLetter)
 }
 					</code></pre>
-					<p><small>класс существует только в compile time</small>
+					<p>класс существует только в compile time
+					<p><small>AnyVal можно использовать для оптимизации, но осторожно.<br>
+					Есть другие варианты, например tagged types</small>
 				</section>
 
 				<section>
@@ -175,10 +187,10 @@ implicit class RichString(val str: String) extends AnyVal {
 					<pre><code class="scala">
 import scala.concurrent.duration._
 
-val timeout: Duration = 5 minutes
+val timeout: Duration = 5.minutes
 // замена Duration(5, TimeUnit.MINUTES)
 					</code></pre>
-					<p><small>еще пример - specs2</small>
+					<p><small>еще пример - DSL в scalatest/specs2 </small>
 				</section>
 
 				<section>
@@ -882,48 +894,6 @@ val reads: Reads[Numbers] =
     case "three" ⇒ Three  
 }
 					</code></pre>
-				</section>
-
-				<section>
-					<h4>Домашнее задание</h4>
-					<p>Создаем Reads для vk.com API
-					<ul>
-						<li>newsfeed.get - получение списка новостей
-						<li>users.get - получение данных пользователя
-					</ul>
-				</section>
-
-				<section>
-					<p>newsfeed.get
-
-					<ul>
-						<li>post_id - идентификатор записи
-						<li>source_id - автор (&gt;0 пользователь, &lt;0 - группа)
-						<li>text - текст
-						<li>likes / count - число лайков
-					</ul>
-					<p>документация на <a target="_blank" href="https://vk.com/dev/newsfeed.get">newsfeed.get</a>
-				</section>
-
-				<section>
-					<p>users.get
-					<ul>
-						<li>id - идентификатор пользователя
-						<li>first_name - имя
-						<li>last_name - фамилия
-						<li>photo_100 - ссылка на фото пользователя
-					</ul>
-
-					<p>документация на <a target="_blank" href="https://vk.com/dev/users.get">users.get</a>
-				</section>
-
-				<section>
-					<p>Код добавляем в наш большой проект.
-				</section>
-
-				<section>
-					<h3>Тема семинара</h3>
-					<p>Практика по использованию play-json.</p>
 				</section>
 
 				<section>
