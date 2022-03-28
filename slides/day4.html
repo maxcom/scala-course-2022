@@ -358,34 +358,8 @@ implicit def monoidForMap[K, V : Semigroup]: Monoid[Map[K, V]] =
 				</section>
 
 				<section>
-					<p>Тайпклассы можно объявить для более интересных конструкций.
-				</section>
-
-				<section>
-					<p>Функтор - абстракция контейнера с операцией map
-					<img src="catfunctor.png">
-					<p><small>источник: <a target="_blank" href="https://buzzdecafe.github.io/code/2014/10/26/functors-and-applicatives">Functors and Applicatives</a></small>
-				</section>
-
-				<section>
-					<pre><code class="scala">
-// "дырка" говорит что нам не важен тип значения контейнера
-trait Functor[F[_]] {
-  def map[A, B](fa: F[A])(f: A =&gt; B): F[B]
-}
-					</code></pre>
-				</section>
-
-				<section>
-					<p>Требования к реализации функтора:
-					<pre><code class="scala">
-// композиция
-fa.map(f).map(g) = fa.map(v =&gt; g(f(v)))
-					</code></pre>
-					<pre><code class="scala">
-// "identity" - функция (x =&gt; x)
-fa.map(identity) = fa
-					</code></pre>
+					<p>Тайпклассы можно объявить для<br>более интересных конструкций.
+					<p> 6-я лекция: Cats и Circe
 				</section>
 
 				<section>
@@ -809,44 +783,11 @@ implicit val reads: Reads[User] =
 
 				<section>
 					<p>На помощь приходит<br>аппликативный функтор
+					<p>О нем поговорим на лекции про Cats
 				</section>
 
 				<section>
-					<p>Это функтор с дополнительными операциями
-					<ul>
-						<li>pure - создание функтора
-					<pre><code class="scala">
-def pure[A](a: A): F[A]
-					</code></pre>
-						<li>ap - применяет функцию в функторе к значению в функторе<br>
-					<pre><code class="scala">
-def ap[A, B](ff: F[A =&gt; B])(fa: F[A]): F[B]
-					</code></pre>
-					</ul>
-				</section>
-
-
-				<section>
-					<p>Функция ap:<br>
-					<img src="apply.png">
-					<p><small>источник: <a target="_blank" href="https://buzzdecafe.github.io/code/2014/10/26/functors-and-applicatives">Functors and Applicatives</a></small>
-				</section>
-
-				<section>
-					<p>Вместо ap можно определить product - комбинирует два функтора в функтор от пары<br>
-					<pre><code class="scala">
-def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
-					</code></pre>
-				</section>
-
-				<section>
-					<p>Реализации функторов должны следовать нескольким законам.
-
-					<p class="fragment">Подробнее см. <a target="_blank" href="https://softwaremill.com/applicative-functor/">The underrated applicative functor</a> и <a target="_blank" href="https://typelevel.org/cats/typeclasses/applicative.html">Applicative (Cats)</a>.
-				</section>
-
-				<section>
-					<p>Reads - не только монада, но и аппликатив.
+					<p>Reads имеет операцию сборки
 
 					<p class="fragment">При сборке ошибки "складываются".
 				</section>
