@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Cats и Circe</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h3>Часть 6. Cats и Circe</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a></small>
+				</section>
+
+				<section>
+					<h3>План</h3>
+					<ol>
+						<li>Cats</li>
+						<li>Circe</li>
+					</ol>
+				</section>
+
+				<section>
+					<h3>Библиотека Cats</h3>
+					<ul>
+						<li class=fragment>Предоставляет абстракции функционального программирования</li>
+						<li class=fragment>Является основой для экосистемы чистих типизированных библиотек</li>
+					</ul>
+					<p class=fragment><small>* Название является шутливым сокращением слова "категория"</small>
+				</section>
+
+				<section>
+					<h3>Библиотека Cats</h3>
+					<div><img src="cats.png"></div>
+					<p>Абстрактные котики, функциональный подход и теория категорий
+					<p class=fragment><small>Смешать, но не взбалтывать =)</small>
+				</section>
+
+				<section>
+					<h3>Основные понятия</h3>
+					<ul>
+						<li>Полугруппа</li>
+						<li>Моноид</li>
+						<li>Функтор</li>
+						<li>Аппликатив</li>
+						<li>Монада</li>
+						<li>и др. страшные слова</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Монады</h2>
+					(и связанные с ними концепции)
+					<p>Архитектурные строительные блоки, которые появляются в программах снова и снова.
+					<p class=fragment><small>т.е. являются для ФП эквивалентом шаблонов проектирования ООП</small>
+				</section>
+
+				<section>
+					<h2>Их преимущества над ООП</h2>
+					<ul>
+						<li>Формально <small>(а, значит, очень точно)</small> определены</li>
+						<li>Являются максимально обобщёнными</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Модули библиотеки Cats</h2>
+					<p>некоторые из них находятся в собственных репозиториях
+				</section>
+
+				<section>
+					<h2>cats-kernel, cats-core</h2>
+					<ul>
+						<li>набор type-классов
+						<li>минимальный набор структур данных для их поддержки
+						<li>экземпляры классов типов для этих структур данных и стандартных типов
+					</ul>
+				</section>
+
+				<section>
+					<h2>cats-laws, cats-testkit,<br>cats-testkit-scalatest</h2>
+					<ul>
+						<li>набор тестов для проверки собственных инстансов на соответствие законам</li>
+						<li>поддерживается Specs2, ScalaTest, ScalaCheck и др.</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>cats-effect</h2>
+					<ul>
+						<li>библиотека для ассинхронных вычисления</li>
+						<li>основной тип IO - очень похож на Future, но более строгий</li>
+					</ul>
+					<small>(рассмотрим подробнее на следующих лекциях)</small>
+				</section>
+
+				<section>
+					Есть и другие, но нам пока хватит.
+				</section>
+
+				<section>
+					<p>Полезные ссылки:
+					<ul>
+						<li>Website: <a href="https://typelevel.org/cats">https://typelevel.org/cats</a></li>
+						<span class=fragment>
+							<li>Type classes: <a href="https://typelevel.org/cats/typeclasses">https://typelevel.org/cats/typeclasses</a></li>
+							<li>Data types: <a href="https://typelevel.org/cats/datatypes">https://typelevel.org/cats/datatypes</a></li>
+						</span>
+						<li class=fragment>Scala exercises: <a href="https://scala-exercises.org/cats">https://scala-exercises.org/cats</a></li>
+						<li class=fragment>Scala with Cats: <a href="https://scalawithcats.com">https://scalawithcats.com</a></li>
+						<li class=fragment>Другие проекты экосистемы:<br><a href="https://typelevel.org/cats/typelevelEcosystem">https://typelevel.org/cats/typelevelEcosystem</a></li>
+					</ul>
+				</section>
+
+				<section>
+					<p><img src="cats2.png">
+					<p>Рассмотрим наиболее полезные классы
+				</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
