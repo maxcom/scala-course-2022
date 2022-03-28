@@ -195,9 +195,6 @@ val timeout: Duration = 5.minutes
 
 				<section>
 					<h4>Тайпклассы</h4>
-				</section>
-
-				<section>
 					<p>Typeclass - шаблон проектирования, построенный на
 					использовании implicit преобразований.
 				</section>
@@ -210,6 +207,7 @@ def sum(list: List[Int]): Int = list.foldLeft(0)(_ + _)
 					<div class=fragment>
 					<p>Как её обобщить на наш собственный тип значений?
 					<pre><code class="scala">
+// наш собственный тип значений
 case class BusValue(amount: Int)
 					</code></pre>
 					</div>
@@ -226,8 +224,11 @@ case class BusValue(amount: Int)
 				<section>
 					<p>Проблема с ООП:
 					<ul>
-						<li>Нужно как-то из типа добраться до "нуля"
-						<li class=fragment">Нужен trait для метода сложения
+						<li>нужно как-то из типа добраться до "нуля", но<br>
+						нет общего механизма доступа к данным и методам типа
+						<li class=fragment>trait для метода сложения, но
+						trait можно добавить только к "нашим" типам.
+						<li class=fragment>и еще trait'ов может быть много
 					</ul>
 				</section>
 
@@ -239,6 +240,7 @@ def combineAll[A](fa: Seq[A])(implicit m: Monoid[A]): A =
     m.combine(acc, a)
   }
 					</code></pre>
+					<p><small>Monoid есть в Cats и др. библиотеках,<br> может сделать свой</small>
 				</section>
 
 				<section>
@@ -251,6 +253,7 @@ implicit val busMonoid: Monoid[BusValue] =
       BusValue(x.amount + y.amount)
   }
 					</code></pre>
+					monoid может объявить для любого типа,<br> даже "чужого"
 				</section>
 
 				<section>
@@ -263,6 +266,7 @@ combine(x, combine(y, z)) = combine(combine(x, y), z)
 					<pre><code class="scala">
 combine(x, empty) = combine(empty, x) = x
 					</code></pre>
+					коммутативность не требуется!
 				</section>
 
 				<section>
@@ -270,6 +274,7 @@ combine(x, empty) = combine(empty, x) = x
 					<ul>
 						<li>Числа и операция сложения. empty = 0
 						<li class=fragment>Числа и операция умножения. empty = 1
+						<li class=fragment>Контатенация строк, empty = ""
 						<li class=fragment>Коллекции. empty = пустая коллекция
 					</ul>
 				</section>
@@ -279,20 +284,26 @@ combine(x, empty) = combine(empty, x) = x
 					<pre><code class="scala">
 import cats.implicits._
 
+implicit val busMonoid: Monoid[BusValue] =
+
 // pimp my library
 Vector(BusValue(1), BusValue(9000)).combineAll
 					</code></pre>
-					<p><small>Для Seq не работает!</small>
+					<p><small>для Seq нужна новая версия Cats</small>
 				</section>
 
 				<section>
-					NonEmptyList - не моноид, а Semigroup
+					<p>NonEmptyList - не моноид, а полугруппа (Semigroup)
+					<p class=fragment>Обладаем ассоциативным методом combine
 				</section>
 
 				<section>
-					Красивая операция "сложения":
+					Красивая операция "сложения" для Semigroup:
 					<pre><code class="scala">
 BusValue(1) |+| BusValue(9000)
+
+// Monoid это наследник Semigroup,
+// так что работает и для моноидов
 					</code></pre>
 				</section>
 
@@ -302,7 +313,9 @@ BusValue(1) |+| BusValue(9000)
 val one = Map("first" -&gt; BusValue(1), "second" -&gt; BusValue(2))
 val two = Map("second" -&gt; BusValue(3), "third" -&gt; BusValue(3))
 
-one |+| two
+one ++ two // "second" первого заменен на второй
+one |+| two // "second" складывается
+
 // Map("first" -&gt; BusValue(1), 
 //   "second" -&gt; BusValue(5), 
 //   "third" -&gt; BusValue(3))
@@ -310,20 +323,36 @@ one |+| two
 				</section>
 
 				<section>
-					Как это работает?
+					<p>Как это работает?
+					<p>Еще один механизм - неявное преобразование
 					<pre><code class="scala">
-// неявное преобразование
+// неявное преобразование моноида для значения
+// в моноид для Map
 implicit def monoidForMap[K, V]
               (implicit ev: Monoid[V]): Monoid[Map[K, V]] =
                  new MapMonoid[K, V]
 					</code></pre>
+					<p>Если значение не Monoid, то и Map нет.
 				</section>
 
 				<section>
-					<p>Немного другой синтаксис:
+					<p>Вывод преобразований - рекурсивный
+				</section>
+
+				<section>
+					<p>Еще раз посмотрим на этот код
+					<pre><code class="scala">
+// неявное преобразование моноида для значения
+// в моноид для Map
+implicit def monoidForMap[K, V]
+              (implicit ev: Monoid[V]): Monoid[Map[K, V]] =
+                 new MapMonoid[K, V]
+					</code></pre>
+					<p>ev не используем, а только передаем 
+
 					<pre><code class="scala">
 // context bounds
-implicit def monoidForMap[K, V: Semigroup]: Monoid[Map[K, V]] =
+implicit def monoidForMap[K, V : Semigroup]: Monoid[Map[K, V]] =
   new MapMonoid[K, V]
 					</code></pre>
 				</section>
@@ -340,6 +369,7 @@ implicit def monoidForMap[K, V: Semigroup]: Monoid[Map[K, V]] =
 
 				<section>
 					<pre><code class="scala">
+// "дырка" говорит что нам не важен тип значения контейнера
 trait Functor[F[_]] {
   def map[A, B](fa: F[A])(f: A =&gt; B): F[B]
 }
@@ -349,19 +379,18 @@ trait Functor[F[_]] {
 				<section>
 					<p>Требования к реализации функтора:
 					<pre><code class="scala">
+// композиция
 fa.map(f).map(g) = fa.map(v =&gt; g(f(v)))
 					</code></pre>
 					<pre><code class="scala">
+// "identity" - функция (x =&gt; x)
 fa.map(identity) = fa
 					</code></pre>
 				</section>
 
 				<section>
-					<p>После перерыва рассмотрим некоторое практическое применение.
-				</section>
-
-				<section>
-					<h2>Перерыв 5 минут</h2>
+					<h2>Конец первой части</h2>
+					<p>далее работа с тайпклассами на примере play-json
 				</section>
 
 				<section>
