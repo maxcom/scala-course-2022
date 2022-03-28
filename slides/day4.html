@@ -87,7 +87,7 @@ DB localTx { implicit session =&gt;
 				</section>
 
 				<section>
-					<p>Где это применяется? Для передачи контекста
+					<p>Где это применяется? <br>Для передачи контекста
 					<ul>
 						<li>сессии/транзакции БД
 						<li>конфигурации
@@ -123,7 +123,7 @@ DB localTx { implicit session =&gt;
 					<pre><code class="scala">
 implicit class RichString(str: String)
 					</code></pre>
-					<p>автоматическое преобразование там где необходимо
+					<p>автоматическое преобразование там, где необходимо
 				</section>
 
 				<section>
@@ -205,7 +205,7 @@ val timeout: Duration = 5.minutes
 def sum(list: List[Int]): Int = list.foldLeft(0)(_ + _)
 					</code></pre>
 					<div class=fragment>
-					<p>Как её обобщить на наш собственный тип значений?
+					<p>Как её обобщить для нашего типа значений?
 					<pre><code class="scala">
 // наш собственный тип значений
 case class BusValue(amount: Int)
@@ -272,10 +272,10 @@ combine(x, empty) = combine(empty, x) = x
 				<section>
 					<p>Примеры:</p>
 					<ul>
-						<li>Числа и операция сложения. empty = 0
-						<li class=fragment>Числа и операция умножения. empty = 1
-						<li class=fragment>Контатенация строк, empty = ""
-						<li class=fragment>Коллекции. empty = пустая коллекция
+						<li>Числа и операция сложения, empty = 0
+						<li class=fragment>Числа и операция умножения, empty = 1
+						<li class=fragment>Конкатенация строк, empty = ""
+						<li class=fragment>Коллекции, empty = пустая коллекция
 					</ul>
 				</section>
 
@@ -294,7 +294,7 @@ Vector(BusValue(1), BusValue(9000)).combineAll
 
 				<section>
 					<p>NonEmptyList - не моноид, а полугруппа (Semigroup)
-					<p class=fragment>Обладаем ассоциативным методом combine
+					<p class=fragment>Обладает ассоциативным методом combine
 				</section>
 
 				<section>
@@ -302,7 +302,7 @@ Vector(BusValue(1), BusValue(9000)).combineAll
 					<pre><code class="scala">
 BusValue(1) |+| BusValue(9000)
 
-// Monoid это наследник Semigroup,
+// Monoid - это наследник Semigroup,
 // так что работает и для моноидов
 					</code></pre>
 				</section>
@@ -358,7 +358,7 @@ implicit def monoidForMap[K, V : Semigroup]: Monoid[Map[K, V]] =
 				</section>
 
 				<section>
-					<p>Тайплассы можно объявить для более интересных конструкций.
+					<p>Тайпклассы можно объявить для более интересных конструкций.
 				</section>
 
 				<section>
