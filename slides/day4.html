@@ -656,6 +656,7 @@ trait Reads[A] {
   def reads(json: JsValue): JsResult[A]
 }
 					</code></pre>
+					<p>есть макрос Json.writes[A]</p>
 				</section>
 
 				<section>
@@ -693,15 +694,9 @@ object User {
   }
 }
 					</code></pre>
-				</section>
 
-				<section>
-					<p>Почему плохой?
-
-					<ul>
-						<li>Exception вместо JsError
-						<li>Диагностика только по<br> номерам строк из Exception
-					</ul>
+					<p>Exception вместо JsError;<br>
+					диагностика только по номерам строк
 				</section>
 
 				<section>
@@ -718,14 +713,7 @@ implicit val reads: Reads[User] = Reads[User] { json ⇒
   }
 }
 					</code></pre>
-				</section>
-
-				<section>
-					<p>Исключений больше нет,<br> но диагностика еще хуже
-				</section>
-
-				<section>
-					<p>Проблема: при операции поиска теряется путь
+					<p>Исключений больше нет,<br> но потеряли пути ошибок
 				</section>
 
 				<section>
@@ -759,6 +747,7 @@ val idReads: Reads[UUID] = (__ \ "id").read[UUID]
 				<section>
 					<p>Reads - тоже монада
 					<pre><code class="scala">
+// тут мы уже не парсим значение, а собираем функцию парсинга
 implicit val reads: Reads[User] = 
   for {
     id &lt;- (__ \ "id").read[UUID]
@@ -768,38 +757,33 @@ implicit val reads: Reads[User] =
     User(id, name, title)
   }
 					</code></pre>
-				</section>
-
-				<section>
-					<p>Чего мы получили:
-
-					<ul>
-						<li>JsError, никаких исключений
-						<li>В ошибке закодирован путь
+					JsError, никаких исключений.<br>
+					В ошибке закодирован путь
 					</ul>
 				</section>
 
 				<section>
 					<p>Что не так?
 
-					<p class="fragment">Монада - абстракция цепочки вычислений.
+					<p class="fragment">Монада - абстракция цепочки вычислений.<br>
 
-					<p class="fragment">У нас же все вычисления независимые,<br>кроме шага сборки.
+					У нас же все вычисления независимые,<br>кроме шага сборки.
 				</section>
 
 				<section>
-					<p>Еще плохо - ошибка только первая;<br> надо выдать все ошибки
+					<p>Еще плохо - ошибка только первая;<br> надо выдать все ошибки.
 
 					<p class="fragment">Монада тут - плохая абстракция.
 				</section>
 
 				<section>
-					<p>На помощь приходит<br>аппликативный функтор
-					<p>О нем поговорим на лекции про Cats
+					<p>На помощь приходит<br>аппликативный функтор.
+					<p>О нем поговорим на лекции про Cats.
 				</section>
 
 				<section>
-					<p>Reads имеет операцию сборки
+					<p>Reads имеет операцию сборки: пару Reads можно собрать в
+					Reads пары (аналогично для троек и т.д.).
 
 					<p class="fragment">При сборке ошибки "складываются".
 				</section>
@@ -847,6 +831,9 @@ val userReads: Reads[User] = (
 
 					<pre><code class="scala">
 Reads.of[Int].map(Number.apply)
+
+// аналог
+implicitly[Reads[Int]].map(Number.apply)
 					</code></pre>
 				</section>
 
@@ -865,9 +852,9 @@ Reads.of[Int].filter(JsErr("must be positive"))(_ &gt; 0)
 import play.api.libs.json.{JsonValidationError ⇒ JsErr}
 
 sealed trait Numbers
-object One extends Numbers
-object Two extends Numbers
-object Three extends Numbers
+case object One extends Numbers
+case object Two extends Numbers
+case object Three extends Numbers
 
 val reads: Reads[Numbers] = 
   Reads.of[String].collect(JsErr("bad number")) {
