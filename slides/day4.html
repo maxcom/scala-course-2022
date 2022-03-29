@@ -37,7 +37,7 @@
 						<li>Передача контекста и конфигурации
 						<li>“pimp my library”
 						<li>Тайпклассы (примеры из Cats)
-						<li>Сериализация и type classes на примере Play-JSON
+						<li>Тайп классы на примере Play-JSON
 					</ol>
 				</section>
 
@@ -574,8 +574,7 @@ implicit def traversableWrites[A](implicit w: Writes[A]):
 }
 
 Json.toJson(Seq("some string", "second string"))
-// ["some string", "second string"]
-					</code></pre>
+// ["some string", "second string"]</code></pre>
 					<small>Типобезопасно - работает только если для элементов есть Writes</small>
 				</section>
 
