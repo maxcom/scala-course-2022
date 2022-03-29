@@ -284,7 +284,7 @@ combine(x, empty) = combine(empty, x) = x
 					<pre><code class="scala">
 import cats.implicits._
 
-implicit val busMonoid: Monoid[BusValue] =
+implicit val busMonoid: Monoid[BusValue] = ???
 
 // pimp my library
 Vector(BusValue(1), BusValue(9000)).combineAll
