@@ -369,13 +369,13 @@ implicit def monoidForMap[K, V : Semigroup]: Monoid[Map[K, V]] =
 
 				<section>
 					<p>Что же такое тайпклассы?
-					<p>Способ реализации некой функциональности вне данных, с которыми она связана.
+					<p>Способ реализации некой абстрактной функциональности вне данных, с которыми она связана.
 				</section>
 
 				<section>
 					<h4>JSON</h4>
 					<p>Текстовый формат обмена данными.
-					<p class="fragment">Пришел на замену XML, который оказался
+					<p>Пришел на замену XML, который оказался
 					слишком сложным и слишком медленным.
 				</section>
 
@@ -414,12 +414,15 @@ implicit def monoidForMap[K, V : Semigroup]: Monoid[Map[K, V]] =
 				<section>
 					<p>Формат JSON был разработан<br>Дугласом Крокфордом.
 					<p>Видео: <a target="_blank" href="https://www.youtube.com/watch?v=-C-JoyNuQJs">The JSON Saga</a>
+					<p>"The Software shall be used for Good, not Evil."
 				</section>
 
 				<section>
 					<p>Используем библиотеку Play JSON.
 
 					<p>Часть play-framework; можно использовать отдельно.
+
+					<p>Circe, другая библиотека, будет на лекции про Cats
 				</section>
 
 				<section>
@@ -436,7 +439,7 @@ implicit def monoidForMap[K, V : Semigroup]: Monoid[Map[K, V]] =
 
 					<pre><code class="scala">
 libraryDependencies += 
-  "com.typesafe.play" %% "play-json" % "2.8.1"
+  "com.typesafe.play" %% "play-json" % "2.8.2"
 					</code></pre>
 				</section>
 
@@ -467,13 +470,12 @@ val v: JsValue = JsObject(Seq(
 Json.stringify(v) // компактный формат
 Json.prettyPrint(v) // с форматированием			
 					</code></pre>
+					<p>pretty print используем только для отладки
 				</section>
 
 				<section>
-					<p>Большие структуры так выводить не удобно.
-
-					<p class="fragment">Нужно разбить создание JSON на компоненты
-					и комбинировать их.
+					<p>Большие структуры так выводить не удобно. 
+					<p>Хотим выводить JSON для наших case-классов, коллекций и т.п.
 				</section>
 
 				<section>
@@ -494,13 +496,9 @@ trait Writable {
   def toJson: JsValue
 }					
 					</code></pre>
-				</section>
-
-				<section>
-					<p>Однако:
 
 					<ul>
-						<li class="fragment">trait не добавить к стандартным коллекциям
+						<li class=fragment>trait не добавить к стандартным коллекциям
 						<li class="fragment">trait не добавить к сторонним классам
 						<li class="fragment">смешивается основная логика и доп. функции
 					</ul>
@@ -509,14 +507,14 @@ trait Writable {
 				<section>
 					<p>Reflection? Да, это "Java-way".
 
-					<p class="fragment">В runtime запрашиваем структуру объекта средствами JVM и выводим её.
+					<p>В runtime запрашиваем структуру объекта средствами JVM и выводим её.
 				</section>
 
 				<section>
 					<p>Однако:
 
 					<ul>
-						<li class="fragment">Не типобезопасно: можно вывести что-то не то, например сессию БД или внутренний
+						<li>Не типобезопасно: можно вывести что-то не то, например сессию БД или внутренний
 						пароль
 						<li class="fragment">Медленно
 						<li class="fragment">Трудности с настройкой формата вывода
@@ -536,8 +534,12 @@ trait Writes[A] {
 					</code></pre>
 					<p>использование
 					<pre><code class="scala">
-def toJson[T](o: T)(implicit tjs: Writes[T]): JsValue = 
-  tjs.writes(o)
+object Json {
+  def toJson[T](o: T)(implicit tjs: Writes[T]): JsValue = 
+    tjs.writes(o)
+
+  ...
+}
 					</code></pre>
 				</section>
 
@@ -558,7 +560,7 @@ implicit object StringWrites extends Writes[String] {
 
 				<section>
 					<p>Для Seq нужно преобразование
-					<pre><code class="scala">
+					<pre><code class="scala">// реализация из play-json
 implicit def traversableWrites[A](implicit w: Writes[A]): 
     Writes[Traversable[A]] = {
 
@@ -572,7 +574,9 @@ implicit def traversableWrites[A](implicit w: Writes[A]):
 }
 
 Json.toJson(Seq("some string", "second string"))
+// ["some string", "second string"]
 					</code></pre>
+					<small>Типобезопасно - работает только если для элементов есть Writes</small>
 				</section>
 
 				<section>
@@ -582,9 +586,9 @@ Json.toJson(Seq("some string", "second string"))
 case class User(id: UUID, name: String, title: Option[String])
 
 object User { // объявляем в companion object
-  // OWrites вместо Writes
+  // OWrites вместо Writes (возвращает JsObject)
   // используем Writes.apply
-  implicit val writes: OWrites[User] = OWrites { user ⇒
+  implicit val writes: OWrites[User] = OWrites { user =&gt;
     Json.obj( // сам использует Writes для значений
       "id" -&gt; user.id,
       "name" -&gt; user.name,
@@ -604,18 +608,20 @@ object User {
 				</section>
 
 				<section>
-					<p>Writes - не всегда простое преобразование
+					<p>Writes может зависеть от контекста
 					<pre><code class="scala">
 // writes зависит от языка пользователя
-implicit def writes(implicit lang: Lang): OWrites[User]
+implicit def writes(implicit lang: Lang): OWrites[User] = ???
 					</code></pre>
 				</section>
 
 				<section>
 					<p>Такой полиморфизм работает в компиляторе, типы должны быть точно известны.
+					<p>Абстрактные типы записать не сможем.
 				</section>
 
 				<section>
+					<p>Записываем выражение калькулятора<br>из первой лекции
 					<pre><code class="scala">
 // один Writes для всего ADT
 object Expr {
@@ -629,12 +635,13 @@ object Expr {
   }
 }
 					</code></pre>
+					(макрос из play умеет простые ADT)
 				</section>
 
 				<section>
 					<p>Итого мы получили:
 					<ul>
-						<li>Специализированный код для каждого типа
+						<li>Эффективный скомпилированный код
 						<li class="fragment">Типобезопасность
 						<li class="fragment">Код записи JSON отделен от данных
 						<li class="fragment">Возможности по кастомизации, использование контекста
