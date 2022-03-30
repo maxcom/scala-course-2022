@@ -49,6 +49,7 @@ layout: default
   * Видео: [Часть 2. Ленивые вычисления и монады](https://youtu.be/PYvtV4AapgM).
   * Слайды: [Vector. Ленивые вычисления. LazyList и View. Монады.](slides/day3.html)
   * Семинар: Решаем задачи с использованием LazyList. (ведущий - Роман)
+  * Семинар: [Стартовый проект](https://gitlab.com/llgruff/solar-seminar-lazylist). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3)
 4. Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json. 
   * Лекция: 30 марта. Семинар: 6 апреля.
   * Видео: [Часть 1. Implicit значения и преобразования. Тайпклассы.](https://www.youtube.com/watch?v=pagteHi4pp8)
@@ -56,11 +57,10 @@ layout: default
   * Видео: [Стартуем большой проект](https://youtu.be/IWcX4ke4G4w) (домашнее задание)
   * Слайды: [Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json](slides/day4.html)
   * Семинар: Практика по использованию play-json.
-  * Семинар: [Стартовый проект](https://gitlab.com/llgruff/solar-seminar-lazylist). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3)
   * Слайды домашнего задания: [Пишем классификатор](slides/classifier-1.html)
 5. Базовые примитивы многопоточности. 
   * Лекция: 6 апреля. Семинар: 13 апреля.
-  * Семинар: Практика по использованию Future/Promise. Планировщик.
+  * Семинар: Практика по использованию Future/Promise. Планировщик. (ведущий - Роман)
 6. Cats и Circe. 
   * Лекция: 13 апреля. Семинар: 20 апреля.
   * Семинар: Практика по извлечению данных JSON/HTML и валидации.
