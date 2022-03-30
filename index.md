@@ -53,7 +53,7 @@ layout: default
 4. Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json. 
   * Лекция: 30 марта. Семинар: 6 апреля.
   * Видео: [Часть 1. Implicit значения и преобразования. Тайпклассы.](https://www.youtube.com/watch?v=pagteHi4pp8)
-  * Видео: Часть 2. Тайпклассы и работа с JSON. Обзор play-json
+  * Видео: [Часть 2. Тайпклассы и работа с JSON. Обзор play-json](https://www.youtube.com/watch?v=_IBWPKVZ6ug)
   * Видео: [Стартуем большой проект](https://youtu.be/IWcX4ke4G4w) (домашнее задание)
   * Слайды: [Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json](slides/day4.html)
   * Семинар: Практика по использованию play-json. (ведущие - Саша и Наташа)
