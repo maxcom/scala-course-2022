@@ -54,8 +54,9 @@ layout: default
   * Видео: [Часть 1. Implicit значения и преобразования. Тайпклассы.](https://www.youtube.com/watch?v=pagteHi4pp8)
   * Видео: Часть 2. Тайпклассы и работа с JSON. Обзор play-json
   * Видео: [Стартуем большой проект](https://youtu.be/IWcX4ke4G4w) (домашнее задание)
-  * Слайды (в работе): [Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json](slides/day4.html)
+  * Слайды: [Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json](slides/day4.html)
   * Семинар: Практика по использованию play-json.
+  * Семинар: [Стартовый проект](https://gitlab.com/llgruff/solar-seminar-lazylist). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3)
   * Слайды домашнего задания: [Пишем классификатор](slides/classifier-1.html)
 5. Базовые примитивы многопоточности. 
   * Лекция: 6 апреля. Семинар: 13 апреля.
