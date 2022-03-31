@@ -64,9 +64,10 @@
 				<section>
 					<h3>Основные понятия</h3>
 					<ul>
-						<li>Полугруппа</li>
+						<li>Полугруппа (Semigroup)</li>
 						<li>Моноид</li>
 						<li>Функтор</li>
+						<li>??? (Semigroupal)</li>
 						<li>Аппликатив</li>
 						<li>Монада</li>
 						<li>и др. страшные слова</li>
@@ -599,13 +600,133 @@ product.toMap
 
 
 
+				<section>
+					<h2>Semigroupal</h2>
+					<pre><code class="scala">trait Semigroupal[F[_]] {
+  def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  new Semigroupal[Option] {
+
+    def product[A, B](fa: Option[A],
+                      fb: Option[B]): Option[(A, B)] =
+
+      if (fa.isDefined && fb.isDefined)
+        Some((fa.get, fb.get))
+      else None
+
+  }</code></pre>
+				</section>
+
+
+
+
+
 
 
 
 				<section>
 					<h2>Аппликатив</h2>
-					<p>
+					<pre><code class="scala">trait Applicative[F[_]] extends Semigroupal[F] {
+  def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
+
+  def pure[A](a: A): F[A]
+}</code></pre>
+					<p>Semigroupal с "нулём"
+					<p><small>как моноид и полугруппа, но для функций</small>
 				</section>
+
+
+				<section>
+					<p>pure "заворачивает" значение в конструктор типа
+					<pre class=fragment><code class="scala">trait Applicative[Option] {
+  def pure[A](a: A): F[A] = Some(a)
+}</code></pre>
+					<pre class=fragment><code class="scala">trait Applicative[Future] {
+  def pure[A](a: A): F[A] = Future.successful[A](a)
+}</code></pre>
+					<pre class=fragment><code class="scala">trait Applicative[List] {
+  def pure[A](a: A): F[A] = List(a)
+}</code></pre>
+				</section>
+
+
+				<section>
+					Требования к реализации
+					<pre><code class="scala">
+fa.product(fb).product(fc) ~ fa.product(fb.product(fc))   //associativity
+
+pure(()).product(fa) ~ fa                       //left identity
+fa.product(pure(())) ~ fa                       //right identity
+					</code></pre>
+				</section>
+
+
+				<section>
+					<p>Эквивалентное определение
+					<pre><code class="scala">trait Applicative[F[_]] {
+  def ap[A, B](ff: F[A => B])(fa: F[A]): F[B]
+
+  def pure[A](a: A): F[A]
+}</code></pre>
+				</section>
+
+
+				<section>
+					<p>На самом деле в cats
+					<pre><code class="scala">import cats.Functor
+
+trait Applicative[F[_]] extends Functor[F] {
+  def ap[A, B](ff: F[A => B])(fa: F[A]): F[B]
+
+  def pure[A](a: A): F[A]
+
+  def product[A, B](fa: F[A], fb: F[B]): F[(A, B)] =
+    ap(map(fa)(a => (b: B) => (a, b)))(fb)
+
+  def map[A, B](fa: F[A])(f: A => B): F[B] = ap(pure(f))(fa)
+
+}</code></pre>
+				</section>
+
+
+
+
+
+
+
+				<section>
+					<p>//TODO применения ap: https://typelevel.org/cats/typeclasses/applicative.html#what-is-ap
+				</section>
+
+				<section>
+					<p>//TODO Applicatives compose
+				</section>
+
+				<section>
+					<p>//TODO Traverse
+				</section>
+
+
+				<section>
+					<p>//TODO На самом деле иерархия типов в cats гораздо сложнее и есть разные частные случаи - см. доку или исходники
+				</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 				<section>
 					<h2>Монада</h2>
