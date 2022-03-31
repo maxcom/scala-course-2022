@@ -504,46 +504,89 @@ MonoidK[List].combineK[Int](List(1, 2), List(3, 4))
 				<section>
 					Требования к реализации
 					<pre><code class="scala">
-fa.map(f).map(g) = fa.map(f.andThen(g))
-					</code></pre>
-					<pre><code class="scala">
-fa.map(x => x) = fa
+fa.map(f).map(g) = fa.map(f.andThen(g))   //composition
+
+fa.map(x => x) = fa                       //identity
 					</code></pre>
 				</section>
 
-
 				<section>
-					<pre><code class="scala">// Example implementation for Option
+					<pre><code class="scala">
 new Functor[Option] {
   def map[A, B](fa: Option[A])(f: A => B): Option[B] =
     fa match {
       case None    => None
       case Some(a) => Some(f(a))
     }
-}</code></pre>
+}
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Cats предоставляет функцию lift
+					<pre><code class="scala">
+def lift[A, B](f: A => B): F[A] => F[B] = fa => map(fa)(f)
+				</code></pre>
+					<p>"превращает" функцию A => B<br>в функцию F[A] => F[B]
 				</section>
 
 				<section>
-					<p>Предоставляет функцию lift
-					<pre><code class="scala">trait Functor[F[_]] {
-  def map[A, B](fa: F[A])(f: A => B): F[B]
-
-  def lift[A, B](f: A => B): F[A] => F[B] =
-    fa => map(fa)(f)
-}</code></pre>
-				</section>
-
-				<section>
-					<p>Композиция функторов
-					<pre><code class="scala">import cats.Functor
+					<pre><code class="scala">
+import cats.Functor
 import cats.implicits._
 
-val listOption = List(Some(1), None, Some(2))
-// listOption: List[Option[Int]] = List(Some(1), None, Some(2))
+val lenOption: Option[String] => Option[Int] =
+   Functor[Option].lift(_.length)
+					</code></pre><pre class=fragment><code class="scala">
+lenOption(Some("abcd"))
+// res: Option[Int] = Some(4)
+					</code></pre>
+				</section>
 
-// Through Functor#compose
-Functor[List].compose[Option].map(listOption)(_ + 1)
-// res1: List[Option[Int]] = List(Some(2), None, Some(3))</code></pre>
+
+
+				<section>
+					<p>Cats предоставляет композицию функторов
+					<pre><code class="scala">
+import cats.Functor
+import cats.implicits._
+
+val listOpt = Functor[List] compose Functor[Option]
+//Functor[List[Option]]
+					</code></pre>
+					<pre class=fragment><code class="scala">
+listOpt.map( List(Some(1), None, Some(3)) )(_ + 1)
+// res: List[Option[Int]] = List(Some(2), None, Some(4))
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Cats предоставляет функцию fproduct
+					<pre><code class="scala">
+def fproduct[A, B](fa: F[A])(f: A => B): F[(A, B)] =
+   map(fa)(a => a -> f(a))
+					</code></pre>
+					как "map", но возвращает пару
+				</section>
+
+				<section>
+					<pre><code class="scala">
+import cats.Functor
+import cats.implicits._
+
+val source = List("Cats", "is", "awesome")
+val product = Functor[List].fproduct(source)(_.length)
+// res1: List[(String, Int)] =
+//    List((Cats,4), (is,2), (awesome,7))
+					</code></pre><pre class=fragment><code class="scala">
+product.toMap
+// res2: Map[String,Int] =
+//    Map(Cats -> 4, is -> 2, awesome -> 7)
+					</code></pre>
 				</section>
 
 
@@ -578,6 +621,9 @@ Functor[List].compose[Option].map(listOption)(_ + 1)
 
 
 
+				<section>
+					<p>НЕ ЗАБЫТЬ ИСПРАВТЬ ПЛАН!!!!!!!!!!!!!!!
+				</section>
 
 
 
