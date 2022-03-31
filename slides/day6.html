@@ -657,10 +657,11 @@ product.toMap
 				<section>
 					Требования к реализации
 					<pre><code class="scala">
-fa.product(fb).product(fc) ~ fa.product(fb.product(fc))   //associativity
+//associativity
+fa.product(fb).product(fc) ~ fa.product(fb.product(fc))
 
-pure(()).product(fa) ~ fa                       //left identity
-fa.product(pure(())) ~ fa                       //right identity
+pure(()).product(fa) ~ fa               //left identity
+fa.product(pure(())) ~ fa               //right identity
 					</code></pre>
 				</section>
 
