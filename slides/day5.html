@@ -229,14 +229,16 @@ def run(): Unit = for (i &lt;- 0 to 10) println(i)
 				<section>
 					<p>Например RandomAccessFile:
 					<ul>
-						<li>read(...)
 						<li>seek(offset)
+						<li>read(...)
 					</ul>
 					<p>нельзя использовать из разных потоков
 				</section>
 
 				<section>
-					Операции над сложными объектами выполняются в много "ходов".
+					<p>Большинство объектов и структур - не потокобезопасные.
+
+					<p>Исключение: неизменяемые данные, но есть проблема их "публикации".
 				</section>
 
 				<section>
@@ -246,16 +248,20 @@ def run(): Unit = for (i &lt;- 0 to 10) println(i)
 
 				<section>
 					<h4>Синхронизация из Java</h4>
+					Блокировка обеспечивает эксклюзивный доступ.
 					<pre><code style="scala">
+// наследие Java 1.0 - любой объект имеет lock
 val lock = new Object()
 
+// примитивные типы не имеют lock'ов
 var counter: Int = 0
 
 lock.synchronized {
+  // инкремент - не атомарная операция
   counter += 1
 }					
 					</code></pre>
-					<p class=fragment><small>Синхронизация на this - плохо</small>
+					<p class=fragment><small>Синхронизация на this - плохо из-за его публичности</small>
 				</section>
 
 				<section>
@@ -264,17 +270,18 @@ lock.synchronized {
 				</section>
 
 				<section>
+					Пример с тайм-аутом
 					<pre><code style="scala">
-val lock = new ReentrantReadWriteLock()
+val lock = new ReentrantLock()
 var data = Vector(42)
 
 def readData(): Vector[Int] = {
-  try {
-    lock.readLock().tryLock(1, TimeUnit.MINUTES)
+  try { // всегда оборачиваем в try/finally
+    lock.tryLock(1, TimeUnit.MINUTES)
 
     data
   } finally {
-    lock.readLock().unlock()
+    lock.unlock()
   }
 }
 					</code></pre>
@@ -282,8 +289,8 @@ def readData(): Vector[Int] = {
 
 				<section>
 					<h4>Deadlock</h4>
-					<p>Если брать lock'и в разном порядке в разных потоках можно получить взаимную
-					блокировку, из которой не выйти.
+					<p>Взаимная
+					блокировка, из которой не выйти.
 					<p class=fragment>Пример: передача денег между счетами.
 				</section>
 
@@ -294,7 +301,11 @@ def readData(): Vector[Int] = {
 				</section>
 
 				<section>
-					Следующая проблема: оптимизации в JVM и процессоре.
+					Проблема: трудно обеспечить корректность локов, декомпозиция не работает.
+				</section>
+
+				<section>
+					Следующая проблема:<br> оптимизации в JVM и процессоре.
 				</section>
 
 				<section>
@@ -310,11 +321,17 @@ def readData(): Vector[Int] = {
 					<p>Модель памяти Java сложна - подробности смотрите
 					<a target="_blank" href="https://shipilev.net/talks/jugru-Feb2014-jmm-pragmatics.pdf">Java Memory Model прагматика модели</a>
 				</section>
+
+				<section>
+					Блокировки и synchronized создают барьер для оптимизаций
+				</section>
 				
 				<section>
 					<h3>volatile</h3>
 					volatile переменная - создает барьер, без блокировок.
 					<pre><code style="scala">
+// медленне обычного var, но быстрее блокировки
+
 @volatile 
 var vcounter: Int = 0	
 					</code></pre>
@@ -329,11 +346,12 @@ var vcounter: Int = 0
 				</section>
 
 				<section>
-					Atomic счетчик работает без блокировок:
+				Пример - AtomicInteger
 <pre><code class="java">
+// метод класса java.util.concurrent.AtomicInteger
 // реализация из исходников JDK; Java
 public final int incrementAndGet() {
-    for (;;) {
+    for (;;) { // retry при конфликте
         int current = get();
         int next = current + 1;
         if (compareAndSet(current, next))
@@ -341,6 +359,7 @@ public final int incrementAndGet() {
     }
 }
 </code></pre>			
+				дешевле lock если логика простая
 				</section>
 
 				<section>
@@ -354,8 +373,8 @@ public final int incrementAndGet() {
 				<section>
 					<p>Нет хорошего способа расставить блокировки в сложной системе.
 
-					<p class="fragment">Разделяемое состояние требует "протокола" доступа,
-					который нужно разработать и потом ему следовать.
+					<p>Блокировки требуют "протокола" использования. Язык и runtime
+					его не верифицирует.
 				</section>
 
 				<section>
@@ -369,35 +388,39 @@ public final int incrementAndGet() {
 					<ul>
 						<li>Например с GUI можно работать только из выделеного потока
 						<li>Некоторые среды используют один лок на все вызовы
+						<li>Контрпример - ядро Linux
 					</ul>
 				</section>
 
 				<section>
 					<p>Решение: разделяемое изменяемое состояние + <s>параллелизм</s>.
 
-					<p class="fragment">Делаем всю работу в одном потоке.
+					<div class="fragment"><p>Делаем всю работу в одном потоке.
 
-					<p class="fragment">Пример: СУБД Redis, веб-сервер nginx, сервер приложений node.js
+					<p>Пример: СУБД Redis, веб-сервер nginx, сервер приложений node.js
+					</div>
 				</section>
 
 				<section>
 					<p>Решение: разделяемое <s>изменяемое</s> состояние + параллелизм.
 
-					<p class="fragment">Используем иммутабельные структуры и цепочки обработки.
+					<div class="fragment"><p>Используем иммутабельные структуры и<br> цепочки обработки.
 
-					<p class="fragment">Сегодня об этом поговорим, продолжим на 10-м занятии.
+					<p>Пример: Future, Task, IO, Akka Streams</div>
 				</section>
 
 				<section>
 					<p>Решение: <s>разделяемое</s> изменяемое состояние + параллелизм.
 
-					<p class="fragment">Изменяемое состояние приватное, работаем с ним из одного потока.
+					<div class="fragment"><p>Изменяемое состояние приватное, работаем с ним из одного потока.
 
-					<p class="fragment">Это подход "Акторов", о которых поговорим на 7-м занятии.
+					<p>Пример: акторы (Akka и др)</div>
 				</section>
 
 				<section>
-					<h2>Перерыв 5 минут</h2>
+					<h2>Конец первой части</h2>
+					<p>Вторая часть - Future и Promise.<br>
+					(+ модадные трансформеры)
 				</section>
 
 				<section>
