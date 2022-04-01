@@ -42,7 +42,12 @@
 				</section>
 
 				<section>
+					Первая часть лекции - про low level и то какие проблемы он нам несет.
+				</section>
+
+				<section>
 					<h3>Асинхронность и многопоточность.</h3>
+					<p>В JVM есть и то, и другое. В других средах может быть что-то одно.
 				</section>
 
 				<section>
@@ -55,6 +60,11 @@
 						<li class=fragment>В многоядерных системах потоки выполняются одновременно.
 					</ul>
 				</section>
+
+				<section>
+					Thread в Java = поток в ОС
+				</section>
+
 				<section>
 					Потоки применяют для:
 					<ul>
@@ -83,10 +93,10 @@ def func(input: String): String
 				<section>
 					<p>Иногда работа не выполняется в нашей функции:
 					<ul>
-						<li class=fragment>Запрос к БД выполняет БД
-						<li class=fragment>Серевой I/O выполняет ядро
-						<li class=fragment>Работу делает другой поток
-						<li class=fragment>...
+						<li>Запрос к БД выполняет БД
+						<li>Сетевой I/O выполняет ядро
+						<li>Работу делает другой поток
+						<li>...
 					</ul>
 				</section>
 
@@ -100,9 +110,10 @@ def func(input: String): String
 					<ul>
 						<li>Работа с большим числом сокетов<br>
 						<small>рассмотрим на 7-й лекции</small>
-						<li class=fragment>"Отзывчивость"
+						<li class=fragment>"Отзывчивость"<br><small>гарантированное время отклика</small>
 						<li class=fragment>Отказоустойчивость<br>
-						<small>рассмотрим на лекции про Akka</small>
+						<small>альтернативные ответы при ошибках, retry и пр<br>
+						рассмотрим на лекции про Akka</small>
 					</ul>
 				</section>
 
@@ -111,11 +122,8 @@ def func(input: String): String
 					<pre><code class="scala">
 def func(input: String, onComplete: Try[String] =&gt; Unit): Unit
 					</code></pre>
-					<p class=fragment>Иногда возвращается Cancellable
-				</section>
-
-				<section>
-					Проблема: мы не хотим работать с такими функциями напрямую.
+					<p class=fragment>Проблема: не удобно и не ФП. Callback hell.
+					<p class=fragment>Еще бывает Cancellable 
 				</section>
 
 				<section>
@@ -144,11 +152,12 @@ thread.start()
 
 				<section>
 					<h4>Сколько должно быть потоков?</h4>
+					Не известно - оценка "на глаз" + тестирование, но
 					<ul>
-						<li>под математику: число ядер
+						<li class=fragment>под математику: число ядер
 						<li class=fragment>сетевое взаимодействие и простая логика без блокирующих 
 							вызовов: N * CPU, N ~= 3
-						<li class=fragment>дисковый ввод-вывод: число шпинделей жесткого диска
+						<li class=fragment>дисковый ввод-вывод: число шпинделей жесткого диска. CPU не важно
 						<li class=fragment>и т. п.
 					</ul>
 					<p class=fragment>
@@ -169,7 +178,8 @@ val executor: ExecutorService =
   Executors.newFixedThreadPool(10) // 10 потоков
 
 // создаем Scala-обертку
-implicit val ec: ExecutionContextExecutor =
+// часто используют "implicit val"
+val ec: ExecutionContext =
   ExecutionContext.fromExecutor(executor)
 					</code></pre>
 				</section>
@@ -184,14 +194,13 @@ ec.execute(() =&gt; {
   println("Hello world!")
 })
 					</code></pre>
-					<p>В пуле задачи помещаются в очередь, задачи
-					из которой выполняются в потоках пула.
+					<p>Thread Pool = пул потоков + очередь задач
 				</section>
 
 				<section>
 					<p>Стандартные реализации:
 					<ul>
-						<li>ForkJoinPool - по умолчанию
+						<li>ForkJoinPool - хорошо распределяет мелкие задачи по CPU
 						<li>ThreadPoolExecutor - для редко используемых или очень больших пулов
 					</ul>
 				</section>
@@ -201,10 +210,7 @@ ec.execute(() =&gt; {
 				</section>
 
 				<section>
-					Проблема: потоки - источник недетерминированности.
-				</section>
-
-				<section>
+					Проблема: потоки - источник недетерминированности:
 					<pre><code class="scala">
 def run(): Unit = for (i &lt;- 0 to 10) println(i)
 
@@ -212,7 +218,8 @@ def run(): Unit = for (i &lt;- 0 to 10) println(i)
   ec.execute(run _)
 }
 					</code></pre>
-					<p>разный порядок при каждом запуске
+					<p>разный порядок при каждом запуске - сложно обеспечить корректность и
+					протестировать
 				</section>
 
 				<section>
