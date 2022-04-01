@@ -495,7 +495,7 @@ MonoidK[List].combineK[Int](List(1, 2), List(3, 4))
 				</section>
 
 				<section>
-					<p>Контейнер с операцией map
+					<p>Добавляет операцию map к контейнерам
 					<pre><code class="scala">trait Functor[F[_]] {
   def map[A, B](fa: F[A])(f: A => B): F[B]
 }</code></pre>
@@ -605,6 +605,7 @@ product.toMap
 					<pre><code class="scala">trait Semigroupal[F[_]] {
   def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
 }</code></pre>
+					Комбинирует два контейнера
 				</section>
 
 				<section>
@@ -630,18 +631,19 @@ product.toMap
 
 				<section>
 					<h2>Аппликатив</h2>
-					<pre><code class="scala">trait Applicative[F[_]] extends Semigroupal[F] {
+					<pre><code class="scala">trait Semigroupal[F[_]] {
   def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
+}
 
+trait Applicative[F[_]] extends Semigroupal[F] {
   def pure[A](a: A): F[A]
 }</code></pre>
-					<p>Semigroupal с "нулём"
-					<p><small>как моноид и полугруппа, но для функций</small>
+					<p>Аналогично тому как моноид расширяет полугруппу
 				</section>
 
 
 				<section>
-					<p>pure "заворачивает" значение в конструктор типа
+					<p>pure "заворачивает" значение в контейнер типа
 					<pre class=fragment><code class="scala">trait Applicative[Option] {
   def pure[A](a: A): F[A] = Some(a)
 }</code></pre>
@@ -657,8 +659,8 @@ product.toMap
 				<section>
 					Требования к реализации
 					<pre><code class="scala">
-//associativity
 fa.product(fb).product(fc) ~ fa.product(fb.product(fc))
+                                        //associativity
 
 pure(()).product(fa) ~ fa               //left identity
 fa.product(pure(())) ~ fa               //right identity
@@ -736,6 +738,17 @@ trait Applicative[F[_]] extends Functor[F] {
 
 
 
+				<section>
+					<p>Рассказать примеры полезных datatypes: https://typelevel.org/cats/datatypes.html
+						Id
+						OptionT
+						NonEmptyList
+						Ior
+						Validated
+						Either (надо ли?)
+						EitherT
+						Chain и NonEmptyChain
+				</section>
 
 
 
