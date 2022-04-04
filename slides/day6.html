@@ -1059,38 +1059,29 @@ val left: Ior[String, Nothing] = "Err".leftIor // Left("Err")
 
 
 
-
-
-
-
+				<section>
+					<h2 style="text-transform: none;">Chain</h2>
+					Коллекция с константным временем<br>добавления в начало и конец.
+				</section>
 
 				<section>
-					<h2>Validated</h2>
+					<pre><code class="scala">
+sealed abstract class Chain[+A]
+
+case object Empty extends Chain[Nothing]
+case class Singleton[A](a: A) extends Chain[A]
+case class Append[A](left: Chain[A],
+                     right: Chain[A]) extends Chain[A]
+case class Wrap[A](seq: Seq[A]) extends Chain[A]
+					</code></pre>
 				</section>
 
 
-				<section>
-					<h2>Chain и NonEmptyChain (надо ли?)</h2>
-				</section>
-
-
-
-
-
 
 
 				<section>
-					<p>Рассказать примеры полезных datatypes: https://typelevel.org/cats/datatypes.html
-					<ol>
-						<li>Id</li>
-						<li>OptionT</li>
-						<li>NonEmptyList</li>
-						<li>Ior</li>
-						<li>Validated</li>
-						<li>Either (надо ли?)</li>
-						<li>EitherT</li>
-						<li>Chain и NonEmptyChain</li>
-					</ol>
+					<h2 style="text-transform: none;">NonEmptyChain</h2>
+					<p>Аналогично NonEmptyList</p>
 				</section>
 
 
@@ -1100,9 +1091,188 @@ val left: Ior[String, Nothing] = "Err".leftIor // Left("Err")
 
 
 
+
+
+
+
 				<section>
-					<p>НЕ ЗАБЫТЬ ИСПРАВТЬ ПЛАН!!!!!!!!!!!!!!!
+					<h2 style="text-transform: none;">Validated</h2>
 				</section>
+
+				<section>
+					<pre><code class="scala">
+sealed abstract class Validated[+E, +A]
+
+final case class Valid[+A](a: A) extends Validated[Nothing, A]
+final case class Invalid[+E](e: E) extends Validated[E, Nothing]
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Пример:<br>валидация заполнения полей web-формы
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  final case class RegistrationData(name: String,
+                                    pass: String,
+                                    age: Int)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  sealed trait AccValidation { def err: String }
+
+  case object NameError extends AccValidation { val err = ??? }
+  case object PassError extends AccValidation { val err = ??? }
+  case object AgeError  extends AccValidation { val err = ??? }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateName(name: String): Either[AccValidation, String] =
+  Either.cond(???, name, NameError)
+
+def validatePass(pass: String): Either[AccValidation, String] =
+  Either.cond(???, pass, PassError)
+
+def validateAge(age: Int): Either[AccValidation, Int] =
+  Either.cond(???, age, AgeError)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateForm(name: String, pass: String, age: Int) =
+  for {
+    validName <- validateName(name)
+    validPass <- validatePass(pass)
+    validAge  <- validateAge(age)
+  } yield RegistrationData(validName, validPass, validAge)
+
+// Either[DomainValidation, RegistrationData]
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Проблема:</p><p>вернём только первую ошибку</p>
+				</section>
+
+				<section>
+					<p>Решение:</p><p>Validated</p>
+				</section>
+
+				<section>
+					<p>Первая попытка</p>
+					<pre><code class="scala">import cats.data._
+import cats.data.Validated._
+import cats.implicits._
+
+def validateForm(name: String, pass: String, age: Int) =
+  for {
+    validName <- validateName(name).toValidated
+    validPass <- validatePass(pass).toValidated
+    validAge  <- validateAge(age).toValidated
+  } yield RegistrationData(validName, validPass, validAge)
+
+// Validated[DomainValidation, RegistrationData]
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Не скомпилируется</p>
+					<pre><code class="scala">
+// error: value flatMap is not a member of
+//        cats.data.Validated[DomainValidation,String]
+//
+//     validName <- validateName(name).toValidated
+//                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Validated - не монада, но зато аппликатив</p>
+				</section>
+
+				<section>
+					<p>Вторая попытка</p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+type ValidatedNec[+E, +A] = Validated[NonEmptyChain[E], A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+class ValidatedSugar[A](a: A) extends AnyVal {
+
+  def validNec[B]: ValidatedNec[B, A] =
+                                  Validated.Valid(a)
+
+  def invalidNec[B]: ValidatedNec[A, B] =
+                                  Validated.invalidNec(a)
+
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+type ValidationResult[A] = ValidatedNec[AccValidation, A]
+// type ValidationResult[A] =
+//              Validated[NonEmptyChain[AccValidation], A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateName(name: String): ValidationResult[String] =
+        if(???) name.validNec
+        else    NameError.invalidNec
+
+def validatePass(pass: String): ValidationResult[String] =
+        if(???) pass.validNec
+        else    PassError.invalidNec
+
+def validateAge(age: Int): ValidationResult[Int] =
+        if(???) age.validNec
+        else    AgeError.invalidNec
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateForm(name: String, pass: String, age: Int) =
+  (
+    validateName(name),
+    validatePass(pass),
+    validateAge(age)
+  ).mapN(RegistrationData)
+
+// ValidationResult[RegistrationData]
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Что в итоге?</h2>
+				</section>
+
+				<section>
+					<pre><code class="scala">sealed trait AccValidation { def err: String }</code></pre>
+					<pre class=fragment><code class="scala">type ValidationResult[RegistrationData] =
+       Validated[NonEmptyChain[AccValidation], RegistrationData]</code></pre>
+					<ul>
+						<li class=fragment>Удобный тип для вражения результата</li>
+						<li class=fragment>Гарантирован непустой список ошибок</li>
+						<li class=fragment>Собраны все ошибки</li>
+					</ul>
+				</section>
+
 
 
 
