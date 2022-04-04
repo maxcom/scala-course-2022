@@ -179,9 +179,6 @@ implicit val intAdditionSemigroup = new Semigroup[Int] {
 				</section>
 
 				<section>
-				</section>
-
-				<section>
 					<ul>
 						<li>Тип Int и операция умножения</li>
 						<li class=fragment>Тип String и операция "склеивания"</li>
@@ -228,7 +225,7 @@ trait Monoid[A] extends Semigroup[A] {
 				</section>
 
 				<section>
-					<p>В математике чаще называют "единицей" или "нейтральным элементов"
+					<p>В математике чаще называют "единицей" или "нейтральным элементом"
 				</section>
 
 				<section>
@@ -842,11 +839,11 @@ List(1, 2, 3).traverse(i => Future.successful(i))
 
 				<section>
 					<h2 style="text-transform: none;">Id</h2>
-					<pre style="text-align: center;">type Id[A] = A</pre>
+					<p>type Id[A] = A</p>
 				</section>
 
 				<section>
-					<p class=fragment>Id - Это монада
+					<p>Id - Это монада
 					<pre><code class="scala">
   def map[A, B](fa: Id[A])(f: A => B): Id[B]
   def flatMap[A, B](fa: Id[A])(f: A => Id[B]): Id[B]
@@ -859,7 +856,7 @@ List(1, 2, 3).traverse(i => Future.successful(i))
 
 				<section>
 					<h2 style="text-transform: none;">OptionT</h2>
-					<pre style="text-align: center;">OptionT[F[_], A] ~ F[Option[A]]</pre>
+					</p>OptionT[F[_], A] ~ F[Option[A]]</p>
 				</section>
 
 				<section>
@@ -1043,13 +1040,13 @@ val left: Ior[String, Nothing] = "Err".leftIor // Left("Err")
 
 				<section>
 					<h2 style="text-transform: none;">IorT</h2>
-					<pre style="text-align: center;">IorT[F[_], A, B] ~ F[Ior[A, B]]</pre>
+					<p>IorT[F[_], A, B] ~ F[Ior[A, B]]</p>
 				</section>
 
 
 				<section>
 					<h2 style="text-transform: none;">EitherT</h2>
-					<pre style="text-align: center;">EitherT[F[_], A, B] ~ F[Either[A, B]]</pre>
+					<p>EitherT[F[_], A, B] ~ F[Either[A, B]]</p>
 				</section>
 
 
