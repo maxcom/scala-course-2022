@@ -1013,23 +1013,64 @@ val failedGreet: OptionT[Future,String] = OptionT.none
 
 
 				<section>
-					<h2>Ior</h2>
+					<h2 style="text-transform: none;">Ior</h2>
+					<p>Отношение ”inclusive-or” между двумя типами</p>
+					<p><small>PS: Either ~ “exclusive-or”</small></p>
 				</section>
+
+				<section>
+					<pre><code class="scala">
+import cats.data._
+
+val right = Ior.right[String, Int](3)     // Right(3)
+val left = Ior.left[String, Int]("Error") // Left("Error")
+val both = Ior.both("Warning", 3)         // Both("Warning", 3)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+import cats.implicits._
+
+val right: Ior[Nothing, Int]   = 3.rightIor    // Right(3)
+val left: Ior[String, Nothing] = "Err".leftIor // Left("Err")
+					</code></pre>
+				</section>
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">IorT</h2>
+					<pre style="text-align: center;">IorT[F[_], A, B] ~ F[Ior[A, B]]</pre>
+				</section>
+
+
+				<section>
+					<h2 style="text-transform: none;">EitherT</h2>
+					<pre style="text-align: center;">EitherT[F[_], A, B] ~ F[Either[A, B]]</pre>
+				</section>
+
+
+
+
+
+
+
+
+
+
 
 				<section>
 					<h2>Validated</h2>
 				</section>
 
-				<section>
-					<h2>Either (надо ли?)</h2>
-				</section>
 
 				<section>
-					<h2>EitherT</h2>
-				</section>
-
-				<section>
-					<h2>Chain и NonEmptyChain</h2>
+					<h2>Chain и NonEmptyChain (надо ли?)</h2>
 				</section>
 
 
