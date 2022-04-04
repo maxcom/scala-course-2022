@@ -32,7 +32,9 @@
 				<section>
 					<h3>План</h3>
 					<ol>
-						<li>Cats</li>
+						<li>Cats Modules</li>
+						<li>Cats Type Classes</li>
+						<li>Cats Data Types</li>
 						<li>Circe</li>
 					</ol>
 				</section>
@@ -59,19 +61,6 @@
 					<div><img src="cats.png"></div>
 					<p>Абстрактные котики, функциональный подход и теория категорий
 					<p class=fragment><small>Смешать, но не взбалтывать =)</small>
-				</section>
-
-				<section>
-					<h3>Основные понятия</h3>
-					<ul>
-						<li>Полугруппа (Semigroup)</li>
-						<li>Моноид</li>
-						<li>Функтор</li>
-						<li>??? (Semigroupal)</li>
-						<li>Аппликатив</li>
-						<li>Монада</li>
-						<li>и др. страшные слова</li>
-					</ul>
 				</section>
 
 				<section>
@@ -158,7 +147,7 @@
 
 
 				<section>
-					<h2>Полугруппа</h2>
+					<h2>Semigroup</h2>
 					<p>Определена операция
 					<pre><code class="scala">trait Semigroup[A] {
   def combine(x: A, y: A): A
@@ -192,8 +181,12 @@ implicit val intAdditionSemigroup = new Semigroup[Int] {
 				</section>
 
 				<section>
+				</section>
+
+				<section>
 					<ul>
-						<li>Тип String и операция "склеивания"</li>
+						<li>Тип Int и операция умножения</li>
+						<li class=fragment>Тип String и операция "склеивания"</li>
 						<li class=fragment>Кортежи: пары, тройки и т.д.</li>
 					</ul>
 				</section>
@@ -206,20 +199,15 @@ val map1 = Map("hello" -> 1, "world" -> 1)
 val map2 = Map("hello" -> 2, "cats"  -> 3)
 
 Semigroup[Map[String, Int]].combine(map1, map2)
-// res5: Map[String, Int] =
+// res1: Map[String, Int] =
 //   Map("hello" -> 3, "cats" -> 3, "world" -> 1)
 
 map1 |+| map2
-// res6: Map[String, Int] =
+// res2: Map[String, Int] =
 //   Map("hello" -> 3, "cats" -> 3, "world" -> 1)</code></pre>
 					<p class=fragment>Аналогично для List и других коллекций
 				</section>
 
-				<section>
-					<p>Не надо изобретать велосипед:
-					<p>инстансы этих классов и многих других уже есть в Cats
-				</section>
-
 
 
 
@@ -230,7 +218,7 @@ map1 |+| map2
 
 
 				<section>
-					<h2>Моноид</h2>
+					<h2>Monoid</h2>
 					<p>Полугруппа с "нулём"
 					<pre><code class="scala">trait Semigroup[A] {
   def combine(x: A, y: A): A
@@ -239,6 +227,10 @@ map1 |+| map2
 trait Monoid[A] extends Semigroup[A] {
   def empty: A
 }</code></pre>
+				</section>
+
+				<section>
+					<p>В математике чаще называют "единицей" или "нейтральным элементов"
 				</section>
 
 				<section>
@@ -416,7 +408,7 @@ import cats.implicits._
 val lifted = List(nel1, nel2).map(nel => Option(nel))
 
 Monoid.combineAll(lifted)
-// res8: Option[NonEmptyList[Int]] =
+// res: Option[NonEmptyList[Int]] =
 //                   Some(NonEmptyList(1, List(2, 3, 4, 5, 6)))</code></pre>
 				</section>
 
@@ -430,7 +422,7 @@ Monoid.combineAll(lifted)
 
 				<section>
 					<h2 style="text-transform: none;">MonoidK</h2>
-					<p>Моноид над контейнерами
+					<p>Моноид над коллекциями
 				</section>
 
 				<section>
@@ -453,13 +445,13 @@ Monoid.combineAll(lifted)
 				<section>
 					<p>Метод empty теперь параметризуется<br>типом элементов
 					<pre><code class="scala">Monoid[List[String]].empty
-// res0: List[String] = List()
-
-MonoidK[List].empty[String]
 // res1: List[String] = List()
 
+MonoidK[List].empty[String]
+// res2: List[String] = List()
+
 MonoidK[List].empty[Int]
-// res2: List[Int] = List()</code></pre>
+// res3: List[Int] = List()</code></pre>
 				</section>
 
 				<section>
@@ -479,9 +471,11 @@ MonoidK[List].combineK[Int](List(1, 2), List(3, 4))
 				</section>
 
 
+
+
 				<section>
 					<h2 style="text-transform: none;">SemigroupK</h2>
-					<p>Полугруппа над контейнерами
+					<p>Полугруппа над коллекциями
 				</section>
 
 
@@ -491,7 +485,7 @@ MonoidK[List].combineK[Int](List(1, 2), List(3, 4))
 
 
 				<section>
-					<h2>Функтор</h2>
+					<h2>Functor</h2>
 				</section>
 
 				<section>
@@ -630,7 +624,7 @@ product.toMap
 
 
 				<section>
-					<h2>Аппликатив</h2>
+					<h2>Applicative</h2>
 					<pre><code class="scala">trait Semigroupal[F[_]] {
   def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
 }
@@ -643,7 +637,7 @@ trait Applicative[F[_]] extends Semigroupal[F] {
 
 
 				<section>
-					<p>pure "заворачивает" значение в контейнер типа
+					<p>pure "заворачивает" значение в контейнер типа<br>(помещает значение в контекст)
 					<pre class=fragment><code class="scala">trait Applicative[Option] {
   def pure[A](a: A): F[A] = Some(a)
 }</code></pre>
@@ -695,6 +689,81 @@ trait Applicative[F[_]] extends Functor[F] {
 }</code></pre>
 				</section>
 
+				<section>
+					<p>Любой аппликатив является функтором и полугруппой
+				</section>
+
+
+
+
+				<section>
+					<p>Композиция аппликативов
+					<pre><code class="scala">import cats.Applicative
+
+val composed = Applicative[Future].compose[Option]
+</code></pre>
+<pre class=fragment><code class="scala">val x: Future[Option[Int]] = Future.successful(Some(5))
+val y: Future[Option[Char]] = Future.successful(Some('a'))
+
+composed.map2(x, y)(_ + _)
+// composed: Future[Option[Int]] = Future(Success(Some(102)))
+</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val username: Option[String] = Some("username")
+val password: Option[String] = Some("password")
+val url: Option[String] = Some("some.login.url.here")
+
+def connect(username: String,
+            password: String,
+            url: String): Option[Connection] = None
+
+Applicative[Option].map3(username, password, url)(connect)
+// res: Option[Option[Connection]] = Some(None)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+import cats.implicits._
+
+(username, password, url).mapN(connect)
+// res: Option[Option[Connection]] = Some(None)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+def sequenceOption[A](fa: List[Future[A]]): Future[List[A]]
+
+def traverseOption[A, B](as: List[A])
+                        (f: A => Future[B]): Future[List[B]]
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+import cats.implicits._
+
+List(1, 2, 3).traverse(i => Future.successful(i))
+// res: Future[List[Int]] = Future(Success(List(1, 2, 3)))
+					</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -702,20 +771,35 @@ trait Applicative[F[_]] extends Functor[F] {
 
 
 				<section>
-					<p>//TODO применения ap: https://typelevel.org/cats/typeclasses/applicative.html#what-is-ap
+					<h2>Monad</h2>
+					<p class=fragment>Applicative с функцией flatten
 				</section>
 
 				<section>
-					<p>//TODO Applicatives compose
+					<pre><code class="scala">
+  Option(Option(1)).flatten
+  // res1: Option[Int] = Some(1)
+
+  Option(None).flatten
+  // res2: Option[Nothing] = None
+					</code></pre>
 				</section>
 
 				<section>
-					<p>//TODO Traverse
+					<pre><code class="scala">
+  List(List(1),List(2,3)).flatten
+  // res: List[Int] = List(1, 2, 3)
+					</code></pre>
 				</section>
 
 
 				<section>
-					<p>//TODO На самом деле иерархия типов в cats гораздо сложнее и есть разные частные случаи - см. доку или исходники
+					map затем flatten ~ flatMap
+				</section>
+
+				<section>
+					<p>Используется в конструкции<br>for { ... } yield { ... }</p>
+					<p>Об этом рассказывали в прошлых лекциях</p>
 				</section>
 
 
@@ -723,6 +807,23 @@ trait Applicative[F[_]] extends Functor[F] {
 
 
 
+				<section>
+					<small><ul>
+						<li>Semigroup (полугруппа над скалярами)</li>
+						<li>Monoid (моноид - полугруппа с "нулём")</li>
+						<li>SemigroupK (полугруппа над коллекциями)</li>
+						<li>MonoidK (моноид над коллекциями)</li>
+						<li>Functor ("контейнер" над скаляром с операцией map)</li>
+						<li>Semigroupal (полугруппа над "контейнерами")</li>
+						<li>Applicative (моноид над "контейрнерами")</li>
+						<li>Monad (аппликатив с функцией flatten)</li>
+					</ul></small>
+				</section>
+
+				<section>
+					<p>На самом деле иерархия типов в cats гораздо сложнее</p>
+					<small>Изучайте документацию и исходники</small>
+				</section>
 
 
 
@@ -732,9 +833,208 @@ trait Applicative[F[_]] extends Functor[F] {
 
 
 				<section>
-					<h2>Монада</h2>
-					<p>
+					<h2>Cats Data Types</h2>
 				</section>
+
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">Id</h2>
+					<pre style="text-align: center;">type Id[A] = A</pre>
+				</section>
+
+				<section>
+					<p class=fragment>Id - Это монада
+					<pre><code class="scala">
+  def map[A, B](fa: Id[A])(f: A => B): Id[B]
+  def flatMap[A, B](fa: Id[A])(f: A => Id[B]): Id[B]
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">OptionT</h2>
+					<pre style="text-align: center;">OptionT[F[_], A] ~ F[Option[A]]</pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val firstNameF: Future[String]
+                        = askFirstName()
+
+val lastNameFO: Future[Option[String]]
+                        = askLastName()
+
+val ticketNumO: Option[String]
+                        = getTicketNumber(???, ???)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+for {
+  first  <- OptionT.liftF(firstNameF)
+  last   <- OptionT(lastNameFO)
+  ticket <- OptionT.fromOption[Future](ticketNumO(first, last))
+} yield s"Hello, $last $first. Your ticket $ticket"
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val greet: OptionT[Future,String] = OptionT.pure("Hola!")
+
+val greetAlt: OptionT[Future,String] = OptionT.some("Hi!")
+
+val failedGreet: OptionT[Future,String] = OptionT.none
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">Nested</h2>
+					<pre><code class="scala">
+  final case class Nested[F[_], G[_], A](value: F[G[A]])
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">NonEmptyList</h2>
+					<pre><code class="scala">
+  final case class NonEmptyList[+A](head: A, tail: List[A]) {
+    ???
+  }
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+  def average(xs: List[Int]): Double = {
+    xs.sum / xs.length.toDouble
+  }
+					</code></pre>
+
+					<pre class=fragment><code class="scala">
+  average(List.empty)    // Exception
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+  def average(xs: List[Int]): Option[Double] =
+    if (xs.nonEmpty)
+      Some(xs.sum / xs.length.toDouble)
+    else None
+					</code></pre>
+					<p class=fragment>Можно, но не красиво<br><small>и возвращается Option</small></p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  import cats.data.NonEmptyList
+
+  def average(xs: NonEmptyList[Int]): Double = {
+    xs.reduceLeft(_+_) / xs.length.toDouble
+  }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  def one[A](head: A): NonEmptyList[A]
+
+  def of[A](head: A, tail: A*): NonEmptyList[A]
+
+  def ofInitLast[A](init: List[A], last: A): NonEmptyList[A]
+
+  def fromList[A](l: List[A]): Option[NonEmptyList[A]]
+  def fromListUnsafe[A](l: List[A]): NonEmptyList[A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  NonEmptyList.one(42)
+
+  NonEmptyList.of(1)
+  NonEmptyList.of(1, 2, 3, 4)
+
+  NonEmptyList.ofInitLast(List(), 4)
+  NonEmptyList.ofInitLast(List(1,2,3), 4)
+
+  NonEmptyList.fromList(List())      // None
+  NonEmptyList.fromList(List(1,2,3))
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  import cats.syntax.list._
+
+  List(1,2,3).toNel    // Some(NonEmptyList(1, List(2, 3)))
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">OneAnd</h2>
+					<pre><code class="scala">
+  import cats.data.OneAnd      //OneAnd[F[_],A]
+
+  type NonEmptyList[A]   = OneAnd[List, A]
+  type NonEmptyStream[A] = OneAnd[Stream, A]
+					</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Ior</h2>
+				</section>
+
+				<section>
+					<h2>Validated</h2>
+				</section>
+
+				<section>
+					<h2>Either (надо ли?)</h2>
+				</section>
+
+				<section>
+					<h2>EitherT</h2>
+				</section>
+
+				<section>
+					<h2>Chain и NonEmptyChain</h2>
+				</section>
+
+
+
+
 
 
 
@@ -758,9 +1058,11 @@ trait Applicative[F[_]] extends Functor[F] {
 
 
 
+
 				<section>
 					<p>НЕ ЗАБЫТЬ ИСПРАВТЬ ПЛАН!!!!!!!!!!!!!!!
 				</section>
+
 
 
 
