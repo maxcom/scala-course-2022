@@ -390,15 +390,18 @@ combineAll(List(
 				</section>
 
 				<section>
-					<pre><code class="scala">import cats.data.NonEmptyList
+					<pre><code class="scala">val nel1 = NonEmptyList(1, List(2, 3))
+val nel2 = NonEmptyList(4, List(5, 6))
 
-val nel1 = NonEmptyList(1, List(2, 3))
-val nel2 = NonEmptyList(4, List(5, 6))</code></pre>
+val all = List(nel1, nel2)
+
+Monoid.combineAll(all)
+// Ошибка: NonEmptyList не является моноидом</code></pre>
 				</section>
 
 				<section>
-					<pre><code class="scala">import cats.Monoid
-import cats.implicits._
+					<pre><code class="scala">val nel1 = NonEmptyList(1, List(2, 3))
+val nel2 = NonEmptyList(4, List(5, 6))
 
 val lifted = List(nel1, nel2).map(nel => Option(nel))
 
