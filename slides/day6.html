@@ -420,7 +420,9 @@ Monoid.combineAll(lifted)
 
 				<section>
 					<h2 style="text-transform: none;">MonoidK</h2>
-					<p>Моноид над коллекциями
+					<p>Моноид над конструкторами<br>типов с одним аргументом</p>
+					<small class=fragment>Будем называть их "контейнерами"</small>
+					<p class=fragment>В частности - над коллекциями</p>
 				</section>
 
 				<section>
@@ -473,7 +475,7 @@ MonoidK[List].combineK[Int](List(1, 2), List(3, 4))
 
 				<section>
 					<h2 style="text-transform: none;">SemigroupK</h2>
-					<p>Полугруппа над коллекциями
+					<p>Полугруппа над конструкторами<br>типов с одним аргументом
 				</section>
 
 
@@ -597,7 +599,7 @@ product.toMap
 					<pre><code class="scala">trait Semigroupal[F[_]] {
   def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
 }</code></pre>
-					Комбинирует два контейнера
+					Комбинирует два контейнера разного типа
 				</section>
 
 				<section>
@@ -809,11 +811,11 @@ List(1, 2, 3).traverse(i => Future.successful(i))
 					<small><ul>
 						<li>Semigroup (полугруппа над скалярами)</li>
 						<li>Monoid (моноид - полугруппа с "нулём")</li>
-						<li>SemigroupK (полугруппа над коллекциями)</li>
-						<li>MonoidK (моноид над коллекциями)</li>
+						<li>SemigroupK (полугруппа над "контейнерами" с одинаковым параметром)</li>
+						<li>MonoidK (моноид над "контейнерами" с одинаковым параметром)</li>
 						<li>Functor ("контейнер" над скаляром с операцией map)</li>
-						<li>Semigroupal (полугруппа над "контейнерами")</li>
-						<li>Applicative (моноид над "контейрнерами")</li>
+						<li>Semigroupal (полугруппа над "контейнерами" с разными параметрами)</li>
+						<li>Applicative (моноид над "контейрнерами" с разными параметрами)</li>
 						<li>Monad (аппликатив с функцией flatten)</li>
 					</ul></small>
 				</section>
