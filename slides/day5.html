@@ -558,7 +558,7 @@ val f: Future[Int] = run { 2 * 2 }
 					<ul>
 						<li>Future.successful - завершенная Future
 						<li>Future.failed - завершенная с ошибкой Future
-						<li>Future.unit - Future, завершенна Unit
+						<li>Future.unit - Future, завершенная со значением Unit
 					</ul>
 					<p>(ExecutionContext не нужен, поток не требуется)
 				</section>
@@ -721,7 +721,7 @@ val completed: Future[Seq[Int]] =
 						<li>Запускается сразу
 						<li class=fragment>implicit ExecutionContext
 						<li class=fragment>Нет остановки/отмены; тайм-аутов
-						<li class=fragment>Не управления ресурсами
+						<li class=fragment>Нет управления ресурсами
 						<li class=fragment>Context switch при цепочках вычислений
 					</ul>
 				</section>
@@ -756,7 +756,7 @@ maybeF.map(_.map(_.length))
 				</section>
 
 				<section>
-					<p>Универсальный трансформер для фукторов
+					<p>Универсальный трансформер для функторов
 					<pre><code class="scala">
 import cats.data._
 import cats.implicits._
@@ -780,7 +780,7 @@ Nested(maybeF).map(_.length).value
 					<p>Что мы хотим от Future[Option[T]]? 
 					<ul>
 						<li class="fragment">Асинхронное выполнение, как у Future
-						<li class="fragment">Выполнять операции пока не возникнет None,<br> как у Option. Или Failure, как у Future
+						<li class="fragment">Выполнять операции, пока не возникнет None,<br> как у Option. Или Failure, как у Future
 					</ul>
 				</section>
 
