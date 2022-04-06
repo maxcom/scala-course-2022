@@ -423,18 +423,24 @@ public final int incrementAndGet() {
 				<section>
 					<h3>Future[T]</h3>
 					<p>Future - результат отложенного вычисления.
+				</section>
+
+				<section>
+					<p>от асинхронной функции
 					<pre><code class="scala">
 def func(input: String, onComplete: Try[String] =&gt; Unit): Unit
 					</code></pre>
 					переходим к
 					<pre><code class="scala">
+implicit val ec: ExecutionContext = ???
 val f = def func(input: String): Future[String]
 f.onComplete(...) // добавляем Callback
 					</code></pre>
+					<p>это базовый низкоуровневый механизм
 				</section>
 
 				<section>
-					Добавляем callback
+					пример callback
 <pre><code class="scala">
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -449,10 +455,11 @@ f.onComplete { // выполняется в потоке ec
     println(s"Failed: ${ex.toString}")
 }
 </code></pre>
+<p>всё еще не ФП
 				</section>
 
 				<section>
-					Еще есть более два механизма
+					Еще есть два механизма
 				</section>
 
 				<section>
@@ -486,10 +493,14 @@ f.value match {
 </code></pre>
 				</section>
 
-				
 				<section>
 					<h3>Promise[T]</h3>
-					Promise - контейнер для результата отложенного вычисления.
+					<p>Promise - контейнер для результата отложенного вычисления.
+					<p>Нужен для построения асинхронных функций.
+				</section>
+				
+				<section>
+					<p>Promise = контейнер + связанная с ним Future
 					<ul>
 						<li>Значение можно сохранить один раз
 						<li>Значение завершает связанную с ним Future
@@ -497,6 +508,7 @@ f.value match {
 				</section>
 
 				<section>
+					Future из асинхронной функции:
 <pre><code class="scala">
 def func(input: String, onComplete: Try[String] =&gt; Unit): Unit
 
@@ -514,16 +526,17 @@ def futureFunc(input: String): Future[String] = {
 					Запускаем синхронную функцию в отдельном потоке:
 <pre><code class="scala">def func(input: String): String = ???
 
+// apply[T](body: =&gt; T)(implicit ec: ExecutionContext)
 def futureFunc(input: String): Future[String] = Future {
   func(input)
 }
 </code></pre>
-	
+				<p><small>Это удобная утилита, а не основное предназначение Future</small>
 				</section>
 
 				<section>
 					Реализация Future.apply:
-<pre><code class="scala">
+<pre><code class="scala">// реализация в библиотеке сложнее
 def run[T](f :=&gt; T)
           (implicit ec: ExecutionContext): Future[T] = {
   val p = Promise[T]()
@@ -536,16 +549,18 @@ def run[T](f :=&gt; T)
 }
 
 val f: Future[Int] = run { 2 * 2 }
-
 </code></pre>
+				<p><small>перешли от execute к более функциональному стилю</small>
 				</section>
 
 				<section>
-					Иногда хотим поместить готовое значение в Future:
+					<p>Иногда хотим поместить готовое значение в Future:
 					<ul>
-						<li>Future.successful - конструирование завершенной Future
-						<li>Future.failed - конструирование завершенной с ошибкой Future
+						<li>Future.successful - завершенная Future
+						<li>Future.failed - завершенная с ошибкой Future
+						<li>Future.unit - Future, завершенна Unit
 					</ul>
+					<p>(ExecutionContext не нужен, поток не требуется)
 				</section>
 
 				<section>
@@ -553,27 +568,25 @@ val f: Future[Int] = run { 2 * 2 }
 				</section>
 
 				<section>
-					<p>Future - функтор
-				</section>
-
-				<section>
-					<p>Функция map<br>
-					<img src="catfunctor.png">
+					<p>Future - функтор, у нее есть функция map<br>
+					<img src="catfunctor.png" width="80%">
 					<p><small>источник: <a target="_blank" href="https://buzzdecafe.github.io/code/2014/10/26/functors-and-applicatives">Functors and Applicatives</a></small>
+					<p><small>(Подробнее о функторах на лекции про Cats)</small>
 				</section>
 
 				<section>
-					Функция map преобразует значение в Future, например:
+					Работаем со значением, которого еще нет:
 <pre><code class="scala">
 val f3: Future[Int] = f.map(_ * 10)
 
+// возвращается мгновенно, вычисляется когда f будет вычислено
 </code></pre>
-					функция будет выполнена тогда, когда<br>значение f будет вычислено
+					<p>похоже на работу с ленивыми структурами данных
 				</section>
 
 				<section>
 					это может работать вот так:
-<pre><code class="scala">
+<pre><code class="scala">// pimp my library
 implicit class MyFuture[T](val f: Future[T]) extends AnyVal {
   def myMap[R](func: T ⇒ R)
               (implicit ec: ExecutionContext): Future[R] = {
@@ -593,8 +606,10 @@ implicit class MyFuture[T](val f: Future[T]) extends AnyVal {
 
 				<section>
 					<p>Future - монада
-<pre><code class="scala">flatMap[S](f: T =&gt; Future[S]): Future[S]
+<pre><code class="scala">flatMap[S](f: T =&gt; Future[S])
+          (implicit ec: ExecutionContext): Future[S]
 </code></pre>
+					<p>f - монадическая функция
 				</section>
 
 				<section>
@@ -604,25 +619,26 @@ def userByEmail(email: String): Future[Int] = ???
 
 def ticketsByUser(user: Int): Future[Seq[Int]] = ???
 
-val count: Future[Int] = 
-  userByEmail("user1@test")
-    .flatMap(ticketsByUser)
-    .map(_.length)
+// где-то должен быть implicit ec
+def countTickets(email: String): Future[Int] = 
+  userByEmail(email).flatMap(ticketsByUser).map(_.length)
 </code></pre>
-					
+					функция возвращается мгновенно
 				</section>
 
 				<section>
 					<p>Можно использовать for:
 <pre><code class="scala">
+// где-то должен быть implicit ec
 val count: Future[Int] = for {
   user &lt;- userByEmail("user1@test")
   tickets &lt;- ticketsByUser(user)
 } yield {
   tickets.length
 }
-
 </code></pre>
+				аналог на callback'ах - "лапша",
+				особенно после добавления обработки ошибок
 				</section>
 
 				<section>
@@ -631,12 +647,13 @@ val count: Future[Int] = for {
 						<li>transform[S](f: Try[T] =&gt; Try[S]): Future[S]
 						<li>transformWith[S](f: Try[T] =&gt; Future[S]): Future[S]
 					</ul>
+					<p>(аналог map/flatMap, но с обработкой ошибок)
 				</section>
 
 
 				<section>
-					Совет: избегайте в своем коде таких типов как Future[Future[...]], Future[Try[...]] и Try[Future[...]].
-					<br>Это источник проблем.
+					<p>Избегайте в коде таких типов как Future[Future[...]], Future[Try[...]] и Try[Future[...]].
+					<p>Это источник проблем.
 				</section>
 
 				<section>
@@ -652,6 +669,7 @@ val res: Future[Result] = for {
 				</section>
 
 				<section>
+					стартуем Future до for
 <pre><code class="scala">
 val infoF = getUserInfo(user)
 val statsF = getUserStat(user) 
@@ -666,38 +684,19 @@ val res: Future[Result] = for {
 
 				<section>
 					<p>Монада - абстракция цепочки вычислений;<br> тут не подходит
+
+					<p>Future это аппликативный функтор, но об это на лекции про Cats
 				</section>
 
 				<section>
-					<p>Вспомним аппликативный функтор
-				</section>
-
-				<section>
-					<p>product - комбинирует два функтора<br> в функтор от пары<br>
+					<p>Используем zip
 					<pre><code class="scala">
-def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
+val infoF = getUserInfo(user)
+
+getUserInfo(user)
+  .zip(getUserStat(user)) // Future[(info, stat)]
+  .map(Result.tupled _)
 					</code></pre>
-				</section>
-
-				<section>
-					<p>Future - аппликативный функтор<br>
-					(в библиотеке Cats)
-				</section>
-
-				<section>
-					<pre><code class="scala">
-import cats.instances.future._
-import cats.syntax.all._
-
-(getUserInfo(user), getUserInfo(user)).tupled
-
-(getUserInfo(user), getUserInfo(user)).mapN(Result.apply)
-					</code></pre>
-				</section>
-
-				<section>
-					Нет Cats?<br>
-					Используем метод zip
 				</section>
 
 				<section>
@@ -707,21 +706,38 @@ import cats.syntax.all._
 def process(i: Int): Future[Int] = ???
 
 val processed: Seq[Future[Int]] = 
-  Seq(1, 2, 3).map(process)
+  Seq(1, 2, 3).map(process) // тут начинается работа
 
 val completed: Future[Seq[Int]] = 
-  Future.sequence(processed)
+  Future.sequence(processed) // тут собираем результат
+					</code></pre>
+					<p>sequence может быть опасен - загружает очередь пула потоков
+					и может "перегрузить" process и пул
+				</section>
+
+				<section>
+					<p>Что плохого в Future?
+					<ul>
+						<li>Запускается сразу
+						<li class=fragment>implicit ExecutionContext
+						<li class=fragment>Нет остановки/отмены
+					</ul>
+				</section>
+
+				<section>
+					<p>Всё еще не ФП?
+					<pre><code class="scala">
+val x = Future(r.nextInt)
+(x, x)
+
+// vs
+
+(Future(r.nextInt), Future(r.nextInt))
 					</code></pre>
 				</section>
 
 				<section>
-					<p>Future.sequence может быть опасен - загружает очередь пула потоков
-					и может "перегрузить" process()
-				</section>
-
-				<section>
-					<h3>Монадные трансформеры<sup>*</sup></h3>
-					<p><small>дополнительная часть, если успеем</small>
+					<h3>Монадные трансформеры</h3>
 				</section>
 
 				<section>
@@ -738,37 +754,36 @@ maybeF.map(_.map(_.length))
 				</section>
 
 				<section>
-					<p>Функторы можно собрать в один функтор:
+					<p>Универсальный трансформер для фукторов
 					<pre><code class="scala">
 import cats.data._
 import cats.implicits._
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
+// еще нужен implicit ec
 
-val maybeF: Future[Option[String]] = 
-  Future.successful(Some("value"))
+val maybeF: Future[Option[String]] = ???
 
-val nested = Nested(maybeF)
-
-nested.map(_.length).value // Future[Option[Int]]
+// заменяет maybeF.map(_.map(_.length))
+Nested(maybeF).map(_.length).value 
+// возвращает Future[Option[Int]]
 					</code></pre>
 				</section>
 
 				<section>
-					<p>Универсального способа объединить две монады нет.
+					<p>Можно ли соединить две разные монады?
+					<p>В общем случае нет.
 				</section>
 
 				<section>
-					<p>Что мы хотим? 
+					<p>Что мы хотим от Future[Option[T]]? 
 					<ul>
 						<li class="fragment">Асинхронное выполнение, как у Future
-						<li class="fragment">Выполнять операции пока не возникнет None,<br> как у Option
+						<li class="fragment">Выполнять операции пока не возникнет None,<br> как у Option. Или Failure, как у Future
 					</ul>
 				</section>
 
 				<section>
-					<p>Но можно сделать такой flatMap:
+					<p>можно сделать такой flatMap:
 					<pre><code class="scala">
 class FutureO[+A](val fut: Future[Option[A]]) extends AnyVal {
   def flatMap[B](f: A ⇒ FutureO[B])
@@ -781,24 +796,17 @@ class FutureO[+A](val fut: Future[Option[A]]) extends AnyVal {
   }
 }					
 					</code></pre>
+					<p>тут логика Option. От Future - flatMap и конструктор
 				</section>
 
 				<section>
-					<p>Что в этом коде от Option?
+					<p>На месте Future может быть любая другая монада.
 
-					<p class="fragment">Логика работы.
+					<p>Можно обобщить<br>(если у нас есть абстракция монады)
 				</section>
 
 				<section>
-					<p>Что в этом коде от Future?
-
-					<p class="fragment">flatMap и функция создания
-
-					<p class="fragment">На месте Future может быть любая другая монада.
-				</section>
-
-				<section>
-					<p>В библиотеке cats есть трансформер OptionT
+					<p>OptionT - создает монаду для M[Option[T]] (cats)
 					<pre><code class="scala">
 val greetingFO: Future[Option[String]] = ???
 val firstnameF: Future[String] = ???
@@ -819,14 +827,9 @@ val result: Future[Option[String]] = ot.value
 				</section>
 
 				<section>
-					<h3>Тема семинара</h3>
-					<p>Практика по использованию Future/Promise.</p>
-				</section>
-
-				<section>
 					<p>Напоминаю:
 					<ul>
-						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+						<li>Страничка курса:<br> <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
 					</ul>
 				</section>
 
