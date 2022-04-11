@@ -1280,6 +1280,395 @@ def validateForm(name: String, pass: String, age: Int) =
 
 
 
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Библиотека Circe</h2>
+					<p class=fragment><small>* Название может произноситься как "SUR-see"<br>или на греческий манер "KEER-kee"</small></p>
+					<p class=fragment><small>Переводится как Церцея.<br>В честь волшебница из древнегречиской мифологии,<br>которая помогала Аргонавтам.</small></p>
+				</section>
+
+				<section>
+					<p>Особенности библиотеки:<br>
+					<ul>
+						<li>Форк библиотеки Argonaut (основана на Scalaz)</li>
+						<li class=fragment>Ядро Circe зависит от Cats</li>
+						<li class=fragment>Json-парсер зависит от Jawn</li>
+						<li class=fragment>Generic зависит от Shapeless</li>
+					</ul><p>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">sealed abstract class Json</code></pre>
+					<pre><code class="scala">private[circe] final case object JNull
+private[circe] final case class JBoolean(value: Boolean)
+private[circe] final case class JNumber(value: JsonNumber)
+private[circe] final case class JString(value: String)
+private[circe] final case class JArray(value: Vector[Json])
+private[circe] final case class JObject(value: JsonObject)</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">sealed abstract class Json {
+  def isNull: Boolean
+  def isBoolean: Boolean
+  def isNumber: Boolean
+  def isString: Boolean
+  def isArray: Boolean
+  def isObject: Boolean
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">sealed abstract class Json {
+  def asNull: Option[Unit]
+  def asBoolean: Option[Boolean]
+  def asNumber: Option[JsonNumber]
+  def asString: Option[String]
+  def asArray: Option[Vector[Json]]
+  def asObject: Option[JsonObject]
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import io.circe._, io.circe.parser._
+
+val json: String =
+  """{
+       "id": "c730433b-082c-4984-9d66-855c243266f0",
+       "name": "Foo",
+       "counts": [1, 2, 3],
+       "values": {
+         "bar": true,
+         "baz": 100.001,
+         "qux": ["a", "b"]
+       }
+     }"""
+
+val doc: Json = parse(json).getOrElse(Json.Null)</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import io.circe._</code></pre>
+<pre><code class="scala">val json = Json.obj(
+ ("id",Json.fromString("c730433b-082c-4984-9d66-855c243266f0")),
+ ("name", Json.fromString("Foo")),
+ ("counts", Json.fromValues(Seq[Json](
+      Json.fromInt(1), Json.fromInt(2), Json.fromInt(3)
+ ))),
+ ("values", Json.obj(
+      ("bar", Json.fromBoolean(true)),
+      ("baz", Json.fromDouble(100.01).getOrElse(0)),
+      ("qux", Json.fromValues(Seq[Json](
+          Json.fromString("a"), Json.fromString("b")
+      ))
+ ))
+))</code></pre><pre><code class="scala">json.noSpaces
+json.spaces2SortKeys</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def parse(input: String): Either[ParsingFailure, Json]
+					</code></pre>
+					<pre><code class="scala">
+final case class ParsingFailure(message: String,
+                                underlying: Throwable)
+                        extends Error {
+
+  final override def getMessage: String = message
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">val json: String =
+  """{
+       "id": "c730433b-082c-4984-9d66-855c243266f0",
+       "name": "Foo",
+       "counts": [1, 2, 3],
+       "values": []
+     }"""</code></pre><pre><code class="scala">val doc = parse(json)
+// Left(io.circe.ParsingFailure:
+//     expected } or , got '"value...' (line 6, column 13)
+// )
+</code></pre>
+				</section>
+
+
+
+
+				<section>
+					<p>HCursor</p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ val doc: Json = parse(json).getOrElse(Json.Null)
+
+ val cursor: HCursor = doc.hcursor
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ cursor.top       // перейти к "корню"
+ cursor.up        // перейти к "родителю"
+
+ cursor.field("myField")      // перейти к "брату" с ключём
+ cursor.downField("myField")  // перейти к "потомку" с ключём
+
+ cursor.left      //только для array
+ cursor.right     //только для array
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ def delete: ACursor  // возвращает "родителя"
+
+ def withFocus(f: Json => Json): ACursor
+
+ def withFocusM[F[_]](f: Json => F[Json])
+                     (implicit F: Applicative[F]): F[ACursor]
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+cursor.value    // получить значение из текущей позиции как Json
+cursor.as[Double]  // получить значение как число
+
+cursor.get[Double]("fieldName")     // получить значение из поля
+cursor.downField("fieldName").as[Double]           // тоже самое
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def as[A](implicit d: Decoder[A]): Decoder.Result[A]
+
+def get[A](k: String)(implicit d: Decoder[A]): Decoder.Result[A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ type Result[A] = Either[DecodingFailure, A]
+					</code></pre>
+					<pre class=fragment><code class="scala">
+ type AccumulatingResult[A] = ValidatedNel[DecodingFailure, A]
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Encoding & Decoding</p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Encoder[A] {
+   def apply(a: A): Json
+   ...
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Decoder[A] {
+   def apply(c: HCursor): Result[A]
+   def decodeAccumulating(c: HCursor): AccumulatingResult[A]
+
+   def decodeJson(j: Json): Result[A]
+   ...
+ }
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+ trait Encoder[A] {
+   ...
+   def contramap[B](f: B => A): Encoder[B]
+   def mapJson(f: Json => Json): Encoder[A]
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Decoder[A] {
+   ...
+   def map[B](f: A => B): Decoder[B]
+   def flatMap[B](f: A => Decoder[B]): Decoder[B]
+ }
+					</code></pre>
+				</section>
+
+
+				<section>
+					<h2>Encoder & Decoder<br>instances</h2>
+					<ul>
+						<li>для всех стандартных типов Int, String, Long ...</li>
+						<li>для Option[A], List[A], ... при наличии инстанса для A</li>
+					</ul>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Codec[A] extends Decoder[A] with Encoder[A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ implicit class EncoderOps[A](val v: A) extends AnyVal {
+   def asJson(implicit encoder: Encoder[A]): Json = encoder(v)
+ }
+					</code></pre>
+					<pre><code class="scala">
+ import io.circe.syntax._
+ val intsJson = List(1, 2, 3).asJson
+ // EncoderOps(List(1, 2, 3)).asJson(encodingList(encodeInt))
+					</code></pre>
+				</section>
+
+
+				<section>
+					<h2>Custom encoder</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] = new Encoder[Foo] {
+    def apply(f: Foo): Json = Json.obj(
+                           ("foo", Json.fromString(f.a)),
+                           ("bar", Json.fromInt(f.b))
+    )
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Custom encoder<br>(shorter)</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] = (f: Foo) =>
+   Json.obj(
+     ("a", Json.fromString(f.a)),
+     ("b", Json.fromInt(f.b))
+   )
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Semi-automatic</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] =
+      Encoder.forProduct2("foo", "bar")(f => (f.a, f.b))
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Automatic</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] = deriveEncoder
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<h2>Custom decoder<br>(monadic)</h2>
+					<pre><code class="scala">
+ import io.circe.{Decoder, HCursor}
+
+ case class Foo(a: String, b: Int)
+
+ implicit val decoderFoo: Decoder[Foo] = new Decoder[Foo] {
+   def apply(c: HCursor): Decoder.Result[Foo] =
+     for {
+       a <- c.get[String]("a")
+       b <- c.get[Int]("b")
+     } yield Foo(a, b)
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Custom decoder<br>(monadic, shorter)</h2>
+					<pre><code class="scala">
+ import io.circe.{Decoder, HCursor}
+
+ case class Foo(a: String, b: Int)
+
+ implicit val decoderFoo: Decoder[Foo] = (c: HCursor) =>
+   for {
+     a <- c.get[String]("a")
+     b <- c.get[Int]("b")
+   } yield Foo(a, b)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<h2>Custom decoder<br>(applicative)</h2>
+					<pre><code class="scala">
+ import io.circe.Decoder
+ import cats.syntax.apply._
+
+ case class Foo(a: String, b: Int)
+
+ implicit val decoderFoo: Decoder[Foo] = (
+     Decoder.instance(_.downField("a").as[String]),
+     Decoder.instance(_.downField("b").as[Int])
+   ).mapN(Foo.apply)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ decodeAccumulating[Foo]( """{"a":55, "b":"foo"}""" )
+
+ // res: ValidatedNel[circe.Error, Foo] =
+ //    Invalid( NonEmptyList(
+ //          DecodingFailure(String, List(DownField(a))),
+ //          DecodingFailure(Int, List(DownField(b)))
+ //    ))
+					</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+
 				<section>
 					<p>Напоминаю:
 					<ul>
