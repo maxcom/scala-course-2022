@@ -26,7 +26,7 @@
 			<div class="slides">
 				<section>
 					<h2>Классификатор: морфология и диагностика</h2>
-					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2020/">https://maxcom.github.io/scala-course-2020/</small></a>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
 				</section>
 
 				<section>
@@ -39,7 +39,13 @@
 				</section>
 
 				<section>
-					<p>Нейтральный класс - TODO
+					<h3>Нейтральный класс</h3>
+					<ul>
+						<li>Нормализуем вероятности<br>
+						см. раздел <a href="http://bazhenov.me/blog/2012/06/11/naive-bayes.html">Формирование вероятностного пространства</a>.
+						<li>Нейтральный - когда вероятность ниже 70%<br>
+						(порог выносим в константу)
+
 				</section>
 
 				<section>
@@ -49,7 +55,7 @@
 
 					<pre><code class="scala">
 libraryDependencies += 
-  "org.apache.lucene" % "lucene-analyzers-common" % "7.2.1"
+  "org.apache.lucene" % "lucene-analyzers-common" % "8.11.1"
 					</code></pre>
 
 					<p><small>build.sbt</small>
@@ -103,6 +109,13 @@ out // Term(тестов,0,8), Term(строк,9,15) </code></pre>
 Если *не* выучите — моргалы *выколю*, пасти *порву* и, 
 как их, эти… носы пооткушу. Ясно?!
 </code></pre>
+					<p>выделяем слова целиком, с окончаниями</p>
+				</section>
+
+				<section>
+					<p>Срок сдачи - 20 апреля.
+					<p>Делаем новый merge request
+					<p>Если первый mr еще не принят - отдельная ветка под второй
 				</section>
 			</div>
 
