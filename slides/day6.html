@@ -1663,6 +1663,75 @@ def get[A](k: String)(implicit d: Decoder[A]): Decoder.Result[A]
 
 
 
+				<section>
+					<pre><code class="scala">
+ sealed trait Event
+
+ case class Foo(i: Int) extends Event
+ case class Bar(ls: List[String]) extends Event
+					</code></pre>
+					<pre class=fragment><code class="scala">
+ implicit val encodeFoo = Encoder.forProduct1("i")(f => f.i)
+ implicit val encodeBar = Encoder.forProduct1("ls")(f => f.ls)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+ implicit val encodeEvent: Encoder[Event] = Encoder.instance {
+   case foo: Foo => foo.asJson
+   case bar: Bar => bar.asJson
+ }
+					</code></pre>
+					<pre class=fragment><code class="scala">
+ implicit val decodeEvent: Decoder[Event] =
+    List[Decoder[Event]](
+      Decoder[Foo].widen,
+      Decoder[Bar].widen
+    ).reduceLeft(_ or _)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ val fooFirst = List[Decoder[Event]](
+    Decoder[Foo].widen, Decoder[Bar].widen
+ ).reduceLeft(_ or _)
+
+ val barFirst = List[Decoder[Event]](
+    Decoder[Bar].widen, Decoder[Foo].widen
+ ).reduceLeft(_ or _)
+
+ val input = """{"ls": ["a", "b"], "i": 1000}"""
+
+ parser.decode[Event](input)(fooFirst) // Right(Foo(1000))
+ parser.decode[Event](input)(barFirst) // Right(Bar(List(a, b)))
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ implicit val encodeFoo: Encoder[Foo] =
+          Encoder.forProduct2("i", "type")(f => (f.i, "Foo"))
+
+ implicit val encodeBar: Encoder[Bar] =
+          Encoder.forProduct2("s", "type")(f => (f.ls, "Bar"))
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ implicit val genDevConfig: Configuration =
+              Configuration.default.withDiscriminator("type")
+
+ val inFoo = """{"ls": ["a", "b"], "i": 1000, "type": "Foo"}"""
+ val inBar = """{"ls": ["a", "b"], "i": 1000, "type": "Bar"}"""
+
+ parser.decode[Event](inFoo)  // Right(Foo(1000))
+ parser.decode[Event](inBar)  // Right(Bar(List(a, b)))
+					</code></pre>
+				</section>
 
 
 
