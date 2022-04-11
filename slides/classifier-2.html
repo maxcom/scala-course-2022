@@ -49,6 +49,10 @@
 				</section>
 
 				<section>
+					<h3>Нормализация словоформ и токенизация</h3>
+				</section>
+
+				<section>
 					<p>Игнорируем окончания у слов.
 
 					<p>Используем готовую библиотеку - Apache Lucene
@@ -74,6 +78,7 @@ val analyzer = new RussianAnalyzer()
 					<pre><code class="scala">
 case class Term(word: String, start: Int, end: Int)
 					</code></pre>
+					<p><small>смещения понадобятся для диагностики</small>
 				</section>
 
 				<section>
@@ -95,11 +100,17 @@ out // Term(тестов,0,8), Term(строк,9,15) </code></pre>
 				</section>
 
 				<section>
-					<p>Добавляем диагностику
+					<p>Используем при классификации и при обучении.
+				</section>
 
-					<p class="fragment">При классификации для каждого класса выбираем 3 характерных слова
+				<section>
+					<h3>Добавляем диагностику</h3>
+				</section>
 
-					<p class="fragment">Для итогового класса выделяем слова в тексте символами '*'
+				<section>
+					<p>3 характерных слова для найденного класса.
+
+					<p>Выделяем слова в тексте символами '*'
 				</section>
 
 				<section>
