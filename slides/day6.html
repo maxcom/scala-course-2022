@@ -1124,23 +1124,23 @@ final case class Invalid[+E](e: E) extends Validated[E, Nothing]
 
 				<section>
 					<pre><code class="scala">
-  sealed trait AccValidation { def err: String }
+  sealed trait ValidationError { def err: String }
 
-  case object NameError extends AccValidation { val err = ??? }
-  case object PassError extends AccValidation { val err = ??? }
-  case object AgeError  extends AccValidation { val err = ??? }
+  case object NameError extends ValidationError { val err = ??? }
+  case object PassError extends ValidationError { val err = ??? }
+  case object AgeError  extends ValidationError { val err = ??? }
 					</code></pre>
 				</section>
 
 				<section>
 					<pre><code class="scala">
-def validateName(name: String): Either[AccValidation, String] =
+def validateName(name: String): Either[ValidationError, String] =
   Either.cond(???, name, NameError)
 
-def validatePass(pass: String): Either[AccValidation, String] =
+def validatePass(pass: String): Either[ValidationError, String] =
   Either.cond(???, pass, PassError)
 
-def validateAge(age: Int): Either[AccValidation, Int] =
+def validateAge(age: Int): Either[ValidationError, Int] =
   Either.cond(???, age, AgeError)
 					</code></pre>
 				</section>
@@ -1154,7 +1154,7 @@ def validateForm(name: String, pass: String, age: Int) =
     validAge  <- validateAge(age)
   } yield RegistrationData(validName, validPass, validAge)
 
-// Either[DomainValidation, RegistrationData]
+// Either[ValidationError, RegistrationData]
 					</code></pre>
 				</section>
 
@@ -1179,7 +1179,7 @@ def validateForm(name: String, pass: String, age: Int) =
     validAge  <- validateAge(age).toValidated
   } yield RegistrationData(validName, validPass, validAge)
 
-// Validated[DomainValidation, RegistrationData]
+// Validated[ValidationError, RegistrationData]
 					</code></pre>
 				</section>
 
@@ -1187,7 +1187,7 @@ def validateForm(name: String, pass: String, age: Int) =
 					<p>Не скомпилируется</p>
 					<pre><code class="scala">
 // error: value flatMap is not a member of
-//        cats.data.Validated[DomainValidation,String]
+//        cats.data.Validated[ValidationError,String]
 //
 //     validName <- validateName(name).toValidated
 //                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1223,9 +1223,9 @@ class ValidatedSugar[A](a: A) extends AnyVal {
 
 				<section>
 					<pre><code class="scala">
-type ValidationResult[A] = ValidatedNec[AccValidation, A]
+type ValidationResult[A] = ValidatedNec[ValidationError, A]
 // type ValidationResult[A] =
-//              Validated[NonEmptyChain[AccValidation], A]
+//              Validated[NonEmptyChain[ValidationError], A]
 					</code></pre>
 				</section>
 
@@ -1263,9 +1263,9 @@ def validateForm(name: String, pass: String, age: Int) =
 				</section>
 
 				<section>
-					<pre><code class="scala">sealed trait AccValidation { def err: String }</code></pre>
+					<pre><code class="scala">sealed trait ValidationError { def err: String }</code></pre>
 					<pre class=fragment><code class="scala">type ValidationResult[RegistrationData] =
-       Validated[NonEmptyChain[AccValidation], RegistrationData]</code></pre>
+       Validated[NonEmptyChain[ValidationError], RegistrationData]</code></pre>
 					<ul>
 						<li class=fragment>Удобный тип для вражения результата</li>
 						<li class=fragment>Гарантирован непустой список ошибок</li>
