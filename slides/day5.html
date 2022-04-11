@@ -1,0 +1,866 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Базовые примитивы многопоточности</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Часть 5. Базовые примитивы многопоточности</h2>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<h3>План</h3>
+					<ol>
+						<li>Асинхронность и многопоточность.
+						<li>Поток, пулы потоков. 
+						<li>Синхронизация, блокировки и атомики. 
+						<li>Future и Promise. 
+						<li>Реализация функций работы с Future.
+						<li>Монадные трансформеры.
+					</ol>
+				</section>
+
+				<section>
+					Первая часть лекции про low level и то, какие проблемы он нам несет.
+				</section>
+
+				<section>
+					<h3>Асинхронность и многопоточность.</h3>
+					<p>В JVM есть и то, и другое. В других средах может быть что-то одно.
+				</section>
+
+				<section>
+					<h3>Потоки выполнения</h3>
+
+					<ul>
+						<li>Каждый поток выполняется процессором независимо.
+						<li class=fragment>Все потоки работают в общем адресном пространстве, но имеют свои стеки.
+						<li class=fragment>Процессор переключается между разными потоками.
+						<li class=fragment>В многоядерных системах потоки выполняются одновременно.
+					</ul>
+				</section>
+
+				<section>
+					Thread в Java = поток в ОС
+				</section>
+
+				<section>
+					Потоки применяют для:
+					<ul>
+						<li>Выполнения программы более чем на одном ядре CPU.
+						<li>Параллельного выполнения разных процессов программы.
+					</ul>
+				</section>
+				<section>
+					<p>В серверных проложениях часто выделяют по потоку каждому клиенту.</p>
+
+					<p>Программисту это удобно, но не всегда эффективно. В 7-й лекции
+					поговорим об устройстве высоконагруженных приложений.</p>
+				</section>
+
+				<section>
+					<h3>Асинхронность</h3>
+				</section>
+
+				<section>
+					<p>Синхронная функция:
+					<pre><code class="scala">
+def func(input: String): String
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Иногда работа не выполняется в нашей функции:
+					<ul>
+						<li>Запрос к БД выполняет БД
+						<li>Сетевой I/O выполняет ядро
+						<li>Работу делает другой поток
+						<li>...
+					</ul>
+				</section>
+
+				<section>
+					Выполняем асинхронно - запускаем выполнение, которое
+					само сигнализирует нам об его окончании.
+				</section>
+
+				<section>
+					<p>Зачем?
+					<ul>
+						<li>Работа с большим числом сокетов<br>
+						<small>рассмотрим на 7-й лекции</small>
+						<li class=fragment>"Отзывчивость"<br><small>гарантированное время отклика</small>
+						<li class=fragment>Отказоустойчивость<br>
+						<small>альтернативные ответы при ошибках, retry и пр<br>
+						рассмотрим на лекции про Akka</small>
+					</ul>
+				</section>
+
+				<section>
+					<p>Асинхронная функция:
+					<pre><code class="scala">
+def func(input: String, onComplete: Try[String] =&gt; Unit): Unit
+					</code></pre>
+					<p class=fragment>Проблема: не удобно и не ФП. Callback hell.
+					<p class=fragment>Еще бывает Cancellable 
+				</section>
+
+				<section>
+					<h3>Работа с потоками</h3>
+				</section>
+
+				<section>
+					Создание потока - часть Java Runtime:
+					<pre><code class="scala">
+val thread = new Thread(() =&gt; {
+  println("Hello world!")
+})	
+
+thread.start()
+					</code></pre>
+
+				</section>
+
+				<section>
+					<p>Явно потоки (почти) никогда не нужно создавать:
+					<ul>
+						<li>создание потока - "дорогая" операция
+						<li>потоков не должно быть много
+					</ul>
+				</section>
+
+				<section>
+					<h4>Сколько должно быть потоков?</h4>
+					Неизвестно - оценка "на глаз" + тестирование, но
+					<ul>
+						<li class=fragment>под математику: число ядер
+						<li class=fragment>сетевое взаимодействие и простая логика без блокирующих 
+							вызовов: N * CPU, N ~= 3
+						<li class=fragment>дисковый ввод-вывод: число шпинделей жесткого диска. CPU не важно
+						<li class=fragment>и т. п.
+					</ul>
+					<p class=fragment>
+					Верхняя граница у современных ОС - порядка 1000 потоков на процесс. Дальше не
+					эффективно.</p>
+				</section>
+
+				<section>
+					Проблема: хотим управление потоками, не хотим работать с Thread напрямую.
+				</section>
+
+				<section>
+					Пул потоков создается один раз
+
+					<pre><code class="scala">
+// используем Java API
+val executor: ExecutorService =
+  Executors.newFixedThreadPool(10) // 10 потоков
+
+// создаем Scala-обертку
+// часто используют "implicit val"
+val ec: ExecutionContext =
+  ExecutionContext.fromExecutor(executor)
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Задачи можно передать так:
+					<pre><code class="scala">
+ec.execute(() =&gt; {
+  println("Hello world!")
+})
+					</code></pre>
+					<p>Thread Pool = пул потоков + очередь задач
+				</section>
+
+				<section>
+					<p>Стандартные реализации:
+					<ul>
+						<li>ForkJoinPool - хорошо распределяет мелкие задачи по CPU
+						<li>ThreadPoolExecutor - для редко используемых или очень больших пулов
+					</ul>
+				</section>
+
+				<section>
+					Проблема: мы не хотим работать с execute напрямую.
+				</section>
+
+				<section>
+					Проблема: потоки - источник недетерминированности:
+					<pre><code class="scala">
+def run(): Unit = for (i &lt;- 0 to 10) println(i)
+
+(0 to 5).foreach { _ =&gt;
+  ec.execute(run _)
+}
+					</code></pre>
+					<p>разный порядок при каждом запуске - сложно обеспечить корректность и
+					протестировать
+				</section>
+
+				<section>
+					Следующая проблема: доступ к общим ресурсам.
+				</section>
+
+				<section>
+					<p>Например RandomAccessFile:
+					<ul>
+						<li>seek(offset)
+						<li>read(...)
+					</ul>
+					<p>нельзя использовать из разных потоков
+				</section>
+
+				<section>
+					<p>Большинство объектов и структур - не потокобезопасные.
+
+					<p>Исключение: неизменяемые данные, но есть проблема их "публикации".
+				</section>
+
+				<section>
+					Общие ресурсы требуют последовательного доступа - пока один поток
+					выполняется, другие его ждут.
+				</section>
+
+				<section>
+					<h4>Синхронизация из Java</h4>
+					Блокировка обеспечивает эксклюзивный доступ.
+					<pre><code style="scala">
+// наследие Java 1.0 - любой объект имеет lock
+val lock = new Object()
+
+// примитивные типы не имеют lock'ов
+var counter: Int = 0
+
+lock.synchronized {
+  // инкремент - не атомарная операция
+  counter += 1
+}					
+					</code></pre>
+					<p class=fragment><small>Синхронизация на this - плохо из-за его публичности</small>
+				</section>
+
+				<section>
+					В JDK есть много других вариантов: с поддержкой таймаута,
+					latch, семафоры и т.п.
+				</section>
+
+				<section>
+					Пример с тайм-аутом
+					<pre><code style="scala">
+val lock = new ReentrantLock()
+var data = Vector(42)
+
+def readData(): Vector[Int] = {
+  try { // всегда оборачиваем в try/finally
+    lock.tryLock(1, TimeUnit.MINUTES)
+
+    data
+  } finally {
+    lock.unlock()
+  }
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<h4>Deadlock</h4>
+					<p>Взаимная
+					блокировка, из которой не выйти.
+					<p class=fragment>Пример: передача денег между счетами.
+				</section>
+
+				<section>
+					<p>Dealock'ы бывают хитрые, но сводятся к той же схеме.
+
+					<p class="fragment">Пример: извлечение объектов парами из ограниченного пула.
+				</section>
+
+				<section>
+					Проблема: трудно обеспечить корректность локов, декомпозиция не работает.
+				</section>
+
+				<section>
+					Следующая проблема:<br> оптимизации в JVM и процессоре.
+				</section>
+
+				<section>
+					<p>Модель исполнения и памяти сложнее, чем кажется:
+					<ul>
+						<li>Процессор, компилятор и JVM меняют реальный порядок выполнения
+						<li class=fragment>Кеши процессоров сами не синхронизируются на некоторых платформах
+						<li class=fragment>Запись long/double не атомарна на некоторых платформах
+					</ul>
+				</section>
+
+				<section>
+					<p>Модель памяти Java сложна - подробности смотрите
+					<a target="_blank" href="https://shipilev.net/talks/jugru-Feb2014-jmm-pragmatics.pdf">Java Memory Model прагматика модели</a>
+				</section>
+
+				<section>
+					Блокировки и synchronized создают барьер для оптимизаций
+				</section>
+				
+				<section>
+					<h3>volatile</h3>
+					volatile переменная - создает барьер без блокировок.
+					<pre><code style="scala">
+// медленнее обычного var, но быстрее блокировки
+
+@volatile 
+var vcounter: Int = 0	
+					</code></pre>
+					операции над ней "упорядочены", но защиты от "гонки потоков" нет
+				</section>
+
+				<section>
+					<h3>Atomic</h3>
+					<p>Специальная инструкция процессора - CompareAndSet (CAS)
+					<p>Меняет значение на новое, если старое равно заданному</p>
+					<p>Потокобезопасно
+				</section>
+
+				<section>
+				Пример - AtomicInteger
+<pre><code class="java">
+// метод класса java.util.concurrent.AtomicInteger
+// реализация из исходников JDK; Java
+public final int incrementAndGet() {
+    for (;;) { // retry при конфликте
+        int current = get();
+        int next = current + 1;
+        if (compareAndSet(current, next))
+            return next;
+    }
+}
+</code></pre>			
+				дешевле lock, если логика простая
+				</section>
+
+				<section>
+					<p>Такой подход может использоваться для списков, деревьев и хеш-таблиц.
+				</section>
+
+				<section>
+					<p>Разделяемое изменяемое состояние + параллелизм = проблемы.
+				</section>
+
+				<section>
+					<p>Нет хорошего способа расставить блокировки в сложной системе.
+
+					<p>Блокировки требуют "протокола" использования. Язык и runtime
+					его не верифицируют.
+				</section>
+
+				<section>
+					<p>Декомпозиция не работает - проблемы возникают в момент
+					интеграции.
+				</section>
+
+				<section>
+					<p>Качественно расставить блокировки не всегда удается:
+
+					<ul>
+						<li>Например с GUI можно работать только из выделенного потока
+						<li>Некоторые среды используют один лок на все вызовы
+						<li>Контрпример - ядро Linux
+					</ul>
+				</section>
+
+				<section>
+					<p>Решение: разделяемое изменяемое состояние + <s>параллелизм</s>.
+
+					<div class="fragment"><p>Делаем всю работу в одном потоке.
+
+					<p>Пример: СУБД Redis, веб-сервер nginx, сервер приложений node.js
+					</div>
+				</section>
+
+				<section>
+					<p>Решение: разделяемое <s>изменяемое</s> состояние + параллелизм.
+
+					<div class="fragment"><p>Используем иммутабельные структуры и<br> цепочки обработки.
+
+					<p>Пример: Future, Task, IO, Akka Streams</div>
+				</section>
+
+				<section>
+					<p>Решение: <s>разделяемое</s> изменяемое состояние + параллелизм.
+
+					<div class="fragment"><p>Изменяемое состояние приватное, работаем с ним из одного потока.
+
+					<p>Пример: акторы (Akka и др)</div>
+				</section>
+
+				<section>
+					<h2>Конец первой части</h2>
+					<p>Вторая часть - Future и Promise.<br>
+					(+ монадные трансформеры)
+				</section>
+
+				<section>
+					<h3>Future[T]</h3>
+					<p>Future - результат отложенного вычисления.
+				</section>
+
+				<section>
+					<p>от асинхронной функции
+					<pre><code class="scala">
+def func(input: String, onComplete: Try[String] =&gt; Unit): Unit
+					</code></pre>
+					переходим к
+					<pre><code class="scala">
+implicit val ec: ExecutionContext = ???
+val f = def func(input: String): Future[String]
+f.onComplete(...) // добавляем Callback
+					</code></pre>
+					<p>это базовый низкоуровневый механизм
+				</section>
+
+				<section>
+					пример callback
+<pre><code class="scala">
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
+
+val f: Future[Int] = ???
+implicit val ec: ExecutionContext = ???
+
+f.onComplete { // выполняется в потоке ec
+  case Success(value) ⇒
+    println(value)
+  case Failure(ex) ⇒
+    println(s"Failed: ${ex.toString}")
+}
+</code></pre>
+<p>всё еще не ФП
+				</section>
+
+				<section>
+					Еще есть два механизма
+				</section>
+
+				<section>
+					Ожидание выполнения
+<pre><code class="scala">
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+
+val f: Future[Int] = ???
+
+val result: Int = Await.result(f, 5 minutes)
+</code></pre>
+блокирует текущий поток до получения результата
+				</section>
+				<section>
+					Опрос состояния
+<pre><code class="scala">
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
+
+val f: Future[Int] = ???
+
+f.value match {
+  case Some(Success(value)) ⇒
+    println(value)
+  case Some(Failure(ex)) ⇒
+    throw ex
+  case None ⇒
+    println("Not completed :-(")
+}					
+</code></pre>
+				</section>
+
+				<section>
+					<h3>Promise[T]</h3>
+					<p>Promise - контейнер для результата отложенного вычисления.
+					<p>Нужен для построения асинхронных функций.
+				</section>
+				
+				<section>
+					<p>Promise = контейнер + связанная с ним Future
+					<ul>
+						<li>Значение можно сохранить один раз
+						<li>Значение завершает связанную с ним Future
+					</ul>
+				</section>
+
+				<section>
+					Future из асинхронной функции:
+<pre><code class="scala">
+def func(input: String, onComplete: Try[String] =&gt; Unit): Unit
+
+def futureFunc(input: String): Future[String] = {
+  val p: Promise[String] = Promise()
+
+  func(input, p.complete)
+
+  p.future
+}
+</code></pre>
+				</section>
+
+				<section>
+					Запускаем синхронную функцию в отдельном потоке:
+<pre><code class="scala">def func(input: String): String = ???
+
+// apply[T](body: =&gt; T)(implicit ec: ExecutionContext)
+def futureFunc(input: String): Future[String] = Future {
+  func(input)
+}
+</code></pre>
+				<p><small>Это удобная утилита, а не основное предназначение Future</small>
+				</section>
+
+				<section>
+					Реализация Future.apply:
+<pre><code class="scala">// реализация в библиотеке сложнее
+def run[T](f :=&gt; T)
+          (implicit ec: ExecutionContext): Future[T] = {
+  val p = Promise[T]()
+
+  ec.execute(() ⇒ {
+    p.complete(Try(f))
+  })
+
+  p.future
+}
+
+val f: Future[Int] = run { 2 * 2 }
+</code></pre>
+				<p><small>перешли от execute к более функциональному стилю</small>
+				</section>
+
+				<section>
+					<p>Иногда хотим поместить готовое значение в Future:
+					<ul>
+						<li>Future.successful - завершенная Future
+						<li>Future.failed - завершенная с ошибкой Future
+						<li>Future.unit - Future, завершенная со значением Unit
+					</ul>
+					<p>(ExecutionContext не нужен, поток не требуется)
+				</section>
+
+				<section>
+					Callback - не удобно.
+				</section>
+
+				<section>
+					<p>Future - функтор, у нее есть функция map<br>
+					<img src="catfunctor.png" width="80%">
+					<p><small>источник: <a target="_blank" href="https://buzzdecafe.github.io/code/2014/10/26/functors-and-applicatives">Functors and Applicatives</a></small>
+					<p><small>(Подробнее о функторах на лекции про Cats)</small>
+				</section>
+
+				<section>
+					Работаем со значением, которого еще нет:
+<pre><code class="scala">
+val f3: Future[Int] = f.map(_ * 10)
+
+// возвращается мгновенно, вычисляется когда f будет вычислено
+</code></pre>
+					<p>похоже на работу с ленивыми структурами данных
+				</section>
+
+				<section>
+					это может работать вот так:
+<pre><code class="scala">// pimp my library
+implicit class MyFuture[T](val f: Future[T]) extends AnyVal {
+  def myMap[R](func: T ⇒ R)
+              (implicit ec: ExecutionContext): Future[R] = {
+    val p = Promise[R]()
+
+    f.onComplete {
+      case Success(v)  ⇒ p.complete(Try(func(v)))
+      case Failure(ex) ⇒ p.failure(ex)
+    }
+
+    p.future
+  }
+}
+</code></pre>
+
+				</section>
+
+				<section>
+					<p>Future - монада
+<pre><code class="scala">flatMap[S](f: T =&gt; Future[S])
+          (implicit ec: ExecutionContext): Future[S]
+</code></pre>
+					<p>f - монадическая функция
+				</section>
+
+				<section>
+					Пример цепочки трансформаций:
+<pre><code class="scala">
+def userByEmail(email: String): Future[Int] = ???
+
+def ticketsByUser(user: Int): Future[Seq[Int]] = ???
+
+// где-то должен быть implicit ec
+def countTickets(email: String): Future[Int] = 
+  userByEmail(email).flatMap(ticketsByUser).map(_.length)
+</code></pre>
+					функция возвращается мгновенно
+				</section>
+
+				<section>
+					<p>Можно использовать for:
+<pre><code class="scala">
+// где-то должен быть implicit ec
+val count: Future[Int] = for {
+  user &lt;- userByEmail("user1@test")
+  tickets &lt;- ticketsByUser(user)
+} yield {
+  tickets.length
+}
+</code></pre>
+				аналог на callback'ах - "лапша",
+				особенно после добавления обработки ошибок
+				</section>
+
+				<section>
+					<p>Еще полезные методы
+					<ul>
+						<li>transform[S](f: Try[T] =&gt; Try[S]): Future[S]
+						<li>transformWith[S](f: Try[T] =&gt; Future[S]): Future[S]
+					</ul>
+					<p>(аналог map/flatMap, но с обработкой ошибок)
+				</section>
+
+
+				<section>
+					<p>Избегайте в коде таких типов как Future[Future[...]], Future[Try[...]] и Try[Future[...]].
+					<p>Это источник проблем.
+				</section>
+
+				<section>
+					<p>Сборка независимых Future
+<pre><code class="scala">
+val res: Future[Result] = for {
+  info  &lt;- getUserInfo(user)
+  stats &lt;- getUserStat(user)
+} yield Result(info, stats)
+
+</code></pre>
+					<p>проблема - задержка вызова getUserStat
+				</section>
+
+				<section>
+					стартуем Future до for
+<pre><code class="scala">
+val infoF = getUserInfo(user)
+val statsF = getUserStat(user) 
+
+val res: Future[Result] = for {
+  info  &lt;- infoF
+  stats &lt;- statsF
+} yield Result(info, stats)
+
+</code></pre>
+				</section>
+
+				<section>
+					<p>Монада - абстракция цепочки вычислений;<br> тут не подходит
+
+					<p>Future это аппликативный функтор, но об это на лекции про Cats
+				</section>
+
+				<section>
+					<p>Используем zip
+					<pre><code class="scala">
+val infoF = getUserInfo(user)
+
+getUserInfo(user)
+  .zip(getUserStat(user)) // Future[(info, stat)]
+  .map(Result.tupled _)
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Future.sequence для списков
+
+					<pre><code class="scala">
+def process(i: Int): Future[Int] = ???
+
+val processed: Seq[Future[Int]] = 
+  Seq(1, 2, 3).map(process) // тут начинается работа
+
+val completed: Future[Seq[Int]] = 
+  Future.sequence(processed) // тут собираем результат
+					</code></pre>
+					<p>sequence может быть опасен - загружает очередь пула потоков
+					и может "перегрузить" process и пул
+				</section>
+
+				<section>
+					<p>Что плохого в Future?
+					<ul>
+						<li>Запускается сразу
+						<li class=fragment>implicit ExecutionContext
+						<li class=fragment>Нет остановки/отмены; тайм-аутов
+						<li class=fragment>Нет управления ресурсами
+						<li class=fragment>Context switch при цепочках вычислений
+					</ul>
+				</section>
+
+				<section>
+					<p>Всё еще не ФП?
+					<pre><code class="scala">
+val x = Future(r.nextInt)
+(x, x)
+
+// vs
+
+(Future(r.nextInt), Future(r.nextInt))
+					</code></pre>
+				</section>
+
+				<section>
+					<h3>Монадные трансформеры</h3>
+				</section>
+
+				<section>
+					<p>Что делать с Future[Option[T]]?
+				</section>
+
+				<section>
+					<p>Пример map:
+					<pre><code class="scala">
+val maybeF = Future.successful(Some("value"))
+
+maybeF.map(_.map(_.length))
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Универсальный трансформер для функторов
+					<pre><code class="scala">
+import cats.data._
+import cats.implicits._
+
+// еще нужен implicit ec
+
+val maybeF: Future[Option[String]] = ???
+
+// заменяет maybeF.map(_.map(_.length))
+Nested(maybeF).map(_.length).value 
+// возвращает Future[Option[Int]]
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Можно ли соединить две разные монады?
+					<p>В общем случае нет.
+				</section>
+
+				<section>
+					<p>Что мы хотим от Future[Option[T]]? 
+					<ul>
+						<li class="fragment">Асинхронное выполнение, как у Future
+						<li class="fragment">Выполнять операции, пока не возникнет None,<br> как у Option. Или Failure, как у Future
+					</ul>
+				</section>
+
+				<section>
+					<p>можно сделать такой flatMap:
+					<pre><code class="scala">
+class FutureO[+A](val fut: Future[Option[A]]) extends AnyVal {
+  def flatMap[B](f: A ⇒ FutureO[B])
+                (implicit ec: ExecutionContext): FutureO[B] = {
+    val newFuture = fut.flatMap {
+      case Some(a) ⇒ f(a).fut
+      case None    ⇒ Future.successful(None)
+    }
+    new FutureO(newFuture)
+  }
+}					
+					</code></pre>
+					<p>тут логика Option. От Future - flatMap и конструктор
+				</section>
+
+				<section>
+					<p>На месте Future может быть любая другая монада.
+
+					<p>Можно обобщить<br>(если у нас есть абстракция монады)
+				</section>
+
+				<section>
+					<p>OptionT - создает монаду для M[Option[T]] (cats)
+					<pre><code class="scala">
+val greetingFO: Future[Option[String]] = ???
+val firstnameF: Future[String] = ???
+val lastnameO: Option[String] = ???
+
+val ot = for { // OptionT[Future, String]
+  g &lt;- OptionT(greetingFO)
+  f &lt;- OptionT.liftF(firstnameF)
+  l &lt;- OptionT.fromOption[Future](lastnameO)
+} yield s"$g $f $l"
+
+val result: Future[Option[String]] = ot.value
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Трансформеры есть и для некоторых других монад.
+				</section>
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса:<br> <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>

@@ -33,11 +33,11 @@
 					<h3>План</h3>
 					<p>Последняя лекция про язык Scala
 					<ol>
-						<li>Imlicit значения
+						<li>Implicit значения
 						<li>Передача контекста и конфигурации
 						<li>“pimp my library”
 						<li>Тайпклассы (примеры из Cats)
-						<li>Сериализация и type classes на примере Play-JSON
+						<li>Тайп классы на примере Play-JSON
 					</ol>
 				</section>
 
@@ -87,11 +87,11 @@ DB localTx { implicit session =&gt;
 				</section>
 
 				<section>
-					<p>Где это применяется? Для передачи контекста
+					<p>Где это применяется? <br>Для передачи контекста
 					<ul>
-						<li>Сессия/транзакция БД
-						<li>Конфигурация
-						<li>Свойства запроса (права, язык, таймзона и т.п.)
+						<li>сессии/транзакции БД
+						<li>конфигурации
+						<li>свойств запроса (права, язык, таймзона и т.п.)
 						<li>...
 					</ul>
 				</section>
@@ -123,7 +123,7 @@ DB localTx { implicit session =&gt;
 					<pre><code class="scala">
 implicit class RichString(str: String)
 					</code></pre>
-					<p>автоматическое преобразование там где необходимо
+					<p>автоматическое преобразование там, где необходимо
 				</section>
 
 				<section>
@@ -195,9 +195,6 @@ val timeout: Duration = 5.minutes
 
 				<section>
 					<h4>Тайпклассы</h4>
-				</section>
-
-				<section>
 					<p>Typeclass - шаблон проектирования, построенный на
 					использовании implicit преобразований.
 				</section>
@@ -208,8 +205,9 @@ val timeout: Duration = 5.minutes
 def sum(list: List[Int]): Int = list.foldLeft(0)(_ + _)
 					</code></pre>
 					<div class=fragment>
-					<p>Как её обобщить на наш собственный тип значений?
+					<p>Как её обобщить для нашего типа значений?
 					<pre><code class="scala">
+// наш собственный тип значений
 case class BusValue(amount: Int)
 					</code></pre>
 					</div>
@@ -226,8 +224,11 @@ case class BusValue(amount: Int)
 				<section>
 					<p>Проблема с ООП:
 					<ul>
-						<li>Нужно как-то из типа добраться до "нуля"
-						<li class=fragment">Нужен trait для метода сложения
+						<li>нужно как-то из типа добраться до "нуля", но<br>
+						нет общего механизма доступа к данным и методам типа
+						<li class=fragment>trait для метода сложения, но
+						trait можно добавить только к "нашим" типам.
+						<li class=fragment>и еще trait'ов может быть много
 					</ul>
 				</section>
 
@@ -239,6 +240,7 @@ def combineAll[A](fa: Seq[A])(implicit m: Monoid[A]): A =
     m.combine(acc, a)
   }
 					</code></pre>
+					<p><small>Monoid есть в Cats и др. библиотеках,<br> можете сделать свой</small>
 				</section>
 
 				<section>
@@ -251,6 +253,7 @@ implicit val busMonoid: Monoid[BusValue] =
       BusValue(x.amount + y.amount)
   }
 					</code></pre>
+					monoid может объявить для любого типа,<br> даже "чужого"
 				</section>
 
 				<section>
@@ -263,14 +266,16 @@ combine(x, combine(y, z)) = combine(combine(x, y), z)
 					<pre><code class="scala">
 combine(x, empty) = combine(empty, x) = x
 					</code></pre>
+					коммутативность не требуется!
 				</section>
 
 				<section>
 					<p>Примеры:</p>
 					<ul>
-						<li>Числа и операция сложения. empty = 0
-						<li class=fragment>Числа и операция умножения. empty = 1
-						<li class=fragment>Коллекции. empty = пустая коллекция
+						<li>Числа и операция сложения, empty = 0
+						<li class=fragment>Числа и операция умножения, empty = 1
+						<li class=fragment>Конкатенация строк, empty = ""
+						<li class=fragment>Коллекции, empty = пустая коллекция
 					</ul>
 				</section>
 
@@ -279,20 +284,26 @@ combine(x, empty) = combine(empty, x) = x
 					<pre><code class="scala">
 import cats.implicits._
 
+implicit val busMonoid: Monoid[BusValue] = ???
+
 // pimp my library
 Vector(BusValue(1), BusValue(9000)).combineAll
 					</code></pre>
-					<p><small>Для Seq не работает!</small>
+					<p><small>для Seq нужна новая версия Cats</small>
 				</section>
 
 				<section>
-					NonEmptyList - не моноид, а Semigroup
+					<p>NonEmptyList - не моноид, а полугруппа (Semigroup)
+					<p class=fragment>Обладает ассоциативным методом combine
 				</section>
 
 				<section>
-					Красивая операция "сложения":
+					Красивая операция "сложения" для Semigroup:
 					<pre><code class="scala">
 BusValue(1) |+| BusValue(9000)
+
+// Monoid - это наследник Semigroup,
+// так что работает и для моноидов
 					</code></pre>
 				</section>
 
@@ -302,7 +313,9 @@ BusValue(1) |+| BusValue(9000)
 val one = Map("first" -&gt; BusValue(1), "second" -&gt; BusValue(2))
 val two = Map("second" -&gt; BusValue(3), "third" -&gt; BusValue(3))
 
-one |+| two
+one ++ two // "second" первого заменен на второй
+one |+| two // "second" складывается
+
 // Map("first" -&gt; BusValue(1), 
 //   "second" -&gt; BusValue(5), 
 //   "third" -&gt; BusValue(3))
@@ -310,64 +323,59 @@ one |+| two
 				</section>
 
 				<section>
-					Как это работает?
+					<p>Как это работает?
+					<p>Еще один механизм - неявное преобразование
 					<pre><code class="scala">
-// неявное преобразование
+// неявное преобразование моноида для значения
+// в моноид для Map
 implicit def monoidForMap[K, V]
               (implicit ev: Monoid[V]): Monoid[Map[K, V]] =
                  new MapMonoid[K, V]
 					</code></pre>
+					<p>Если значение не Monoid, то и Map нет.
 				</section>
 
 				<section>
-					<p>Немного другой синтаксис:
+					<p>Вывод преобразований - рекурсивный
+				</section>
+
+				<section>
+					<p>Еще раз посмотрим на этот код
+					<pre><code class="scala">
+// неявное преобразование моноида для значения
+// в моноид для Map
+implicit def monoidForMap[K, V]
+              (implicit ev: Monoid[V]): Monoid[Map[K, V]] =
+                 new MapMonoid[K, V]
+					</code></pre>
+					<p>ev не используем, а только передаем 
+
 					<pre><code class="scala">
 // context bounds
-implicit def monoidForMap[K, V: Semigroup]: Monoid[Map[K, V]] =
+implicit def monoidForMap[K, V : Semigroup]: Monoid[Map[K, V]] =
   new MapMonoid[K, V]
 					</code></pre>
 				</section>
 
 				<section>
-					<p>Тайплассы можно объявить для более интересных конструкций.
+					<p>Тайпклассы можно объявить для<br>более интересных конструкций.
+					<p> 6-я лекция: Cats и Circe
 				</section>
 
 				<section>
-					<p>Функтор - абстракция контейнера с операцией map
-					<img src="catfunctor.png">
-					<p><small>источник: <a target="_blank" href="https://buzzdecafe.github.io/code/2014/10/26/functors-and-applicatives">Functors and Applicatives</a></small>
+					<h2>Конец первой части</h2>
+					<p>далее работа с тайпклассами на примере play-json
 				</section>
 
 				<section>
-					<pre><code class="scala">
-trait Functor[F[_]] {
-  def map[A, B](fa: F[A])(f: A =&gt; B): F[B]
-}
-					</code></pre>
-				</section>
-
-				<section>
-					<p>Требования к реализации функтора:
-					<pre><code class="scala">
-fa.map(f).map(g) = fa.map(v =&gt; g(f(v)))
-					</code></pre>
-					<pre><code class="scala">
-fa.map(identity) = fa
-					</code></pre>
-				</section>
-
-				<section>
-					<p>После перерыва рассмотрим некоторое практическое применение.
-				</section>
-
-				<section>
-					<h2>Перерыв 5 минут</h2>
+					<p>Что же такое тайпклассы?
+					<p>Способ реализации некой абстрактной функциональности вне данных, с которыми она связана.
 				</section>
 
 				<section>
 					<h4>JSON</h4>
 					<p>Текстовый формат обмена данными.
-					<p class="fragment">Пришел на замену XML, который оказался
+					<p>Пришел на замену XML, который оказался
 					слишком сложным и слишком медленным.
 				</section>
 
@@ -406,12 +414,15 @@ fa.map(identity) = fa
 				<section>
 					<p>Формат JSON был разработан<br>Дугласом Крокфордом.
 					<p>Видео: <a target="_blank" href="https://www.youtube.com/watch?v=-C-JoyNuQJs">The JSON Saga</a>
+					<p>"The Software shall be used for Good, not Evil."
 				</section>
 
 				<section>
 					<p>Используем библиотеку Play JSON.
 
 					<p>Часть play-framework; можно использовать отдельно.
+
+					<p>Circe, другая библиотека, будет на лекции про Cats
 				</section>
 
 				<section>
@@ -428,7 +439,7 @@ fa.map(identity) = fa
 
 					<pre><code class="scala">
 libraryDependencies += 
-  "com.typesafe.play" %% "play-json" % "2.8.1"
+  "com.typesafe.play" %% "play-json" % "2.8.2"
 					</code></pre>
 				</section>
 
@@ -459,13 +470,12 @@ val v: JsValue = JsObject(Seq(
 Json.stringify(v) // компактный формат
 Json.prettyPrint(v) // с форматированием			
 					</code></pre>
+					<p>pretty print используем только для отладки
 				</section>
 
 				<section>
-					<p>Большие структуры так выводить не удобно.
-
-					<p class="fragment">Нужно разбить создание JSON на компоненты
-					и комбинировать их.
+					<p>Большие структуры так выводить не удобно. 
+					<p>Хотим выводить JSON для наших case-классов, коллекций и т.п.
 				</section>
 
 				<section>
@@ -486,13 +496,9 @@ trait Writable {
   def toJson: JsValue
 }					
 					</code></pre>
-				</section>
-
-				<section>
-					<p>Однако:
 
 					<ul>
-						<li class="fragment">trait не добавить к стандартным коллекциям
+						<li class=fragment>trait не добавить к стандартным коллекциям
 						<li class="fragment">trait не добавить к сторонним классам
 						<li class="fragment">смешивается основная логика и доп. функции
 					</ul>
@@ -501,14 +507,14 @@ trait Writable {
 				<section>
 					<p>Reflection? Да, это "Java-way".
 
-					<p class="fragment">В runtime запрашиваем структуру объекта средствами JVM и выводим её.
+					<p>В runtime запрашиваем структуру объекта средствами JVM и выводим её.
 				</section>
 
 				<section>
 					<p>Однако:
 
 					<ul>
-						<li class="fragment">Не типобезопасно: можно вывести что-то не то, например сессию БД или внутренний
+						<li>Не типобезопасно: можно вывести что-то не то, например сессию БД или внутренний
 						пароль
 						<li class="fragment">Медленно
 						<li class="fragment">Трудности с настройкой формата вывода
@@ -528,8 +534,12 @@ trait Writes[A] {
 					</code></pre>
 					<p>использование
 					<pre><code class="scala">
-def toJson[T](o: T)(implicit tjs: Writes[T]): JsValue = 
-  tjs.writes(o)
+object Json {
+  def toJson[T](o: T)(implicit tjs: Writes[T]): JsValue = 
+    tjs.writes(o)
+
+  ...
+}
 					</code></pre>
 				</section>
 
@@ -550,7 +560,7 @@ implicit object StringWrites extends Writes[String] {
 
 				<section>
 					<p>Для Seq нужно преобразование
-					<pre><code class="scala">
+					<pre><code class="scala">// реализация из play-json
 implicit def traversableWrites[A](implicit w: Writes[A]): 
     Writes[Traversable[A]] = {
 
@@ -564,7 +574,8 @@ implicit def traversableWrites[A](implicit w: Writes[A]):
 }
 
 Json.toJson(Seq("some string", "second string"))
-					</code></pre>
+// ["some string", "second string"]</code></pre>
+					<small>Типобезопасно - работает только если для элементов есть Writes</small>
 				</section>
 
 				<section>
@@ -574,9 +585,9 @@ Json.toJson(Seq("some string", "second string"))
 case class User(id: UUID, name: String, title: Option[String])
 
 object User { // объявляем в companion object
-  // OWrites вместо Writes
+  // OWrites вместо Writes (возвращает JsObject)
   // используем Writes.apply
-  implicit val writes: OWrites[User] = OWrites { user ⇒
+  implicit val writes: OWrites[User] = OWrites { user =&gt;
     Json.obj( // сам использует Writes для значений
       "id" -&gt; user.id,
       "name" -&gt; user.name,
@@ -596,18 +607,20 @@ object User {
 				</section>
 
 				<section>
-					<p>Writes - не всегда простое преобразование
+					<p>Writes может зависеть от контекста
 					<pre><code class="scala">
 // writes зависит от языка пользователя
-implicit def writes(implicit lang: Lang): OWrites[User]
+implicit def writes(implicit lang: Lang): OWrites[User] = ???
 					</code></pre>
 				</section>
 
 				<section>
 					<p>Такой полиморфизм работает в компиляторе, типы должны быть точно известны.
+					<p>Абстрактные типы записать не сможем.
 				</section>
 
 				<section>
+					<p>Записываем выражение калькулятора<br>из первой лекции
 					<pre><code class="scala">
 // один Writes для всего ADT
 object Expr {
@@ -621,12 +634,13 @@ object Expr {
   }
 }
 					</code></pre>
+					(макрос из play умеет простые ADT)
 				</section>
 
 				<section>
 					<p>Итого мы получили:
 					<ul>
-						<li>Специализированный код для каждого типа
+						<li>Эффективный скомпилированный код
 						<li class="fragment">Типобезопасность
 						<li class="fragment">Код записи JSON отделен от данных
 						<li class="fragment">Возможности по кастомизации, использование контекста
@@ -641,6 +655,7 @@ trait Reads[A] {
   def reads(json: JsValue): JsResult[A]
 }
 					</code></pre>
+					<p>есть макрос Json.writes[A]</p>
 				</section>
 
 				<section>
@@ -678,15 +693,9 @@ object User {
   }
 }
 					</code></pre>
-				</section>
 
-				<section>
-					<p>Почему плохой?
-
-					<ul>
-						<li>Exception вместо JsError
-						<li>Диагностика только по<br> номерам строк из Exception
-					</ul>
+					<p>Exception вместо JsError;<br>
+					диагностика только по номерам строк
 				</section>
 
 				<section>
@@ -703,14 +712,7 @@ implicit val reads: Reads[User] = Reads[User] { json ⇒
   }
 }
 					</code></pre>
-				</section>
-
-				<section>
-					<p>Исключений больше нет,<br> но диагностика еще хуже
-				</section>
-
-				<section>
-					<p>Проблема: при операции поиска теряется путь
+					<p>Исключений больше нет,<br> но потеряли пути ошибок
 				</section>
 
 				<section>
@@ -744,6 +746,7 @@ val idReads: Reads[UUID] = (__ \ "id").read[UUID]
 				<section>
 					<p>Reads - тоже монада
 					<pre><code class="scala">
+// тут мы уже не парсим значение, а собираем функцию парсинга
 implicit val reads: Reads[User] = 
   for {
     id &lt;- (__ \ "id").read[UUID]
@@ -753,71 +756,33 @@ implicit val reads: Reads[User] =
     User(id, name, title)
   }
 					</code></pre>
-				</section>
-
-				<section>
-					<p>Чего мы получили:
-
-					<ul>
-						<li>JsError, никаких исключений
-						<li>В ошибке закодирован путь
+					JsError, никаких исключений.<br>
+					В ошибке закодирован путь
 					</ul>
 				</section>
 
 				<section>
 					<p>Что не так?
 
-					<p class="fragment">Монада - абстракция цепочки вычислений.
+					<p class="fragment">Монада - абстракция цепочки вычислений.<br>
 
-					<p class="fragment">У нас же все вычисления независимые,<br>кроме шага сборки.
+					У нас же все вычисления независимые,<br>кроме шага сборки.
 				</section>
 
 				<section>
-					<p>Еще плохо - ошибка только первая;<br> надо выдать все ошибки
+					<p>Еще плохо - ошибка только первая;<br> надо выдать все ошибки.
 
 					<p class="fragment">Монада тут - плохая абстракция.
 				</section>
 
 				<section>
-					<p>На помощь приходит<br>аппликативный функтор
+					<p>На помощь приходит<br>аппликативный функтор.
+					<p>О нем поговорим на лекции про Cats.
 				</section>
 
 				<section>
-					<p>Это функтор с дополнительными операциями
-					<ul>
-						<li>pure - создание функтора
-					<pre><code class="scala">
-def pure[A](a: A): F[A]
-					</code></pre>
-						<li>ap - применяет функцию в функторе к значению в функторе<br>
-					<pre><code class="scala">
-def ap[A, B](ff: F[A =&gt; B])(fa: F[A]): F[B]
-					</code></pre>
-					</ul>
-				</section>
-
-
-				<section>
-					<p>Функция ap:<br>
-					<img src="apply.png">
-					<p><small>источник: <a target="_blank" href="https://buzzdecafe.github.io/code/2014/10/26/functors-and-applicatives">Functors and Applicatives</a></small>
-				</section>
-
-				<section>
-					<p>Вместо ap можно определить product - комбинирует два функтора в функтор от пары<br>
-					<pre><code class="scala">
-def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
-					</code></pre>
-				</section>
-
-				<section>
-					<p>Реализации функторов должны следовать нескольким законам.
-
-					<p class="fragment">Подробнее см. <a target="_blank" href="https://softwaremill.com/applicative-functor/">The underrated applicative functor</a> и <a target="_blank" href="https://typelevel.org/cats/typeclasses/applicative.html">Applicative (Cats)</a>.
-				</section>
-
-				<section>
-					<p>Reads - не только монада, но и аппликатив.
+					<p>Reads имеет операцию сборки: пару Reads можно собрать в
+					Reads пары (аналогично для троек и т.д.).
 
 					<p class="fragment">При сборке ошибки "складываются".
 				</section>
@@ -865,6 +830,9 @@ val userReads: Reads[User] = (
 
 					<pre><code class="scala">
 Reads.of[Int].map(Number.apply)
+
+// аналог
+implicitly[Reads[Int]].map(Number.apply)
 					</code></pre>
 				</section>
 
@@ -883,9 +851,9 @@ Reads.of[Int].filter(JsErr("must be positive"))(_ &gt; 0)
 import play.api.libs.json.{JsonValidationError ⇒ JsErr}
 
 sealed trait Numbers
-object One extends Numbers
-object Two extends Numbers
-object Three extends Numbers
+case object One extends Numbers
+case object Two extends Numbers
+case object Three extends Numbers
 
 val reads: Reads[Numbers] = 
   Reads.of[String].collect(JsErr("bad number")) {

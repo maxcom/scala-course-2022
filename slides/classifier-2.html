@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Классификатор: морфология и диагностика</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Классификатор: морфология и диагностика</h2>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<p>"Домашнее" задание: развиваем классификатор
+					<ul>
+						<li>Нейтральный класс
+						<li class="fragment">Добавляем нормализацию словоформ
+						<li class="fragment">Добавляем диагностику
+					</ul>
+				</section>
+
+				<section>
+					<h3>Нейтральный класс</h3>
+					<ul>
+						<li>Нормализуем вероятности<br>
+						см. раздел <a href="http://bazhenov.me/blog/2012/06/11/naive-bayes.html">Формирование вероятностного пространства</a>.
+						<li>Нейтральный - когда вероятность ниже 70%<br>
+						(порог выносим в константу)
+
+				</section>
+
+				<section>
+					<h3>Нормализация словоформ и токенизация</h3>
+				</section>
+
+				<section>
+					<p>Игнорируем окончания у слов.
+
+					<p>Используем готовую библиотеку - Apache Lucene
+
+					<pre><code class="scala">
+libraryDependencies += 
+  "org.apache.lucene" % "lucene-analyzers-common" % "8.11.1"
+					</code></pre>
+
+					<p><small>build.sbt</small>
+				</section>
+
+				<section>
+					<p>Создаем анализатор:
+					<pre><code class="scala">
+val analyzer = new RussianAnalyzer()
+					</code></pre>
+					<p>В комплекте - токенизатор и <a target="_blank" href="https://ru.wikipedia.org/wiki/%D0%A1%D1%82%D0%B5%D0%BC%D0%BC%D0%B5%D1%80_%D0%9F%D0%BE%D1%80%D1%82%D0%B5%D1%80%D0%B0">стеммер Портера</a>
+				</section>
+
+				<section>
+					<p>Нам нужно достать
+					<pre><code class="scala">
+case class Term(word: String, start: Int, end: Int)
+					</code></pre>
+					<p><small>смещения понадобятся для диагностики</small>
+				</section>
+
+				<section>
+					<pre><code class="scala">val ts = analyzer.tokenStream("text", "тестовая строка")
+ts.reset()
+
+val out = new ArrayBuffer[Term]
+
+while (ts.incrementToken()) {
+  val word = 
+    ts.getAttribute(classOf[CharTermAttribute]).toString
+
+  val offsets = ts.getAttribute(classOf[OffsetAttribute])
+
+  out += Term(word, offsets.startOffset(), offsets.endOffset())
+}
+
+out // Term(тестов,0,8), Term(строк,9,15) </code></pre>
+				</section>
+
+				<section>
+					<p>Используем при классификации и при обучении.
+				</section>
+
+				<section>
+					<h3>Добавляем диагностику</h3>
+				</section>
+
+				<section>
+					<p>3 характерных слова для найденного класса.
+
+					<p>Выделяем слова в тексте символами '*'
+				</section>
+
+				<section>
+					<p>Пример:
+<pre><code class="scala">
+вот вам английский язык! Выучить от сих до сих! Приеду — проверю! 
+Если *не* выучите — моргалы *выколю*, пасти *порву* и, 
+как их, эти… носы пооткушу. Ясно?!
+</code></pre>
+					<p>выделяем слова целиком, с окончаниями</p>
+				</section>
+
+				<section>
+					<p>Срок сдачи - 20 апреля.
+					<p>Делаем новый merge request
+					<p>Если первый mr еще не принят - отдельная ветка под второй
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>

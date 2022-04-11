@@ -49,19 +49,29 @@ layout: default
   * Видео: [Часть 2. Ленивые вычисления и монады](https://youtu.be/PYvtV4AapgM).
   * Слайды: [Vector. Ленивые вычисления. LazyList и View. Монады.](slides/day3.html)
   * Семинар: Решаем задачи с использованием LazyList. (ведущий - Роман)
+  * Семинар: [Стартовый проект](https://gitlab.com/llgruff/solar-seminar-lazylist). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson3)
 4. Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json. 
   * Лекция: 30 марта. Семинар: 6 апреля.
+  * Видео: [Часть 1. Implicit значения и преобразования. Тайпклассы.](https://www.youtube.com/watch?v=pagteHi4pp8)
+  * Видео: [Часть 2. Тайпклассы и работа с JSON. Обзор play-json](https://www.youtube.com/watch?v=_IBWPKVZ6ug)
   * Видео: [Стартуем большой проект](https://youtu.be/IWcX4ke4G4w) (домашнее задание)
-  * Слайды (в работе): [Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json](slides/day4.html)
-  * Семинар: Практика по использованию play-json.
+  * Слайды: [Implicit значения и преобразования. Тайпклассы. Чтение и запись JSON в play-json](slides/day4.html)
+  * Семинар: Практика по использованию play-json. (ведущие - Саша и Наташа)
+  * Семинар: [Стартовый проект](https://gitlab.com/djattah/lessonjson). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson4](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson4)
   * Слайды домашнего задания: [Пишем классификатор](slides/classifier-1.html)
 5. Базовые примитивы многопоточности. 
   * Лекция: 6 апреля. Семинар: 13 апреля.
-  * Семинар: Практика по использованию Future/Promise. Планировщик.
+  * Видео: [Введение в многопоточное и асинхронное программирование.](https://www.youtube.com/watch?v=BQ0KxwA1HFM)
+  * Видео: [Future и Promise](https://youtu.be/OTq-S78RbTk)
+  * Слайды: [Базовые примитивы многопоточности](slides/day5.html)
+  * Семинар: Практика по использованию Future/Promise. Планировщик. (ведущий - Роман)
 6. Cats и Circe. 
-  * Лекция: 13 апреля. Семинар: 20 апреля.
+  * Лекция: 13 апреля. Семинар: 21 апреля (*Внимание!* семинар перенесен на четверг!).
+  * Видео (в работе): Cats и Circe
+  * Видео: [Классификатор часть 2](https://youtu.be/ChCGzx8Xxi8) (домашнее задание).
   * Слайды: [Cats и Circe](slides/day6.html)
-  * Семинар: Практика по извлечению данных JSON/HTML и валидации.
+  * Семинар: Практика по извлечению данных JSON/HTML и валидации. (ведущий - Никита)
+  * Слайды домашнего задания: [Классификатор: морфология и диагностика](slides/classifier-2.html)
 7. HTTP Протокол. Akka HTTP. Архитектура высоконагруженных приложений. 
   * Лекция: 20 апреля. Семинар: 27 апреля.
   * Семинар: Практика по Akka Http.
@@ -79,14 +89,6 @@ layout: default
   * Семинар: Akka Streams.
 12. Подведение итогов.
   * Семинар: 1 июня.
-
-## Дополнительные темы (под вопросом)
-
-* Akka Persistence и CQRS
-* SQL - работа с БД из Scala
-* Анализ JFR и Heap dump
-* Общетехнические темы: pipeline по разработке фичи
-* ZIO
 
 # Материалы для большого практического задания
 
