@@ -1,0 +1,1776 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Cats и Circe</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h3>Часть 6. Cats и Circe</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a></small>
+				</section>
+
+				<section>
+					<h3>План</h3>
+					<ol>
+						<li>Cats Modules</li>
+						<li>Cats Type Classes</li>
+						<li>Cats Data Types</li>
+						<li>Circe</li>
+					</ol>
+				</section>
+
+
+
+
+
+
+
+				<section>
+					<div><img src="cats.png"></div>
+					<h3>Библиотека Cats</h3>
+					<p>Абстрактные котики, функциональный подход и теория категорий
+					<p class=fragment><small>* Название является шутливым сокращением слова "категория"</small>
+				</section>
+
+
+				<section>
+					<ul>
+						<li>Предоставляет абстракции функционального программирования</li>
+						<li class=fragment>Является основой для экосистемы чистих типизированных библиотек</li>
+					</ul>
+				</section>
+
+
+				<section>
+					<h2>Монады</h2>
+					(и связанные с ними концепции)
+					<p>Архитектурные строительные блоки, которые появляются в программах снова и снова.
+					<p class=fragment><small>т.е. являются для ФП эквивалентом шаблонов проектирования ООП</small>
+				</section>
+
+				<section>
+					<h2>Их преимущества над ООП</h2>
+					<ul>
+						<li>Формально <small>(а, значит, очень точно)</small> определены</li>
+						<li>Являются максимально обобщёнными</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Модули библиотеки Cats</h2>
+					<p>некоторые из них находятся в собственных репозиториях
+				</section>
+
+				<section>
+					<h2>cats-kernel, cats-core</h2>
+					<ul>
+						<li>набор type-классов
+						<li>минимальный набор структур данных для их поддержки
+						<li>экземпляры классов типов для этих структур данных и стандартных типов
+					</ul>
+				</section>
+
+				<section>
+					<h2>cats-laws, cats-testkit,<br>cats-testkit-scalatest</h2>
+					<ul>
+						<li>набор тестов для проверки собственных инстансов на соответствие законам</li>
+						<li>поддерживается Specs2, ScalaTest, ScalaCheck и др.</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>cats-effect</h2>
+					<ul>
+						<li>библиотека для ассинхронных вычисления</li>
+						<li>основной тип IO - очень похож на Future, но более строгий</li>
+					</ul>
+					<small>(рассмотрим подробнее на следующих лекциях)</small>
+				</section>
+
+				<section>
+					Есть и другие, но нам пока хватит.
+				</section>
+
+				<section>
+					<p>Полезные ссылки:
+					<ul>
+						<li>Website: <a href="https://typelevel.org/cats">https://typelevel.org/cats</a></li>
+						<span class=fragment>
+							<li>Type classes: <a href="https://typelevel.org/cats/typeclasses">https://typelevel.org/cats/typeclasses</a></li>
+							<li>Data types: <a href="https://typelevel.org/cats/datatypes">https://typelevel.org/cats/datatypes</a></li>
+						</span>
+						<li class=fragment>Scala exercises: <a href="https://scala-exercises.org/cats">https://scala-exercises.org/cats</a></li>
+						<li class=fragment>Scala with Cats: <a href="https://scalawithcats.com">https://scalawithcats.com</a></li>
+						<li class=fragment>Другие проекты экосистемы:<br><a href="https://typelevel.org/cats/typelevelEcosystem">https://typelevel.org/cats/typelevelEcosystem</a></li>
+					</ul>
+				</section>
+
+
+
+
+
+
+
+
+				<section>
+					<p><img src="cats2.png">
+					<p>Рассмотрим наиболее полезные классы
+				</section>
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Semigroup</h2>
+					<p>Определена операция
+					<pre><code class="scala">trait Semigroup[A] {
+  def combine(x: A, y: A): A
+}</code></pre>
+					<div class=fragment>
+					<p>Должна удовлетворять закону ассоциативности
+					<pre><code class="scala">combine(x, combine(y, z)) = combine(combine(x, y), z)</code></pre>
+					</div>
+				</section>
+
+				<section>
+					<h2>Пример</h2>
+					<p>Тип Int и операция сложения
+					<pre><code class="scala">import cats.Semigroup
+
+implicit val intAdditionSemigroup = new Semigroup[Int] {
+  def combine(x: Int, y: Int): Int = x + y
+}</code></pre>
+					<small>Поэтому часто операцию "combine" называют "сложением"</small>
+				</section>
+
+				<section>
+					<p>cats предоставляет infix-синтаксис для полугруп
+					<pre><code class="scala">import cats.implicits._
+
+1 |+| 2</code></pre>
+				</section>
+
+				<section>
+					<h2>Ещё примеры</h2>
+				</section>
+
+				<section>
+					<ul>
+						<li>Тип Int и операция умножения</li>
+						<li class=fragment>Тип String и операция "склеивания"</li>
+						<li class=fragment>Кортежи: пары, тройки и т.д.</li>
+					</ul>
+				</section>
+
+				<section>
+					<p>Тип Map и операция merge
+					<pre><code class="scala">import cats.implicits._
+
+val map1 = Map("hello" -> 1, "world" -> 1)
+val map2 = Map("hello" -> 2, "cats"  -> 3)
+
+Semigroup[Map[String, Int]].combine(map1, map2)
+// res1: Map[String, Int] =
+//   Map("hello" -> 3, "cats" -> 3, "world" -> 1)
+
+map1 |+| map2
+// res2: Map[String, Int] =
+//   Map("hello" -> 3, "cats" -> 3, "world" -> 1)</code></pre>
+					<p class=fragment>Аналогично для List и других коллекций
+				</section>
+
+
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Monoid</h2>
+					<p>Полугруппа с "нулём"
+					<pre><code class="scala">trait Semigroup[A] {
+  def combine(x: A, y: A): A
+}
+
+trait Monoid[A] extends Semigroup[A] {
+  def empty: A
+}</code></pre>
+				</section>
+
+				<section>
+					<p>В математике чаще называют "единицей" или "нейтральным элементом"
+				</section>
+
+				<section>
+					<p>Также удовлетворяет закону ассоциативности
+					<pre><code class="scala">combine(x, combine(y, z)) = combine(combine(x, y), z)</code></pre>
+					<div class=fragment>
+						<p>И дополнительно закон для "нуля":
+						<pre><code class="scala">combine(x, empty) = combine(empty, x) = x</code></pre>
+					</div>
+				</section>
+
+				<section>
+					<p>Большинство полугрупп легко расширяются до моноида.
+				</section>
+
+				<section>
+					<ul>
+						<li>Целые числа (Int, Long), сложение и 0</li>
+						<li class=fragment>Целые числа (Int, Long), умножение и 1</li>
+						<li class=fragment>String, конкатенация и пустая строка <code class="scala">""</code></li>
+						<li class=fragment>Коллекция, конкатенация и пустая коллекция того же типа:
+							<ul style="list-style-type: none;">
+								<li class=fragment>Map[A, B] и Map.empty[A, B]</li>
+								<li class=fragment>List[A] и List.empty[A]</li>
+								<li class=fragment>и др.</li>
+							</ul>
+						</li>
+					</ul>
+				</section>
+
+				<section>
+					<pre><code class="scala">import cats.Monoid
+
+implicit val intAdditionMonoid: Monoid[Int] = new Monoid[Int] {
+  def empty: Int = 0
+  def combine(x: Int, y: Int): Int = x + y
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">val x = 1
+
+Monoid[Int].combine(x, Monoid[Int].empty)
+// res1: Int = 1
+
+Monoid[Int].combine(Monoid[Int].empty, x)
+// res2: Int = 1</code></pre>
+				</section>
+
+				<section>
+					<p>Cats предоставляет операции для коллекций над моноидами.
+				</section>
+
+				<section>
+					<pre><code class="scala">def combineAll[A: Monoid](as: List[A]): A =
+      as.foldLeft(Monoid[A].empty)(Monoid[A].combine)</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import cats.implicits._
+
+combineAll(List(1, 2, 3))
+// res: Int = 6</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import cats.implicits._
+
+combineAll(List("hello", " ", "world"))
+// res: String = "hello world"
+</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import cats.implicits._
+
+combineAll(List(
+             Map('a' -> 1),
+             Map('a' -> 2, 'b' -> 3),
+             Map('b' -> 4, 'c' -> 5)
+          ))
+// res: Map[Char, Int] = Map('b' -> 7, 'c' -> 5, 'a' -> 3)</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import cats.implicits._
+
+combineAll(List(
+             Set(1, 2),
+             Set(2, 3, 4, 5)
+          ))
+// res: Set[Int] = Set(5, 1, 2, 3, 4)</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+				<section>
+					<p>Не всякая полугруппа является моноидом
+				</section>
+
+				<section>
+					<p>Но любая полугруппа может им стать, если её завернуть в Option!
+				</section>
+
+				<section>
+					<p>Option[A] не является ни моноидом, ни полугруппой:
+						<br>не определена операция combine
+					<p class=fragment>Но Option[A: Semigroup] является!
+				</section>
+
+
+				<section>
+					<p>NonEmptyList - полугруппа, но не моноид
+				</section>
+
+				<section><pre><code class="scala">final case class NonEmptyList[A](head: A, tail: List[A]) {
+
+  def ++(other: NonEmptyList[A]) =
+                        NonEmptyList(head, tail ++ other.toList)
+
+  def toList: List[A] = head :: tail
+
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">implicit def nonEmptyListSemigroup[A] =
+                                new Semigroup[NonEmptyList[A]] {
+
+  def combine(x: NonEmptyList[A], y: NonEmptyList[A]) = x ++ y
+
+}</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">implicit def optionMonoid[A: Semigroup] = new Monoid[Option[A]]
+{
+  def empty: Option[A] = None
+
+  def combine(x: Option[A], y: Option[A]): Option[A] =
+    x match {
+      case None => y
+      case Some(xv) =>
+        y match {
+          case None => x
+          case Some(yv) => Some(xv |+| yv)
+        }
+    }
+}</code></pre>
+				</section>
+
+
+				<section>
+					<p>Такое комбинирование пролучаем из
+						<br>Semigroup.combineAllOption
+				</section>
+
+				<section>
+					<pre><code class="scala">val nel1 = NonEmptyList(1, List(2, 3))
+val nel2 = NonEmptyList(4, List(5, 6))
+
+val all = List(nel1, nel2)
+
+Monoid.combineAll(all)
+// Ошибка: NonEmptyList не является моноидом</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">val nel1 = NonEmptyList(1, List(2, 3))
+val nel2 = NonEmptyList(4, List(5, 6))
+
+val lifted = List(nel1, nel2).map(nel => Option(nel))
+
+Monoid.combineAll(lifted)
+// res: Option[NonEmptyList[Int]] =
+//                   Some(NonEmptyList(1, List(2, 3, 4, 5, 6)))</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">MonoidK</h2>
+					<p>Моноид над конструкторами<br>типов с одним аргументом</p>
+					<small class=fragment>Будем называть их "контейнерами"</small>
+					<p class=fragment>В частности - над коллекциями</p>
+				</section>
+
+				<section>
+					<h2 style="text-transform: none;">Monoid[A]</h2>
+					<ul>
+						<li>Позволяет комбинировать значения A</li>
+						<li class=fragment>Существует "пустое" значение A, которое функционирует как "ноль"</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2 style="text-transform: none;">MonoidK[F]</h2>
+					<ul>
+						<li>Позволяет комбинировать два значения F[A]</li>
+						<li class=fragment>Для любого A существует "пустое" значение F[A]</li>
+						<li class=fragment>Комбинация и пустое значение зависят только от структуры F, но не от структуры A</li>
+					</ul>
+				</section>
+
+				<section>
+					<p>Метод empty теперь параметризуется<br>типом элементов
+					<pre><code class="scala">Monoid[List[String]].empty
+// res1: List[String] = List()
+
+MonoidK[List].empty[String]
+// res2: List[String] = List()
+
+MonoidK[List].empty[Int]
+// res3: List[Int] = List()</code></pre>
+				</section>
+
+				<section>
+					<p>Метод combineK теперь параметризуется<br>типом элементов
+					<pre><code class="scala">Monoid[List[String]].combine(
+             List("hello", "world"),
+             List("bye", "moon"))
+// res1: List[String] = List("hello", "world", "bye", "moon")
+
+MonoidK[List].combineK[String](
+             List("hello", "world"),
+             List("bye", "moon"))
+// res2: List[String] = List("hello", "world", "bye", "moon")
+
+MonoidK[List].combineK[Int](List(1, 2), List(3, 4))
+// res3: List[Int] = List(1, 2, 3, 4)</code></pre>
+				</section>
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">SemigroupK</h2>
+					<p>Полугруппа над конструкторами<br>типов с одним аргументом
+				</section>
+
+
+
+
+
+
+
+				<section>
+					<h2>Functor</h2>
+				</section>
+
+				<section>
+					<p>Добавляет операцию map к контейнерам
+					<pre><code class="scala">trait Functor[F[_]] {
+  def map[A, B](fa: F[A])(f: A => B): F[B]
+}</code></pre>
+					<img src="catfunctor.png" class=fragment>
+				</section>
+
+				<section>
+					Требования к реализации
+					<pre><code class="scala">
+fa.map(f).map(g) = fa.map(f.andThen(g))   //composition
+
+fa.map(x => x) = fa                       //identity
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+new Functor[Option] {
+  def map[A, B](fa: Option[A])(f: A => B): Option[B] =
+    fa match {
+      case None    => None
+      case Some(a) => Some(f(a))
+    }
+}
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Cats предоставляет функцию lift
+					<pre><code class="scala">
+def lift[A, B](f: A => B): F[A] => F[B] = fa => map(fa)(f)
+				</code></pre>
+					<p>"превращает" функцию A => B<br>в функцию F[A] => F[B]
+				</section>
+
+				<section>
+					<pre><code class="scala">
+import cats.Functor
+import cats.implicits._
+
+val lenOption: Option[String] => Option[Int] =
+   Functor[Option].lift(_.length)
+					</code></pre><pre class=fragment><code class="scala">
+lenOption(Some("abcd"))
+// res: Option[Int] = Some(4)
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Cats предоставляет композицию функторов
+					<pre><code class="scala">
+import cats.Functor
+import cats.implicits._
+
+val listOpt = Functor[List] compose Functor[Option]
+//Functor[List[Option]]
+					</code></pre>
+					<pre class=fragment><code class="scala">
+listOpt.map( List(Some(1), None, Some(3)) )(_ + 1)
+// res: List[Option[Int]] = List(Some(2), None, Some(4))
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Cats предоставляет функцию fproduct
+					<pre><code class="scala">
+def fproduct[A, B](fa: F[A])(f: A => B): F[(A, B)] =
+   map(fa)(a => a -> f(a))
+					</code></pre>
+					как "map", но возвращает пару
+				</section>
+
+				<section>
+					<pre><code class="scala">
+import cats.Functor
+import cats.implicits._
+
+val source = List("Cats", "is", "awesome")
+val product = Functor[List].fproduct(source)(_.length)
+// res1: List[(String, Int)] =
+//    List((Cats,4), (is,2), (awesome,7))
+					</code></pre><pre class=fragment><code class="scala">
+product.toMap
+// res2: Map[String,Int] =
+//    Map(Cats -> 4, is -> 2, awesome -> 7)
+					</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Semigroupal</h2>
+					<pre><code class="scala">trait Semigroupal[F[_]] {
+  def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
+}</code></pre>
+					Комбинирует два контейнера разного типа
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  new Semigroupal[Option] {
+
+    def product[A, B](fa: Option[A],
+                      fb: Option[B]): Option[(A, B)] =
+
+      if (fa.isDefined && fb.isDefined)
+        Some((fa.get, fb.get))
+      else None
+
+  }</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Applicative</h2>
+					<pre><code class="scala">trait Semigroupal[F[_]] {
+  def product[A, B](fa: F[A], fb: F[B]): F[(A, B)]
+}
+
+trait Applicative[F[_]] extends Semigroupal[F] {
+  def pure[A](a: A): F[A]
+}</code></pre>
+					<p>Аналогично тому как моноид расширяет полугруппу
+				</section>
+
+
+				<section>
+					<p>pure "заворачивает" значение в контейнер типа<br>(помещает значение в контекст)
+					<pre class=fragment><code class="scala">trait Applicative[Option] {
+  def pure[A](a: A): F[A] = Some(a)
+}</code></pre>
+					<pre class=fragment><code class="scala">trait Applicative[Future] {
+  def pure[A](a: A): F[A] = Future.successful[A](a)
+}</code></pre>
+					<pre class=fragment><code class="scala">trait Applicative[List] {
+  def pure[A](a: A): F[A] = List(a)
+}</code></pre>
+				</section>
+
+
+				<section>
+					Требования к реализации
+					<pre><code class="scala">
+fa.product(fb).product(fc) ~ fa.product(fb.product(fc))
+                                        //associativity
+
+pure(()).product(fa) ~ fa               //left identity
+fa.product(pure(())) ~ fa               //right identity
+					</code></pre>
+				</section>
+
+
+				<section>
+					<p>Эквивалентное определение
+					<pre><code class="scala">trait Applicative[F[_]] {
+  def ap[A, B](ff: F[A => B])(fa: F[A]): F[B]
+
+  def pure[A](a: A): F[A]
+}</code></pre>
+				</section>
+
+
+				<section>
+					<p>На самом деле в cats
+					<pre><code class="scala">import cats.Functor
+
+trait Applicative[F[_]] extends Functor[F] {
+  def ap[A, B](ff: F[A => B])(fa: F[A]): F[B]
+
+  def pure[A](a: A): F[A]
+
+  def product[A, B](fa: F[A], fb: F[B]): F[(A, B)] =
+    ap(map(fa)(a => (b: B) => (a, b)))(fb)
+
+  def map[A, B](fa: F[A])(f: A => B): F[B] = ap(pure(f))(fa)
+
+}</code></pre>
+				</section>
+
+				<section>
+					<p>Любой аппликатив является функтором и полугруппой
+				</section>
+
+
+
+
+				<section>
+					<p>Композиция аппликативов
+					<pre><code class="scala">import cats.Applicative
+
+val composed = Applicative[Future].compose[Option]
+</code></pre>
+<pre class=fragment><code class="scala">val x: Future[Option[Int]] = Future.successful(Some(5))
+val y: Future[Option[Char]] = Future.successful(Some('a'))
+
+composed.map2(x, y)(_ + _)
+// composed: Future[Option[Int]] = Future(Success(Some(102)))
+</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val username: Option[String] = Some("username")
+val password: Option[String] = Some("password")
+val url: Option[String] = Some("some.login.url.here")
+
+def connect(username: String,
+            password: String,
+            url: String): Option[Connection] = None
+
+Applicative[Option].map3(username, password, url)(connect)
+// res: Option[Option[Connection]] = Some(None)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+import cats.implicits._
+
+(username, password, url).mapN(connect)
+// res: Option[Option[Connection]] = Some(None)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+def sequenceFuture[A](fa: List[Future[A]]): Future[List[A]]
+
+def traverseFuture[A, B](as: List[A])
+                        (f: A => Future[B]): Future[List[B]]
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+import cats.implicits._
+
+List(1, 2, 3).traverse(i => Future.successful(i))
+// res: Future[List[Int]] = Future(Success(List(1, 2, 3)))
+					</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Monad</h2>
+					<p class=fragment>Applicative с функцией flatten
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  Option(Option(1)).flatten
+  // res1: Option[Int] = Some(1)
+
+  Option(None).flatten
+  // res2: Option[Nothing] = None
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  List(List(1),List(2,3)).flatten
+  // res: List[Int] = List(1, 2, 3)
+					</code></pre>
+				</section>
+
+
+				<section>
+					map затем flatten ~ flatMap
+				</section>
+
+				<section>
+					<p>Используется в конструкции<br>for { ... } yield { ... }</p>
+					<p>Об этом рассказывали в прошлых лекциях</p>
+				</section>
+
+
+
+
+
+
+				<section>
+					<small><ul>
+						<li>Semigroup (полугруппа над скалярами)</li>
+						<li>Monoid (моноид - полугруппа с "нулём")</li>
+						<li>SemigroupK (полугруппа над "контейнерами" с одинаковым параметром)</li>
+						<li>MonoidK (моноид над "контейнерами" с одинаковым параметром)</li>
+						<li>Functor ("контейнер" над скаляром с операцией map)</li>
+						<li>Semigroupal (полугруппа над "контейнерами" с разными параметрами)</li>
+						<li>Applicative (моноид над "контейрнерами" с разными параметрами)</li>
+						<li>Monad (аппликатив с функцией flatten)</li>
+					</ul></small>
+				</section>
+
+				<section>
+					<p>На самом деле иерархия типов в cats гораздо сложнее</p>
+					<small>Изучайте документацию и исходники</small>
+				</section>
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Cats Data Types</h2>
+				</section>
+
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">Id</h2>
+					<p>type Id[A] = A</p>
+				</section>
+
+				<section>
+					<p>Id - Это монада
+					<pre><code class="scala">
+  def map[A, B](fa: Id[A])(f: A => B): Id[B]
+  def flatMap[A, B](fa: Id[A])(f: A => Id[B]): Id[B]
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">OptionT</h2>
+					</p>OptionT[F[_], A] ~ F[Option[A]]</p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val firstNameF: Future[String]
+                        = askFirstName()
+
+val lastNameFO: Future[Option[String]]
+                        = askLastName()
+
+val ticketNumO: Option[String]
+                        = getTicketNumber(???, ???)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+for {
+  first  <- OptionT.liftF(firstNameF)
+  last   <- OptionT(lastNameFO)
+  ticket <- OptionT.fromOption[Future](ticketNumO(first, last))
+} yield s"Hello, $last $first. Your ticket $ticket"
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val greet: OptionT[Future,String] = OptionT.pure("Hola!")
+
+val greetAlt: OptionT[Future,String] = OptionT.some("Hi!")
+
+val failedGreet: OptionT[Future,String] = OptionT.none
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">Nested</h2>
+					<pre><code class="scala">
+  final case class Nested[F[_], G[_], A](value: F[G[A]])
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">NonEmptyList</h2>
+					<pre><code class="scala">
+  final case class NonEmptyList[+A](head: A, tail: List[A]) {
+    ???
+  }
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+  def average(xs: List[Int]): Double = {
+    xs.sum / xs.length.toDouble
+  }
+					</code></pre>
+
+					<pre class=fragment><code class="scala">
+  average(List.empty)    // Exception
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+  def average(xs: List[Int]): Option[Double] =
+    if (xs.nonEmpty)
+      Some(xs.sum / xs.length.toDouble)
+    else None
+					</code></pre>
+					<p class=fragment>Можно, но не красиво<br><small>и возвращается Option</small></p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  import cats.data.NonEmptyList
+
+  def average(xs: NonEmptyList[Int]): Double = {
+    xs.reduceLeft(_+_) / xs.length.toDouble
+  }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  def one[A](head: A): NonEmptyList[A]
+
+  def of[A](head: A, tail: A*): NonEmptyList[A]
+
+  def ofInitLast[A](init: List[A], last: A): NonEmptyList[A]
+
+  def fromList[A](l: List[A]): Option[NonEmptyList[A]]
+  def fromListUnsafe[A](l: List[A]): NonEmptyList[A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  NonEmptyList.one(42)
+
+  NonEmptyList.of(1)
+  NonEmptyList.of(1, 2, 3, 4)
+
+  NonEmptyList.ofInitLast(List(), 4)
+  NonEmptyList.ofInitLast(List(1,2,3), 4)
+
+  NonEmptyList.fromList(List())      // None
+  NonEmptyList.fromList(List(1,2,3))
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  import cats.syntax.list._
+
+  List(1,2,3).toNel    // Some(NonEmptyList(1, List(2, 3)))
+					</code></pre>
+				</section>
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">OneAnd</h2>
+					<pre><code class="scala">
+  import cats.data.OneAnd      //OneAnd[F[_],A]
+
+  type NonEmptyList[A]   = OneAnd[List, A]
+  type NonEmptyStream[A] = OneAnd[Stream, A]
+					</code></pre>
+				</section>
+
+
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">Ior</h2>
+					<p>Отношение ”inclusive-or” между двумя типами</p>
+					<p><small>PS: Either ~ “exclusive-or”</small></p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+import cats.data._
+
+val right = Ior.right[String, Int](3)     // Right(3)
+val left = Ior.left[String, Int]("Error") // Left("Error")
+val both = Ior.both("Warning", 3)         // Both("Warning", 3)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+import cats.implicits._
+
+val right: Ior[Nothing, Int]   = 3.rightIor    // Right(3)
+val left: Ior[String, Nothing] = "Err".leftIor // Left("Err")
+					</code></pre>
+				</section>
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">IorT</h2>
+					<p>IorT[F[_], A, B] ~ F[Ior[A, B]]</p>
+				</section>
+
+
+				<section>
+					<h2 style="text-transform: none;">EitherT</h2>
+					<p>EitherT[F[_], A, B] ~ F[Either[A, B]]</p>
+				</section>
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">Chain</h2>
+					Коллекция с константным временем<br>добавления в начало и конец.
+				</section>
+
+				<section>
+					<pre><code class="scala">
+sealed abstract class Chain[+A]
+
+case object Empty extends Chain[Nothing]
+case class Singleton[A](a: A) extends Chain[A]
+case class Append[A](left: Chain[A],
+                     right: Chain[A]) extends Chain[A]
+case class Wrap[A](seq: Seq[A]) extends Chain[A]
+					</code></pre>
+				</section>
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">NonEmptyChain</h2>
+					<p>Аналогично NonEmptyList</p>
+				</section>
+
+
+
+
+
+
+
+
+
+
+
+
+				<section>
+					<h2 style="text-transform: none;">Validated</h2>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+sealed abstract class Validated[+E, +A]
+
+final case class Valid[+A](a: A) extends Validated[Nothing, A]
+final case class Invalid[+E](e: E) extends Validated[E, Nothing]
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Пример:<br>валидация заполнения полей web-формы
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  final case class RegistrationData(name: String,
+                                    pass: String,
+                                    age: Int)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+  sealed trait ValidationError { def err: String }
+
+  case object NameError extends ValidationError { val err = ??? }
+  case object PassError extends ValidationError { val err = ??? }
+  case object AgeError  extends ValidationError { val err = ??? }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateName(name: String): Either[ValidationError, String] =
+  Either.cond(???, name, NameError)
+
+def validatePass(pass: String): Either[ValidationError, String] =
+  Either.cond(???, pass, PassError)
+
+def validateAge(age: Int): Either[ValidationError, Int] =
+  Either.cond(???, age, AgeError)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateForm(name: String, pass: String, age: Int) =
+  for {
+    validName <- validateName(name)
+    validPass <- validatePass(pass)
+    validAge  <- validateAge(age)
+  } yield RegistrationData(validName, validPass, validAge)
+
+// Either[ValidationError, RegistrationData]
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Проблема:</p><p>вернём только первую ошибку</p>
+				</section>
+
+				<section>
+					<p>Решение:</p><p>Validated</p>
+				</section>
+
+				<section>
+					<p>Первая попытка</p>
+					<pre><code class="scala">import cats.data._
+import cats.data.Validated._
+import cats.implicits._
+
+def validateForm(name: String, pass: String, age: Int) =
+  for {
+    validName <- validateName(name).toValidated
+    validPass <- validatePass(pass).toValidated
+    validAge  <- validateAge(age).toValidated
+  } yield RegistrationData(validName, validPass, validAge)
+
+// Validated[ValidationError, RegistrationData]
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Не скомпилируется</p>
+					<pre><code class="scala">
+// error: value flatMap is not a member of
+//        cats.data.Validated[ValidationError,String]
+//
+//     validName <- validateName(name).toValidated
+//                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Validated - не монада, но зато аппликатив</p>
+				</section>
+
+				<section>
+					<p>Вторая попытка</p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+type ValidatedNec[+E, +A] = Validated[NonEmptyChain[E], A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+class ValidatedSugar[A](a: A) extends AnyVal {
+
+  def validNec[B]: ValidatedNec[B, A] =
+                                  Validated.Valid(a)
+
+  def invalidNec[B]: ValidatedNec[A, B] =
+                                  Validated.invalidNec(a)
+
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+type ValidationResult[A] = ValidatedNec[ValidationError, A]
+// type ValidationResult[A] =
+//              Validated[NonEmptyChain[ValidationError], A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateName(name: String): ValidationResult[String] =
+        if(???) name.validNec
+        else    NameError.invalidNec
+
+def validatePass(pass: String): ValidationResult[String] =
+        if(???) pass.validNec
+        else    PassError.invalidNec
+
+def validateAge(age: Int): ValidationResult[Int] =
+        if(???) age.validNec
+        else    AgeError.invalidNec
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def validateForm(name: String, pass: String, age: Int) =
+  (
+    validateName(name),
+    validatePass(pass),
+    validateAge(age)
+  ).mapN(RegistrationData)
+
+// ValidationResult[RegistrationData]
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Что в итоге?</h2>
+				</section>
+
+				<section>
+					<pre><code class="scala">sealed trait ValidationError { def err: String }</code></pre>
+					<pre class=fragment><code class="scala">type ValidationResult[RegistrationData] =
+       Validated[NonEmptyChain[ValidationError], RegistrationData]</code></pre>
+					<ul>
+						<li class=fragment>Удобный тип для вражения результата</li>
+						<li class=fragment>Гарантирован непустой список ошибок</li>
+						<li class=fragment>Собраны все ошибки</li>
+					</ul>
+				</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+				<section>
+					<h2>Библиотека Circe</h2>
+					<p class=fragment><small>* Название может произноситься как "SUR-see"<br>или на греческий манер "KEER-kee"</small></p>
+					<p class=fragment><small>Переводится как Церцея.<br>В честь волшебница из древнегречиской мифологии,<br>которая помогала Аргонавтам.</small></p>
+				</section>
+
+				<section>
+					<p>Особенности библиотеки:<br>
+					<ul>
+						<li>Форк библиотеки Argonaut (основана на Scalaz)</li>
+						<li class=fragment>Ядро Circe зависит от Cats</li>
+						<li class=fragment>Json-парсер зависит от Jawn</li>
+						<li class=fragment>Generic зависит от Shapeless</li>
+					</ul><p>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">sealed abstract class Json</code></pre>
+					<pre><code class="scala">private[circe] final case object JNull
+private[circe] final case class JBoolean(value: Boolean)
+private[circe] final case class JNumber(value: JsonNumber)
+private[circe] final case class JString(value: String)
+private[circe] final case class JArray(value: Vector[Json])
+private[circe] final case class JObject(value: JsonObject)</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">sealed abstract class Json {
+  def isNull: Boolean
+  def isBoolean: Boolean
+  def isNumber: Boolean
+  def isString: Boolean
+  def isArray: Boolean
+  def isObject: Boolean
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">sealed abstract class Json {
+  def asNull: Option[Unit]
+  def asBoolean: Option[Boolean]
+  def asNumber: Option[JsonNumber]
+  def asString: Option[String]
+  def asArray: Option[Vector[Json]]
+  def asObject: Option[JsonObject]
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import io.circe._, io.circe.parser._
+
+val json: String =
+  """{
+       "id": "c730433b-082c-4984-9d66-855c243266f0",
+       "name": "Foo",
+       "counts": [1, 2, 3],
+       "values": {
+         "bar": true,
+         "baz": 100.001,
+         "qux": ["a", "b"]
+       }
+     }"""
+
+val doc: Json = parse(json).getOrElse(Json.Null)</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">import io.circe._</code></pre>
+<pre><code class="scala">val json = Json.obj(
+ ("id",Json.fromString("c730433b-082c-4984-9d66-855c243266f0")),
+ ("name", Json.fromString("Foo")),
+ ("counts", Json.fromValues(Seq[Json](
+      Json.fromInt(1), Json.fromInt(2), Json.fromInt(3)
+ ))),
+ ("values", Json.obj(
+      ("bar", Json.fromBoolean(true)),
+      ("baz", Json.fromDouble(100.01).getOrElse(0)),
+      ("qux", Json.fromValues(Seq[Json](
+          Json.fromString("a"), Json.fromString("b")
+      ))
+ ))
+))</code></pre><pre><code class="scala">json.noSpaces
+json.spaces2SortKeys</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def parse(input: String): Either[ParsingFailure, Json]
+					</code></pre>
+					<pre><code class="scala">
+final case class ParsingFailure(message: String,
+                                underlying: Throwable)
+                        extends Error {
+
+  final override def getMessage: String = message
+}</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">val json: String =
+  """{
+       "id": "c730433b-082c-4984-9d66-855c243266f0",
+       "name": "Foo",
+       "counts": [1, 2, 3],
+       "values": []
+     }"""</code></pre><pre><code class="scala">val doc = parse(json)
+// Left(io.circe.ParsingFailure:
+//     expected } or , got '"value...' (line 6, column 13)
+// )
+</code></pre>
+				</section>
+
+
+
+
+				<section>
+					<p>HCursor</p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ val doc: Json = parse(json).getOrElse(Json.Null)
+
+ val cursor: HCursor = doc.hcursor
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ cursor.top       // перейти к "корню"
+ cursor.up        // перейти к "родителю"
+
+ cursor.field("myField")      // перейти к "брату" с ключём
+ cursor.downField("myField")  // перейти к "потомку" с ключём
+
+ cursor.left      //только для array
+ cursor.right     //только для array
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ def delete: ACursor  // возвращает "родителя"
+
+ def withFocus(f: Json => Json): ACursor
+
+ def withFocusM[F[_]](f: Json => F[Json])
+                     (implicit F: Applicative[F]): F[ACursor]
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+cursor.value    // получить значение из текущей позиции как Json
+cursor.as[Double]  // получить значение как число
+
+cursor.get[Double]("fieldName")     // получить значение из поля
+cursor.downField("fieldName").as[Double]           // тоже самое
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def as[A](implicit d: Decoder[A]): Decoder.Result[A]
+
+def get[A](k: String)(implicit d: Decoder[A]): Decoder.Result[A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ type Result[A] = Either[DecodingFailure, A]
+					</code></pre>
+					<pre class=fragment><code class="scala">
+ type AccumulatingResult[A] = ValidatedNel[DecodingFailure, A]
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Encoding & Decoding</p>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Encoder[A] {
+   def apply(a: A): Json
+   ...
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Decoder[A] {
+   def apply(c: HCursor): Result[A]
+   def decodeAccumulating(c: HCursor): AccumulatingResult[A]
+
+   def decodeJson(j: Json): Result[A]
+   ...
+ }
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+ trait Encoder[A] {
+   ...
+   def contramap[B](f: B => A): Encoder[B]
+   def mapJson(f: Json => Json): Encoder[A]
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Decoder[A] {
+   ...
+   def map[B](f: A => B): Decoder[B]
+   def flatMap[B](f: A => Decoder[B]): Decoder[B]
+ }
+					</code></pre>
+				</section>
+
+
+				<section>
+					<h2>Encoder & Decoder<br>instances</h2>
+					<ul>
+						<li>для всех стандартных типов Int, String, Long ...</li>
+						<li>для Option[A], List[A], ... при наличии инстанса для A</li>
+					</ul>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ trait Codec[A] extends Decoder[A] with Encoder[A]
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ implicit class EncoderOps[A](val v: A) extends AnyVal {
+   def asJson(implicit encoder: Encoder[A]): Json = encoder(v)
+ }
+					</code></pre>
+					<pre><code class="scala">
+ import io.circe.syntax._
+ val intsJson = List(1, 2, 3).asJson
+ // EncoderOps(List(1, 2, 3)).asJson(encodingList(encodeInt))
+					</code></pre>
+				</section>
+
+
+				<section>
+					<h2>Custom encoder</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] = new Encoder[Foo] {
+    def apply(f: Foo): Json = Json.obj(
+                           ("foo", Json.fromString(f.a)),
+                           ("bar", Json.fromInt(f.b))
+    )
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Custom encoder<br>(shorter)</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] = (f: Foo) =>
+   Json.obj(
+     ("a", Json.fromString(f.a)),
+     ("b", Json.fromInt(f.b))
+   )
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Semi-automatic</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] =
+      Encoder.forProduct2("foo", "bar")(f => (f.a, f.b))
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Automatic</h2>
+					<pre><code class="scala">
+ import io.circe.Encoder
+
+ case class Foo(a: String, b: Int)
+
+ implicit val encoderFoo: Encoder[Foo] = deriveEncoder
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<h2>Custom decoder<br>(monadic)</h2>
+					<pre><code class="scala">
+ import io.circe.{Decoder, HCursor}
+
+ case class Foo(a: String, b: Int)
+
+ implicit val decoderFoo: Decoder[Foo] = new Decoder[Foo] {
+   def apply(c: HCursor): Decoder.Result[Foo] =
+     for {
+       a <- c.get[String]("a")
+       b <- c.get[Int]("b")
+     } yield Foo(a, b)
+ }
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Custom decoder<br>(monadic, shorter)</h2>
+					<pre><code class="scala">
+ import io.circe.{Decoder, HCursor}
+
+ case class Foo(a: String, b: Int)
+
+ implicit val decoderFoo: Decoder[Foo] = (c: HCursor) =>
+   for {
+     a <- c.get[String]("a")
+     b <- c.get[Int]("b")
+   } yield Foo(a, b)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<h2>Custom decoder<br>(applicative)</h2>
+					<pre><code class="scala">
+ import io.circe.Decoder
+ import cats.syntax.apply._
+
+ case class Foo(a: String, b: Int)
+
+ implicit val decoderFoo: Decoder[Foo] = (
+     Decoder.instance(_.downField("a").as[String]),
+     Decoder.instance(_.downField("b").as[Int])
+   ).mapN(Foo.apply)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ decodeAccumulating[Foo]( """{"a":55, "b":"foo"}""" )
+
+ // res: ValidatedNel[circe.Error, Foo] =
+ //    Invalid( NonEmptyList(
+ //          DecodingFailure(String, List(DownField(a))),
+ //          DecodingFailure(Int, List(DownField(b)))
+ //    ))
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<pre><code class="scala">
+ sealed trait Event
+
+ case class Foo(i: Int) extends Event
+ case class Bar(ls: List[String]) extends Event
+					</code></pre>
+					<pre class=fragment><code class="scala">
+ implicit val encodeFoo = Encoder.forProduct1("i")(f => f.i)
+ implicit val encodeBar = Encoder.forProduct1("ls")(f => f.ls)
+					</code></pre>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">
+ implicit val encodeEvent: Encoder[Event] = Encoder.instance {
+   case foo: Foo => foo.asJson
+   case bar: Bar => bar.asJson
+ }
+					</code></pre>
+					<pre class=fragment><code class="scala">
+ implicit val decodeEvent: Decoder[Event] =
+    List[Decoder[Event]](
+      Decoder[Foo].widen,
+      Decoder[Bar].widen
+    ).reduceLeft(_ or _)
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ val fooFirst = List[Decoder[Event]](
+    Decoder[Foo].widen, Decoder[Bar].widen
+ ).reduceLeft(_ or _)
+
+ val barFirst = List[Decoder[Event]](
+    Decoder[Bar].widen, Decoder[Foo].widen
+ ).reduceLeft(_ or _)
+
+ val input = """{"ls": ["a", "b"], "i": 1000}"""
+
+ parser.decode[Event](input)(fooFirst) // Right(Foo(1000))
+ parser.decode[Event](input)(barFirst) // Right(Bar(List(a, b)))
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ implicit val encodeFoo: Encoder[Foo] =
+          Encoder.forProduct2("i", "type")(f => (f.i, "Foo"))
+
+ implicit val encodeBar: Encoder[Bar] =
+          Encoder.forProduct2("s", "type")(f => (f.ls, "Bar"))
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+ implicit val genDevConfig: Configuration =
+              Configuration.default.withDiscriminator("type")
+
+ val inFoo = """{"ls": ["a", "b"], "i": 1000, "type": "Foo"}"""
+ val inBar = """{"ls": ["a", "b"], "i": 1000, "type": "Bar"}"""
+
+ parser.decode[Event](inFoo)  // Right(Foo(1000))
+ parser.decode[Event](inBar)  // Right(Bar(List(a, b)))
+					</code></pre>
+				</section>
+
+
+
+
+
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
