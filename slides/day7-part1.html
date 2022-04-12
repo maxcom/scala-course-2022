@@ -1,0 +1,598 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Архитектура обработки запросов. Протокол HTTP.</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h3>Архитектура обработки запросов. Протокол HTTP.</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<h3>План первой части</h2>
+					<ol>
+						<li>Архитектура обработки запросов.
+						<li>HTTP протокол и REST.
+					</ol>
+					<p>Вторая часть - Akka HTTP.
+				</section>
+
+				<section>
+					Сегодня не будет новых<br> способов использования Implicit!
+				</section>
+
+				<section>
+					<p>Основные источники асинхронности в JVM:
+					<ul>
+						<li class=fragment>Многопоточность
+						<li class=fragment>Сокеты (tcp)
+					</ul>
+				</section>
+
+				<section>
+					<h3>Архитектура обработки запросов</h3>
+				</section>
+
+				<section>
+					<p>Протоколы, в которых клиент
+					открывает tcp соединение с сервером и они
+					обмениваются запросами/сообщениями.
+
+					<p class="fragment">Это HTTP, SMTP, XMPP и многие другие.
+				</section>
+
+				<section>
+					<h4>Каждому клиенту по потоку</h4>
+					Самая простая модель: основной поток принимает соединения и передает
+					обработку "рабочим" потокам.
+				</section>
+
+				<section>
+					<pre><code class="scala">private val executor: Executor = 
+    Executors.newCachedThreadPool()
+val serverSocket: ServerSocket = new ServerSocket(2000)
+val greetings: Array[Byte] = 
+  "Hello, world!".getBytes(US_ASCII)
+
+while (true) { // упрощенный вариант сервера
+  val socket: Socket = serverSocket.accept()
+  executor.execute { () ⇒
+    // блокирующийся ввод-вывод
+    socket.getOutputStream.write(greetings)
+    socket.close()
+  }
+}</code></pre>
+					<p><small>упрощенная схема реализации</small>
+				</section>
+
+				<section>
+					<h4>Проблемы подхода (1/3)</h4>
+
+					<p>"Пассивные" клиенты занимают потоки:
+					<ul>
+						<li>Когда держат соединения между запросами
+						<li>Когда читают ответ на своем медленном канале
+						<li>Когда сервер ждет ответ от другого сервиса
+					</ul>
+				</section>
+
+				<section>
+					<h4>Проблемы подхода (2/3)</h4>
+
+					<p>Не предполагает распараллеливания обработки одного запроса
+				</section>
+
+				<section>
+					<h4>Проблемы подхода (3/3)</h4>
+
+					<p>Трудности с обработкой таймаутов и fallback.
+				</section>
+
+				<section>
+					<h2>Все клиенты в одном потоке</h2>
+
+					<p>Можно ли обработать всех клиентов в одном потоке?
+
+					<p>Да, с использованием мультиплексированного ввода вывода.
+				</section>
+
+				<section>
+					<p>Такая архитектура показала свою эффективность.
+
+					<p>Например:
+
+					<ul>
+						<li>Веб-сервер NGINX
+						<li>СУБД Redis
+						<li>Сервер приложений node.js
+					</ul>
+				</section>
+
+				<section>
+					Плюсы такой схемы:
+					<ul>
+						<li>"Пассивные клиенты" почти не нагружают приложения
+						<li>Нет параллельности - нет недетерминизма и сложностей
+						<li>Меньше context switch - эффективнее для ОС и процессора
+					</ul>
+				</section>
+
+				<section>
+					<h2>Введение в Java NIO</h2>
+					<p>Java NIO - низкоуровневые API для ввода-вывода.
+
+					<p>"New IO" - "новый" API (2002 год).
+
+					<p>Дополняется в каждой новой версии JDK.
+				</section>
+
+				<section>
+					<p>Java IO - потоковые чтение/запись
+					<p>Java NIO - блочные чтение/запись
+				</section>
+
+				<section>
+					<p>Блочный I/O оптимальнее потокового, он избегает лишних копирований
+					и преобразований данных.<sup>*</sup><br>
+					<small>* ByteBuffer - кошмар разработчика.</small>
+
+					<p class="fragment">Нам NIO интересен тем, что только в нем есть неблокирующий ввод-вывод.
+				</section>
+
+				<section>
+					<h4>Неблокирующий ввод-вывод</h4>
+					
+					Специальный режим сокета.
+<pre><code class="scala">
+socketChannel.configureBlocking(false)
+
+</code></pre>
+				</section>
+				<section>
+					<p>Блокирущий read: читает сколько может;<br> если данных нет - ждет 
+
+					<p class="fragment">Неблокирующий read: мгновенно читает сколько может; нет данных - пустой результат
+				</section>
+
+				<section>
+					<p>Блокирующий write: пишет всё что передали; если клиент не успевает - ждет и продолжает
+					<p class="fragment">Неблокирующий write: мгновенно пишет сколько может; если клиент не готов - ничего не пишет
+				</section>
+
+				<section>
+<pre><code class="scala">
+  executor.execute { () ⇒
+    val buffer: ByteBuffer = ByteBuffer.wrap(greetings)
+
+    while (buffer.hasRemaining) { // busy wait - плохая идея
+      socket.write(buffer)
+    }
+
+    socket.close()
+  }
+</code></pre>
+				</section>
+
+				<section>
+					Постоянно опрашивать сокеты в ожидании готовности не эффективно.
+				</section>
+
+				<section>
+					Selector - мониторинг состояния сокетов.
+				</section>
+
+				<section>
+<pre><code class="scala">
+val selector: Selector = Selector.open()
+socket.configureBlocking(false)
+val key = socket.register(selector, SelectionKey.OP_WRITE)
+
+while (buffer.hasRemaining) {
+  selector.select() // блокируется
+  if (key.isWritable) {
+    socket.write(buffer)
+  }
+}
+</code></pre>
+				</section>
+
+				<section>
+					<p>Вернулись к блокировкам?
+				</section>
+
+				<section>
+					<h3>Event Loop - используем один Selector на всех клиентов</h3>
+				</section>
+
+				<section>
+<pre><code class="scala">val selector: Selector = Selector.open()
+
+// можно зарегистрировать много сокетов
+serverSocket.register(selector, SelectionKey.OP_ACCEPT, 
+  () -&gt; println("Got new connection"))
+
+while (true) {
+  selector.select()
+
+  val selectionKeys = selector.selectedKeys.asScala
+
+  selectionKeys.foreach { sk ⇒
+    sk.attachment().asInstanceOf[Runnable].run()
+  }
+}
+</code></pre>
+				</section>
+
+				<section>
+					<p>Итого:
+					<ul>
+						<li>"Реактивная логика", основанная на событиях
+						<li>Неограниченное количество клиентов на один поток
+					</ul>
+				</section>
+
+				<section>
+					<p>Сложности?
+
+					<p class="fragment">Запутанная логика чтения - нарезка потока от клиента
+					на произвольные блоки.
+
+					<p class="fragment">Запись только по готовности клиента
+
+					<p class="fragment">Запутанная машина состояний TLS
+				</section>
+
+				<section>
+					<p>Обычно не проблема - программист работает или с готовым сервером,
+					или с framework (netty, akka-io и т.п.)
+				</section>
+
+				<section>
+					Такой подход не сочитается с:
+					<ul>
+						<li>Долгими вычислениями на CPU
+						<li class="fragment">Блокирующимися вызовами (например JDBC)
+						<li class="fragment">Вызовами асинхронных API
+					</ul>
+				</section>
+
+				<section>
+					<h3>Комбинируем потоки и Event Loop</h3>
+					<p>(пример реализации)
+				</section>
+
+				<section>
+					<p>Раньше наши обработчики работали<br> прямо в нашем потоке.
+
+					<p>Сделаем их функциями <br> Unit ⇒ Future[Action]
+
+					<p><small>Action - кодирует следующую операцию над сокетом</small>
+				</section>
+
+				<section>
+					Вызов такой функции делается просто:
+<pre><code class="scala">selectionKeys.foreach { sk ⇒
+  sk.interestOps(0) // не ждем новых событий
+  sk.attachment().asInstanceOf[() ⇒ Future[Action]].apply()
+}
+</code></pre>
+					но как "вернуть" сокет обратно в работу?
+				</section>
+
+				<section>
+					<ul>
+					<li>Selector - не потокобезопасный (почти)
+					<li>да и он все время занят чем-то
+					</ul>
+				</section>
+
+				<section>
+					Создаем специальный Executor:
+<pre><code class="scala"> // неблокирующаяся очередь, построенная на CAS операциях
+val queue = new ConcurrentLinkedQueue[Runnable]
+val executor: Executor = task ⇒ queue.add(task)
+</code></pre>
+					очередь разбираем цикле обработки событий:
+<pre><code class="scala">var task: Runnable = _
+while ({ task = queue.poll(); task } != null) {
+  task.run()
+}
+</code></pre>
+				</section>
+
+				<section>
+					При добавлении задачи прерываем ожидание select()
+<pre><code class="scala">val reactorExecutor = ExecutionContext.fromExecutor { r ⇒
+  queue.add(r)
+  selector.wakeup()
+}
+</code></pre>
+				</section>
+
+				<section>
+<pre><code class="scala">selectionKeys.foreach { sk ⇒
+  sk.interestOps(0)
+  sk.attachment()
+    .asInstanceOf[() ⇒ Future[Action]]
+    .apply()
+    .onComplete(processAction)(reactorExecutor)
+}
+</code></pre>
+				</section>
+
+				<section>
+					<p>Итого мы получили:
+
+					<ul>
+						<li>event loop для эффективного ввода-вывода
+						<li>возможность использования thread pool вычислений
+						    и блокирующихся вызовов
+						<li>возможность использования асинхронных API
+					</ul>
+				</section>
+
+				<section>
+					<p>Все современные сервера на JVM реализуют комбинированный
+					подход.
+				</section>
+
+				<section>
+					<p>Похожий event-loop используется в клиентах к веб-сервисам
+					и к некоторым СУБД.
+
+					<p class="fragment">Функция выполнения запроса возвращает Future,
+					которая обрабатывается в event loop клиента.
+				</section>
+
+
+				<section>
+					<h3>HTTP протокол</h3>
+				</section>
+
+				<section>
+					<p>Протокол передачи данных, придуманный для Web.
+
+					<p class="fragment">Придуман для "классических" сайтов:
+					<ul class="fragment">
+						<li>Генерация HTML на сервере
+						<li>Перезагрузка страниц при переходах
+						<li>Взаимодействие с сервером через формы
+					</ul>
+				</section>
+
+				<section>
+					<p>Позже эволюционировали в JavaScript-приложения
+					<ul>
+						<li>HTML только для первоначальной загрузки
+						<li>State в памяти, взаимодействие с клиентом без перезагрузки
+						<li>Взаимодействие с сервером через AJAX - запросы с XML и JSON телом
+					</ul>
+				</section>
+
+				<section>
+					<p>HTTP используется для взаимодействия
+					сервисов между собой.
+				</section>
+
+				<section>
+					<p>Две "живых" версии стандарта:
+
+					<ul>
+						<li>HTTP 1.1, 1999 год; последняя редакция 2014 года (см. 
+						<a target="_blank" href="https://www.mnot.net/blog/2014/06/07/rfc2616_is_dead">RFC2616 Is Dead</a>).
+						<li>HTTP 2.0, 2015 год - новый транспортный слой
+					</ul>
+				</section>
+
+				<section>
+					<p>Будем говорить про HTTP/1.1
+				</section>
+
+				<section>
+					<p>Схема "запрос-ответ".
+					<p class="fragment">Сервер ожидает соединений клиентов.
+					<p class="fragment">Сервер получает запрос и формирует ответ.
+				</section>
+
+				<section>
+					<p>В одном соединении запросы обрабатываются последовательно.
+					<p>Клиент может открыть несколько соединений к серверу (браузеры - до 6).
+				</section>
+
+				<section>
+					<p>Запрос состоит из:
+					<ul>
+						<li>Строки запроса
+						<li>Заголовков (метаданных)
+						<li>Тела запроса (опционально)
+					</ul>
+				</section>
+
+				<section>
+					<p>Ответ состоит из
+					<ul>
+						<li>Строки ответа
+						<li>Заголовков
+						<li>Тела ответа (тоже опционально)
+					</ul>
+				</section>
+
+				<section>
+					<p>Строка запроса
+					<pre><code class="scala">
+GET /scala-course-2020/slides/day7.html HTTP/1.1
+					</code></pre>
+					<p>Метод, путь ресурса и версия протокола
+				</section>
+
+				<section>
+					<p>Путь - "адрес" ресурса на сервере;<br>"метод" - действие над ресурсом
+				</section>
+
+				<section>
+					<p>Основные методы:
+					<ul>
+						<li>GET - получить
+						<li>POST - отправить данные
+						<li>PUT - поместить
+						<li>DELETE - удалить
+						<li>PATCH - модифицировать
+					</ul>
+					<p>Всего около 20 методов, если включить все расширения
+				</section>
+
+				<section>
+					<p>Заголовки запроса:
+					<ul>
+						<li>Возможности и предпочтения клиента
+						<li>Наличие и состав тела запроса
+						<li>Наличие данных в кеше
+						<li>Cookies
+						<li>Другие модификаторы, например получение с нужного смещения
+					</ul>
+				</section>
+
+				<section>
+					<pre><code class="http">
+Host: localhost:9000
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding: gzip, deflate, br
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Cache-Control: max-age=0
+If-Modified-Since: Sun, 25 Mar 2018 07:25:21 GMT
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36
+					</code></pre>
+					<p><small>Переносы строк запрещены в современном HTTP</small>
+				</section>
+
+				<section>
+					<p>Тело запроса: данные, передаваемые на сервер
+				</section>
+
+				<section>
+					<p>Тело - данные запроса, поля формы, загружаемые данные и т.п.
+
+					<p class="fragment">Тело может быть почти у любого метода, даже у GET (см. 
+					<a href="https://tools.ietf.org/html/rfc7231#section-4.3.1" target="_blank">RFC 7231</a>, раздел 4.3.1).
+				</section>
+
+				<section>
+					<p>Два режима передачи тела запроса:<br> известной длины и неизвестной (chunked).
+				</section>
+
+				<section>
+					<p>Строка ответа
+					<pre><code class="scala">
+HTTP/1.1 200 OK
+					</code></pre>
+					<p>версия протокола и статус ответа
+				</section>
+
+				<section>
+					<p>Статус - трехзначный код плюс его описание
+
+					<ul>
+						<p>1xx - информационные коды
+						<p>2xx - успешные коды
+						<p>3xx - перенаправления
+						<p>4xx - ошибки клиента
+						<p>5xx - ошибки сервера
+					</ul>
+
+					<p><small>Хороший справочник по кодам - в английской
+					<a target="_blank" href="https://en.wikipedia.org/wiki/List_of_HTTP_status_codes">википедии</a>.</small>
+				</section>
+
+				<section>
+					<p>Заголовки ответа
+					<ul>
+						<li>Свойства получаемого ресурса - тип данных,
+						кешируемость, размер, язык и т.п.
+						<li>Режимы передачи - сжатие, chunked и т.п.
+						<li>Установка Cookies
+						<li>Security-заголовки
+					</ul>
+				</section>
+
+				<section>
+					<pre><code class="http">Server: QRATOR
+Date: Sun, 25 Mar 2018 08:57:43 GMT
+Content-Type: text/html;charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Keep-Alive: timeout=15
+Set-Cookie: CSRF_TOKEN="GjxRyqELgF6WoDWtvm3dMQ=="; Version=1; Max-Age=64281600; Expires=Tue, 07-Apr-2020 08:57:43 GMT; Path=/
+Cache-Control: private
+Strict-Transport-Security: max-age=7776000
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Expires: Sat, 24 Mar 2018 12:57:43 GMT
+Last-Modified: Sun, 25 Mar 2018 08:57:41 GMT
+Set-Cookie: JSESSIONID=1485581EB69CB469B9E766D8DCEF4652; Path=/; Secure; HttpOnly
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Тело ответа - содержимое ресурса
+
+					<ul>
+						<li>Известного размера
+						<li>Chunked
+						<li>Ограничено соединением (устаревшее из HTTP/1.0)
+					</ul>
+				</section>
+
+				<section>
+					<h2>Перерыв 5 минут</h2>
+					<p>Вторая часть - Akka HTTP.
+				</section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
