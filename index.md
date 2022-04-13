@@ -65,6 +65,7 @@ layout: default
   * Видео: [Future и Promise](https://youtu.be/OTq-S78RbTk)
   * Слайды: [Базовые примитивы многопоточности](slides/day5.html)
   * Семинар: Практика по использованию Future/Promise. Планировщик. (ведущий - Роман)
+  * Семинар: [Стартовый проект](https://gitlab.com/llgruff/solar-seminar-future). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson5](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson5) 
 6. Cats и Circe. 
   * Лекция: 13 апреля. Семинар: 21 апреля (*Внимание!* семинар перенесен на четверг!).
   * Видео: [Cats и Circe.](https://youtu.be/XxEwkF-RKcE)
