@@ -56,7 +56,7 @@
 				<section>
 					<ul>
 						<li>Предоставляет абстракции функционального программирования</li>
-						<li class=fragment>Является основой для экосистемы чистих типизированных библиотек</li>
+						<li class=fragment>Является основой для экосистемы чистых типизированных библиотек</li>
 					</ul>
 				</section>
 
@@ -101,7 +101,7 @@
 				<section>
 					<h2>cats-effect</h2>
 					<ul>
-						<li>библиотека для ассинхронных вычисления</li>
+						<li>библиотека для ассинхронных вычислений</li>
 						<li>основной тип IO - очень похож на Future, но более строгий</li>
 					</ul>
 					<small>(рассмотрим подробнее на следующих лекциях)</small>
@@ -385,7 +385,7 @@ combineAll(List(
 
 
 				<section>
-					<p>Такое комбинирование пролучаем из
+					<p>Такое комбинирование получаем из
 						<br>Semigroup.combineAllOption
 				</section>
 
@@ -815,7 +815,7 @@ List(1, 2, 3).traverse(i => Future.successful(i))
 						<li>MonoidK (моноид над "контейнерами" с одинаковым параметром)</li>
 						<li>Functor ("контейнер" над скаляром с операцией map)</li>
 						<li>Semigroupal (полугруппа над "контейнерами" с разными параметрами)</li>
-						<li>Applicative (моноид над "контейрнерами" с разными параметрами)</li>
+						<li>Applicative (моноид над "контейнерами" с разными параметрами)</li>
 						<li>Monad (аппликатив с функцией flatten)</li>
 					</ul></small>
 				</section>
@@ -1267,7 +1267,7 @@ def validateForm(name: String, pass: String, age: Int) =
 					<pre class=fragment><code class="scala">type ValidationResult[RegistrationData] =
        Validated[NonEmptyChain[ValidationError], RegistrationData]</code></pre>
 					<ul>
-						<li class=fragment>Удобный тип для вражения результата</li>
+						<li class=fragment>Удобный тип для выражения результата</li>
 						<li class=fragment>Гарантирован непустой список ошибок</li>
 						<li class=fragment>Собраны все ошибки</li>
 					</ul>
@@ -1291,7 +1291,7 @@ def validateForm(name: String, pass: String, age: Int) =
 				<section>
 					<h2>Библиотека Circe</h2>
 					<p class=fragment><small>* Название может произноситься как "SUR-see"<br>или на греческий манер "KEER-kee"</small></p>
-					<p class=fragment><small>Переводится как Церцея.<br>В честь волшебница из древнегречиской мифологии,<br>которая помогала Аргонавтам.</small></p>
+					<p class=fragment><small>Переводится как Церцея.<br>В честь волшебницы из древнегреческой мифологии,<br>которая помогала Аргонавтам.</small></p>
 				</section>
 
 				<section>
@@ -1421,8 +1421,8 @@ final case class ParsingFailure(message: String,
  cursor.top       // перейти к "корню"
  cursor.up        // перейти к "родителю"
 
- cursor.field("myField")      // перейти к "брату" с ключём
- cursor.downField("myField")  // перейти к "потомку" с ключём
+ cursor.field("myField")      // перейти к "брату" с ключом
+ cursor.downField("myField")  // перейти к "потомку" с ключом
 
  cursor.left      //только для array
  cursor.right     //только для array
