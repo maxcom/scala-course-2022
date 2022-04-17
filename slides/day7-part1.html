@@ -32,34 +32,29 @@
 				<section>
 					<h3>План первой части</h2>
 					<ol>
-						<li>Архитектура обработки запросов.
+						<li>Источники асинхронности.	
+						<li>Каждому клиенту по потоку
+						<li>Java NIO и мультиплексированый I/O
 						<li>HTTP протокол и REST.
 					</ol>
 					<p>Вторая часть - Akka HTTP.
 				</section>
 
 				<section>
-					Сегодня не будет новых<br> способов использования Implicit!
-				</section>
-
-				<section>
-					<p>Основные источники асинхронности в JVM:
+					<p>Откуда берется асинхронность?
 					<ul>
 						<li class=fragment>Многопоточность
-						<li class=fragment>Сокеты (tcp)
+						<li class=fragment>Планировщик
+						<li class=fragment>Сокеты
+						<li class=fragment><s>Асинхронный файловый ввод-вывод</s>
+						<li class=fragment>Экзотика: файловая система,<br>
+						native библиотеки.
 					</ul>
 				</section>
 
 				<section>
 					<h3>Архитектура обработки запросов</h3>
-				</section>
-
-				<section>
-					<p>Протоколы, в которых клиент
-					открывает tcp соединение с сервером и они
-					обмениваются запросами/сообщениями.
-
-					<p class="fragment">Это HTTP, SMTP, XMPP и многие другие.
+					(в TCP и HTTP сервисах)
 				</section>
 
 				<section>
@@ -69,8 +64,7 @@
 				</section>
 
 				<section>
-					<pre><code class="scala">private val executor: Executor = 
-    Executors.newCachedThreadPool()
+					<pre><code class="scala">val executor: Executor = Executors.newCachedThreadPool()
 val serverSocket: ServerSocket = new ServerSocket(2000)
 val greetings: Array[Byte] = 
   "Hello, world!".getBytes(US_ASCII)
@@ -95,12 +89,13 @@ while (true) { // упрощенный вариант сервера
 						<li>Когда читают ответ на своем медленном канале
 						<li>Когда сервер ждет ответ от другого сервиса
 					</ul>
+					<p>потоки - ограниченый ресурс!
 				</section>
 
 				<section>
 					<h4>Проблемы подхода (2/3)</h4>
 
-					<p>Не предполагает распараллеливания обработки одного запроса
+					<p>Нет распараллеливания обработки одного запроса
 				</section>
 
 				<section>
@@ -114,7 +109,7 @@ while (true) { // упрощенный вариант сервера
 
 					<p>Можно ли обработать всех клиентов в одном потоке?
 
-					<p>Да, с использованием мультиплексированного ввода вывода.
+					<p>Используем мультиплексированный ввод-вывод.
 				</section>
 
 				<section>
@@ -139,35 +134,34 @@ while (true) { // упрощенный вариант сервера
 				</section>
 
 				<section>
-					<h2>Введение в Java NIO</h2>
+					<h2>Java NIO</h2>
 					<p>Java NIO - низкоуровневые API для ввода-вывода.
 
-					<p>"New IO" - "новый" API (2002 год).
+					<p>"New IO" = "новый" API (2002 год).
 
-					<p>Дополняется в каждой новой версии JDK.
+					<p>Редко когда пишем на "сыром" NIO - используем
+					готовые компоненты.
 				</section>
 
 				<section>
-					<p>Java IO - потоковые чтение/запись
-					<p>Java NIO - блочные чтение/запись
+					<p>java.io - потоковые чтение/запись
+					<p>Java.nio - блочные чтение/запись,<br> неблокирующий ввод-вывод<br>
+					(+ работа с файловой системой)
 				</section>
 
 				<section>
 					<p>Блочный I/O оптимальнее потокового, он избегает лишних копирований
-					и преобразований данных.<sup>*</sup><br>
-					<small>* ByteBuffer - кошмар разработчика.</small>
-
-					<p class="fragment">Нам NIO интересен тем, что только в нем есть неблокирующий ввод-вывод.
+					и преобразований данных.
+					<p>(ByteBuffer - кошмар разработчика)
 				</section>
 
 				<section>
 					<h4>Неблокирующий ввод-вывод</h4>
 					
-					Специальный режим сокета.
-<pre><code class="scala">
-socketChannel.configureBlocking(false)
-
+					<p>Специальный режим сокета.
+<pre><code class="scala">socketChannel.configureBlocking(false)
 </code></pre>
+					<p>включаем сразу после создания
 				</section>
 				<section>
 					<p>Блокирущий read: читает сколько может;<br> если данных нет - ждет 
@@ -181,6 +175,7 @@ socketChannel.configureBlocking(false)
 				</section>
 
 				<section>
+				плохой пример:
 <pre><code class="scala">
   executor.execute { () ⇒
     val buffer: ByteBuffer = ByteBuffer.wrap(greetings)
@@ -192,17 +187,11 @@ socketChannel.configureBlocking(false)
     socket.close()
   }
 </code></pre>
-				</section>
-
-				<section>
-					Постоянно опрашивать сокеты в ожидании готовности не эффективно.
+					<p>Постоянно опрашивать сокеты в ожидании готовности не эффективно.
 				</section>
 
 				<section>
 					Selector - мониторинг состояния сокетов.
-				</section>
-
-				<section>
 <pre><code class="scala">
 val selector: Selector = Selector.open()
 socket.configureBlocking(false)
@@ -210,7 +199,7 @@ val key = socket.register(selector, SelectionKey.OP_WRITE)
 
 while (buffer.hasRemaining) {
   selector.select() // блокируется
-  if (key.isWritable) {
+  if (key.isWritable) { // бывают "ложные" срабатывания
     socket.write(buffer)
   }
 }
@@ -222,10 +211,7 @@ while (buffer.hasRemaining) {
 				</section>
 
 				<section>
-					<h3>Event Loop - используем один Selector на всех клиентов</h3>
-				</section>
-
-				<section>
+					<p>Event Loop - один Selector на всех клиентов
 <pre><code class="scala">val selector: Selector = Selector.open()
 
 // можно зарегистрировать много сокетов
