@@ -241,8 +241,8 @@ while (true) {
 				<section>
 					<p>Сложности?
 
-					<p class="fragment">Запутанная логика чтения - нарезка потока от клиента
-					на произвольные блоки.
+					<p class="fragment">Запутанная логика чтения - нарезка потока
+					на произвольные блоки. Упреждающее чтение.
 
 					<p class="fragment">Запись только по готовности клиента
 
@@ -250,17 +250,18 @@ while (true) {
 				</section>
 
 				<section>
-					<p>Обычно не проблема - программист работает или с готовым сервером,
-					или с framework (netty, akka-io и т.п.)
+					<p>Обычно не проблема - используем готовый сервер
+					или framework (netty, akka-io и т.п.)
 				</section>
 
 				<section>
 					Такой подход не сочитается с:
 					<ul>
 						<li>Долгими вычислениями на CPU
-						<li class="fragment">Блокирующимися вызовами (например JDBC)
-						<li class="fragment">Вызовами асинхронных API
+						<li>Блокирующимися вызовами (например JDBC)
+						<li>Многопоточностью и асинхронными API
 					</ul>
+					<p>в JVM обычно не получается работать в одном потоке.
 				</section>
 
 				<section>
@@ -269,28 +270,20 @@ while (true) {
 				</section>
 
 				<section>
-					<p>Раньше наши обработчики работали<br> прямо в нашем потоке.
+					<p>"Работу" делаем вне event loop. <br>
+					Запускаем асинхронный процесс.
 
-					<p>Сделаем их функциями <br> Unit ⇒ Future[Action]
-
-					<p><small>Action - кодирует следующую операцию над сокетом</small>
+					<p>Ввод-вывод делаем в event loop<br>(i/o не потокобезопасный)
 				</section>
 
 				<section>
 					Вызов такой функции делается просто:
 <pre><code class="scala">selectionKeys.foreach { sk ⇒
   sk.interestOps(0) // не ждем новых событий
-  sk.attachment().asInstanceOf[() ⇒ Future[Action]].apply()
+  sk.attachment().asInstanceOf[Runnable].run()
 }
 </code></pre>
-					но как "вернуть" сокет обратно в работу?
-				</section>
-
-				<section>
-					<ul>
-					<li>Selector - не потокобезопасный (почти)
-					<li>да и он все время занят чем-то
-					</ul>
+					но как "вернуть" сокет обратно в event loop?
 				</section>
 
 				<section>
@@ -308,23 +301,13 @@ while ({ task = queue.poll(); task } != null) {
 				</section>
 
 				<section>
-					При добавлении задачи прерываем ожидание select()
-<pre><code class="scala">val reactorExecutor = ExecutionContext.fromExecutor { r ⇒
+					Прерываем ожидание select()
+<pre><code class="scala">val executor: Executor = { r ⇒
   queue.add(r)
   selector.wakeup()
 }
 </code></pre>
-				</section>
-
-				<section>
-<pre><code class="scala">selectionKeys.foreach { sk ⇒
-  sk.interestOps(0)
-  sk.attachment()
-    .asInstanceOf[() ⇒ Future[Action]]
-    .apply()
-    .onComplete(processAction)(reactorExecutor)
-}
-</code></pre>
+<p>используем этот Executor для<br> возвращения в event loop
 				</section>
 
 				<section>
@@ -341,16 +324,15 @@ while ({ task = queue.poll(); task } != null) {
 				<section>
 					<p>Все современные сервера на JVM реализуют комбинированный
 					подход.
+					<p>Даже для сервлетов<br>(blocking over non-blocking)
 				</section>
 
 				<section>
-					<p>Похожий event-loop используется в клиентах к веб-сервисам
-					и к некоторым СУБД.
+					<p>Event-loop в HTTP-клиенте,<br> драйверах СУБД (кроме JDBC).
 
-					<p class="fragment">Функция выполнения запроса возвращает Future,
-					которая обрабатывается в event loop клиента.
+					<p>Число параллельных запросов не регулируется размером
+					thread pool!
 				</section>
-
 
 				<section>
 					<h3>HTTP протокол</h3>
