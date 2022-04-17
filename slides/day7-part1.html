@@ -32,10 +32,10 @@
 				<section>
 					<h3>План первой части</h2>
 					<ol>
-						<li>Источники асинхронности.	
+						<li>Источники асинхронности
 						<li>Каждому клиенту по потоку
-						<li>Java NIO и мультиплексированый I/O
-						<li>HTTP протокол и REST.
+						<li>Java NIO и мультиплексированный I/O
+						<li>HTTP протокол и REST
 					</ol>
 					<p>Вторая часть - Akka HTTP.
 				</section>
@@ -292,7 +292,7 @@ while (true) {
 val queue = new ConcurrentLinkedQueue[Runnable]
 val executor: Executor = task ⇒ queue.add(task)
 </code></pre>
-					очередь разбираем цикле обработки событий:
+					очередь разбираем в цикле обработки событий:
 <pre><code class="scala">var task: Runnable = _
 while ({ task = queue.poll(); task } != null) {
   task.run()
