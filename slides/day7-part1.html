@@ -415,11 +415,8 @@ while ({ task = queue.poll(); task } != null) {
 					<pre><code class="scala">
 GET /scala-course-2020/slides/day7.html HTTP/1.1
 					</code></pre>
-					<p>Метод, путь ресурса и версия протокола
-				</section>
-
-				<section>
-					<p>Путь - "адрес" ресурса на сервере;<br>"метод" - действие над ресурсом
+					<p>"Метод" - действие над ресурсом
+					<p>Путь - "адрес" ресурса на сервере
 				</section>
 
 				<section>
@@ -430,8 +427,10 @@ GET /scala-course-2020/slides/day7.html HTTP/1.1
 						<li>PUT - поместить
 						<li>DELETE - удалить
 						<li>PATCH - модифицировать
+						<li>и другие
 					</ul>
-					<p>Всего около 20 методов, если включить все расширения
+					<p>У методов есть своя семантика по кешированию,
+					безопасности и идемпотентности.
 				</section>
 
 				<section>
@@ -456,11 +455,7 @@ If-Modified-Since: Sun, 25 Mar 2018 07:25:21 GMT
 Upgrade-Insecure-Requests: 1
 User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36
 					</code></pre>
-					<p><small>Переносы строк запрещены в современном HTTP</small>
-				</section>
-
-				<section>
-					<p>Тело запроса: данные, передаваемые на сервер
+					<p><small>переносы строк запрещены (в отличии от почты) </small>
 				</section>
 
 				<section>
