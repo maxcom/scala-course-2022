@@ -467,6 +467,7 @@ User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (
 
 				<section>
 					<p>Два режима передачи тела запроса:<br> известной длины и неизвестной (chunked).
+					<p>chunked запрос умеют не все клиенты и сервера
 				</section>
 
 				<section>
@@ -481,7 +482,7 @@ HTTP/1.1 200 OK
 					<p>Статус - трехзначный код плюс его описание
 
 					<ul>
-						<p>1xx - информационные коды
+						<p>1xx - информационные коды (экзотика)
 						<p>2xx - успешные коды
 						<p>3xx - перенаправления
 						<p>4xx - ошибки клиента
@@ -519,6 +520,7 @@ Expires: Sat, 24 Mar 2018 12:57:43 GMT
 Last-Modified: Sun, 25 Mar 2018 08:57:41 GMT
 Set-Cookie: JSESSIONID=1485581EB69CB469B9E766D8DCEF4652; Path=/; Secure; HttpOnly
 					</code></pre>
+					<p>заголовки можно делать свои
 				</section>
 
 				<section>
@@ -527,12 +529,12 @@ Set-Cookie: JSESSIONID=1485581EB69CB469B9E766D8DCEF4652; Path=/; Secure; HttpOnl
 					<ul>
 						<li>Известного размера
 						<li>Chunked
-						<li>Ограничено соединением (устаревшее из HTTP/1.0)
+						<li>Ограничено соединением<br>(устаревшее из HTTP/1.0)
 					</ul>
 				</section>
 
 				<section>
-					<h2>Перерыв 5 минут</h2>
+					<h2>Конец первой части</h2>
 					<p>Вторая часть - Akka HTTP.
 				</section>
 			</div>
