@@ -186,32 +186,36 @@ type Route = RequestContext =&gt; Future[RouteResult]
 				</section>
 
 				<section>
-					<p>Альтернативный роутинг:
-					<ul>
-						<li>Play Framework, несколько вариантов
-						<li>Tapir <a target=_blank href="https://github.com/softwaremill/tapir">https://github.com/softwaremill/tapir</a>
-						<li>... еще много реализаций, ищите на github
-					</ul>
-				</section>
-
-				<section>
 					<p>Стандартный роутинг (плюсы):
 					<ul>
-						<li>Максимально гибкий, API любой сложности
-						<li>Легко расширяется
+						<li>Максимально гибкий, API любой сложности.<br>
+						Любая комбинация условий.
 						<li>Неограниченная композиция
+						<li>Легко расширяется своими условиями
 					</ul>
 				</section>
 
 				<section>
 					<p>Стандартный роутинг (минусы):
 					<ul>
-						<li>Переусложнен
-						<li class=fragment>IDEA тормозит
-						<li class=fragment>Ручное форматирование кода
+						<li>Переусложнен, трудная навигация в коде
+						<li class=fragment>IDEA тормозит (много implicit conversion)
+						<li class=fragment>Ручное форматирование кода<br>
+						автоформатирование плохо работает
 						<li class=fragment>Нет генерации документации
 					</ul>
 				</section>
+
+				<section>
+					<p>Альтернативный роутинг:
+					<ul>
+						<li>Play Framework, несколько вариантов
+						<li>Tapir <a target=_blank href="https://github.com/softwaremill/tapir">https://github.com/softwaremill/tapir</a><br>
+						универсальный DSL, генерация OpenAPI
+						<li>... еще много реализаций, ищите на github
+					</ul>
+				</section>
+
 
 				<section>
 					<p>Вернемся к REST:<br>
@@ -262,6 +266,17 @@ type Route = RequestContext =&gt; Future[RouteResult]
 
 				<section>
 					<h3>Роутинг</h3>
+					<pre><code class="scala">
+type Route = RequestContext =&gt; Future[RouteResult]
+					</code></pre>
+
+					<p>RouteResult - ADT
+					<ul>
+						<li>Complete(response: HttpResponse)
+						<li>Rejected(rejections: Seq[Rejection])
+					</ul>
+					<p><small>Complete с ошибкой "финален", Rejected допускает
+					альтернативу</small>
 				</section>
 
 				<section>
@@ -285,30 +300,20 @@ type Route = RequestContext =&gt; Future[RouteResult]
 				</section>
 
 				<section>
-					<pre><code class="scala">
-type Route = RequestContext =&gt; Future[RouteResult]
-					</code></pre>
-				</section>
-
-				<section>
-					<p>RouteResult - ADT
-					<ul>
-						<li>Complete(response: HttpResponse)
-						<li>Rejected(rejections: Seq[Rejection])
-					</ul>
-				</section>
-
-				<section>
-					<p>Directive - элемент роутинга
+					<p>Directive - элемент роутинга. 
+					<p>Функция роутинга,
+					оборачивающая<br> другую функцион роутинга.
 
 					<pre><code class="scala">
 abstract class Directive[L](implicit val ev: Tuple[L]) {
-  // tuple-apply
+  // tuple-apply, "низкий уровень"
   def tapply(f: L =&gt; Route): Route
 
   ... // функции модификации и композиции
 }
 					</code></pre>
+
+					<p>tapply извлекает аргументы из tuple
 				</section>
 
 				<section>
