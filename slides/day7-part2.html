@@ -98,6 +98,8 @@
 						<li>akka-io - неблокирующийся ввод-вывод<br>(акторы + java nio)
 						<li>akka-streams - реактивные потоки
 					</ul>
+					
+					<p>Akka HTTP - веб-сервер на Akka, а не "для Akka".
 				</section>
 
 
@@ -137,7 +139,7 @@ libraryDependencies +=
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 					</code></pre>
-					<p>(не путаем с Java API)
+					<p>(не путаем с javadsl, Java API)
 				</section>
 
 				<section>
@@ -152,6 +154,9 @@ val route: Route = ???
 
 val bindingFuture: Future[Http.ServerBinding] = 
   Http().newServerAt("localhost", 8080).bind(route)
+
+// не забываем про обработку bindingFuture:
+// там могут быть ошибки
 					</code></pre>
 				</section>
 
@@ -162,7 +167,7 @@ val route: Route =
   path("hello") { // путь "/hello"
     get { // метод "GET"
       complete(
-        HttpEntity(
+        HttpEntity( // по-умолчанию тип text/plain для String
           ContentTypes.`text/html(UTF-8)`, 
 	  "<h1>Say hello to akka-http</h1>"))
     }
@@ -175,17 +180,17 @@ val route: Route =
 
 					<pre><code class="scala">
 type Route = RequestContext =&gt; Future[RouteResult]
-// неявно преобразоввывается в Flow из akka-streams
-// Flow[HttpRequest, HttpResponse, Any]
+
+// есть еще более низкоуровневый вариант
 					</code></pre>
 				</section>
 
 				<section>
 					<p>Альтернативный роутинг:
 					<ul>
-						<li>Play Framework
+						<li>Play Framework, несколько вариантов
 						<li>Tapir <a target=_blank href="https://github.com/softwaremill/tapir">https://github.com/softwaremill/tapir</a>
-						<li>... еще много реализаций
+						<li>... еще много реализаций, ищите на github
 					</ul>
 				</section>
 
