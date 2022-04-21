@@ -323,7 +323,7 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
 						<li class=fragment>Фильтровать запросы по условию
 						<li class=fragment>Извлекать данные из запроса и контекста
 						<li class=fragment>Модифицировать ответ
-						<li class=fragment>Завершать ответ
+						<li class=fragment>Создавать ответ
 					</ul>
 				</section>
 
@@ -339,12 +339,13 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
 				<section>
 					<p>Пример:
 					<pre><code class="scala">
-path("hello") {
-  get { // Directive0 требует метод GET
+path("hello") { // Directive0
+  get { // Directive0 
     complete("Say hello to akka-http")
   }
-} ~  // Directive1 требует путь "order/$id"
-path("order" / IntNumber) { id =&gt; // извлеченный id
+} ~  
+// Directive1 требует путь "order/$id" и извлекает id
+path("order" / IntNumber) { id =&gt;
   complete(s"Order $id")
 }
 					</code></pre>
@@ -370,8 +371,8 @@ val orderGetOrPutWithMethod =
   path("order" / IntNumber) &amp; (get | put) &amp; extractMethod
 
 val route =
-  orderGetOrPutWithMethod { (id, m) =&gt;
-    complete(s"Received ${m.name} request for order $id")
+  orderGetOrPutWithMethod { (id, method) =&gt;
+    complete(s"Received ${method.name} request for order $id")
   }
 
 					</code></pre>
@@ -381,6 +382,7 @@ val route =
 					<p>Работа с Future
 					<pre><code class="scala">
 val future: Future[String] = Future.successful("value")
+
 val route =
   path("success") {
     onSuccess(future) { v =&gt; // Directive[Tuple1[String]]
