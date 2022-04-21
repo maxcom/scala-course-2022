@@ -79,7 +79,7 @@ layout: default
   * Видео: [Часть 1. Архитектура обработки запросов. Протокол HTTP.](https://youtu.be/QnqPX2cRdWA)
   * Видео (в работе): REST и Akka HTTP.
   * Слайды: [Часть 1. Архитектура обработки запросов. Протокол HTTP.](slides/day7-part1.html)
-  * Слайды (в работе): [Часть 2. REST и Akka HTTP.](slides/day7-part2.html)
+  * Слайды: [Часть 2. REST и Akka HTTP.](slides/day7-part2.html)
   * Слайды домашнего задания (в работе): Сервис классификации.
   * Семинар: Практика по Akka Http.
 8. Акторы Akka, часть 1.
