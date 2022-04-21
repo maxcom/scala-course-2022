@@ -72,6 +72,7 @@ layout: default
   * Видео: [Классификатор часть 2](https://youtu.be/ChCGzx8Xxi8) (домашнее задание).
   * Слайды: [Cats и Circe](slides/day6.html)
   * Семинар: Практика по извлечению данных JSON/HTML и валидации. (ведущий - Никита)
+  * Семинар: [Стартовый проект](https://gitlab.com/StyopinN/scala-course-2022-lesson6). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson6](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson6) 
   * Слайды домашнего задания: [Классификатор: морфология и диагностика](slides/classifier-2.html)
 7. Архитектура обработки запросов. HTTP Протокол. REST и Akka HTTP.
   * Лекция: 20 апреля. Семинар: 27 апреля.
