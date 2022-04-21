@@ -1,0 +1,496 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>REST и Akka HTTP</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h3>REST и Akka HTTP</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<h3>План</h2>
+					<ol>
+						<li>REST API
+						<li>Akka HTTP
+					</ol>
+				</section>
+
+				<section>
+					<h3>REST API</h3>
+				</section>
+
+				<section>
+					<p>Как строить API поверх HTTP?
+
+					<p class="fragment">Можно инкапсулировать протокол поверх HTTP.
+
+					<p class="fragment">Но это сложно и не позволяет использовать
+					полезные свойства протокола.
+				</section>
+
+				<section>
+					<p>REST - методика создания API поверх протокола HTTP
+				</section>
+
+				<section>
+					<p>"REST" как функционально программирование - его все любят,
+					но никто точно не знает что это такое.
+				</section>
+
+				<section>
+					Обычно под REST понимают следующее:
+
+					<ul>
+						<li>Отсутствие состояния клиента на сервере
+						<li class="fragment">URI, указывающие на объекты API
+						<li class="fragment">Методы HTTP - действия над объектами
+						<li class="fragment">Ошибки с кодами HTTP
+						<li class="fragment">Использование кеширования и условных запросов
+						<li class="fragment">Content-type для выбора формата и версионирования
+					</ul>
+				</section>
+
+				<section>
+					<h3>Akka HTTP</h3>
+				</section>
+
+				<section>
+					<p>Совмененный асинхронный HTTP сервер и клиент.
+
+					<p>(основное использование - серверная сторона)
+				</section>
+
+				<section>
+					<p>Построен на технологиях Akka.
+
+					<ul>
+						<li>akka-io - неблокирующийся ввод-вывод<br>(акторы + java nio)
+						<li>akka-streams - реактивные потоки
+					</ul>
+				</section>
+
+
+				<section>
+					<p>Асинхронность - Future и Akka Streams.<br>
+					Акторы используются только внутри реализации.
+
+					<p><small>(будет отдельная лекция про Akka Streams)</small>
+				</section>
+
+				<section>
+					<p>Java-сервлеты научились быть асинхронными через 10 лет
+					после появления первой версии.
+
+					<p class="fragment">И еще 3 года появился асинхронный ввод-вывод.
+				</section>
+
+				<section>
+					<p>Начнем с Hello, world!
+				</section>
+
+				<section>
+					<p>build.sbt
+					<pre><code class="scala">
+libraryDependencies +=
+  "com.typesafe.akka" %% "akka-http" % "10.2.9"
+
+// версию Akka выбираем сами (&gt;= 2.5)
+libraryDependencies +=
+  "com.typesafe.akka" %% "akka-stream" % "2.6.19"
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Импортируем scaladsl
+					<pre><code class="scala">
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives._
+					</code></pre>
+					<p>(не путаем с Java API)
+				</section>
+
+				<section>
+					Запуск сервера
+
+					<pre><code class="scala">
+// ActorSystem - ExecutionContext, Scheduler и др компоненты
+implicit val system: ActorSystem = ActorSystem("my-system")
+
+// обработчик запросов
+val route: Route = ???
+
+val bindingFuture: Future[Http.ServerBinding] = 
+  Http().newServerAt("localhost", 8080).bind(route)
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Hello, World!
+					<pre><code class="scala">
+val route: Route =
+  path("hello") { // путь "/hello"
+    get { // метод "GET"
+      complete(
+        HttpEntity(
+          ContentTypes.`text/html(UTF-8)`, 
+	  "<h1>Say hello to akka-http</h1>"))
+    }
+  }
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Обработчик запросов
+
+					<pre><code class="scala">
+type Route = RequestContext =&gt; Future[RouteResult]
+// неявно преобразоввывается в Flow из akka-streams
+// Flow[HttpRequest, HttpResponse, Any]
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Альтернативный роутинг:
+					<ul>
+						<li>Play Framework
+						<li>Tapir <a target=_blank href="https://github.com/softwaremill/tapir">https://github.com/softwaremill/tapir</a>
+						<li>... еще много реализаций
+					</ul>
+				</section>
+
+				<section>
+					<p>Стандартный роутинг (плюсы):
+					<ul>
+						<li>Максимально гибкий, API любой сложности
+						<li>Легко расширяется
+						<li>Неограниченная композиция
+					</ul>
+				</section>
+
+				<section>
+					<p>Стандартный роутинг (минусы):
+					<ul>
+						<li>Переусложнен
+						<li class=fragment>IDEA тормозит
+						<li class=fragment>Ручное форматирование кода
+						<li class=fragment>Нет генерации документации
+					</ul>
+				</section>
+
+				<section>
+					<p>Вернемся к REST:<br>
+					URI должен указывать на объект на сервере
+
+					<p class="fragment">Например профиль пользователя admin<br>
+					/users/admin
+				</section>
+
+				<section>
+					<p>Действия над пользователями:
+
+					<ul>
+						<li>GET /users - получить список пользователей
+						<li>POST /users - создать нового
+						<li>GET /users/:login - получить свойства пользователя
+						<li>PUT /users/:login - создать/обновить пользователя
+						<li>PATCH /users/:login - модифицировать пользователя (или POST)
+						<li>DELETE /users/:login - удалить пользователя
+					</ul>
+				</section>
+
+				<section>
+					<h3>Роутинг</h3>
+				</section>
+
+				<section>
+					<p>Роутинг может быть такой:
+<pre><code class="scala">
+    path("users") {
+      post {
+        entity(as[String]) { login =&gt;
+          createNewUser(login)
+          complete(StatusCodes.Created)
+        }
+      } ~ 
+      path(Segment) { login =&gt;
+        get { ??? } ~
+        put { ??? } ~
+        patch { ??? } ~
+        delete { ??? }
+      }
+    } 
+</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+type Route = RequestContext =&gt; Future[RouteResult]
+					</code></pre>
+				</section>
+
+				<section>
+					<p>RouteResult - ADT
+					<ul>
+						<li>Complete(response: HttpResponse)
+						<li>Rejected(rejections: Seq[Rejection])
+					</ul>
+				</section>
+
+				<section>
+					<p>Directive - элемент роутинга
+
+					<pre><code class="scala">
+abstract class Directive[L](implicit val ev: Tuple[L]) {
+  // tuple-apply
+  def tapply(f: L =&gt; Route): Route
+
+  ... // функции модификации и композиции
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Directive может:
+					<ul>
+						<li>Модифицировать запрос
+						<li class=fragment>Фильтровать запросы по условию
+						<li class=fragment>Извлекать данные из запроса и контекста
+						<li class=fragment>Модифицировать ответ
+						<li class=fragment>Завершать ответ
+					</ul>
+				</section>
+
+				<section>
+					<ul>
+						<li>Directive0 - без параметров
+						<li>Directive1 - с 1-м параметром
+						<li>Directive2 - с 2-мя
+						<li>...
+					</ul>
+				</section>
+
+				<section>
+					<p>Пример:
+					<pre><code class="scala">
+path("hello") {
+  get { // Directive0 требует метод GET
+    complete("Say hello to akka-http")
+  }
+} ~  // Directive1 требует путь "order/$id"
+path("order" / IntNumber) { id =&gt; // извлеченный id
+  complete(s"Order $id")
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Композиция:
+					<pre><code class="scala">
+path("order" / IntNumber) { id =&gt;
+  (get | put) {
+    extractMethod { m =&gt;
+      complete(s"Received ${m.name} request for order $id")
+    }
+  }
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+// собрем custom директиву
+val orderGetOrPutWithMethod =
+  path("order" / IntNumber) &amp; (get | put) &amp; extractMethod
+
+val route =
+  orderGetOrPutWithMethod { (id, m) =&gt;
+    complete(s"Received ${m.name} request for order $id")
+  }
+
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Работа с Future
+					<pre><code class="scala">
+val future: Future[String] = Future.successful("value")
+val route =
+  path("success") {
+    onSuccess(future) { v =&gt; // Directive[Tuple1[String]]
+      complete(s"Future was completed with $v.")
+    }
+  }
+					</code></pre>
+				</section>
+
+				<section>
+					<h3>Сериализация</h3>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def complete(m: =&gt; ToResponseMarshallable): StandardRoute
+// implicit преобразование
+					</code></pre>
+					<p>typeclass напрямую не используется
+				</section>
+
+				<section>
+					<pre><code class="scala">
+type ToResponseMarshaller[T] = Marshaller[T, HttpResponse]
+
+sealed abstract class Marshaller[-A, +B] {
+  def apply(value: A)(implicit ec: ExecutionContext): 
+    Future[List[Marshalling[B]]]
+  ...
+}
+					</code></pre>
+					<p>возможно несколько вариантов маршаллинга<br>
+					(content negitiation)
+				</section>
+
+				<section>
+					<p>JSON: <a target=_blank href="https://github.com/hseeberger/akka-http-json">akka-http-json</a>
+					<ul>
+						<li>Argonaut
+						<li>avro4s
+						<li>AVSystem GenCodec
+						<li>circe
+						<li>Jackson
+						<li>Json4s
+						<li>jsoniter-scala
+						<li>Play JSON
+						<li>uPickle
+					</ul>
+				</section>
+
+				<section>
+					<p>build.sbt
+					<pre><code class="scala">
+libraryDependencies +=
+  "de.heikoseeberger" %% "akka-http-play-json" % "1.39.2"
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport._
+
+...
+
+  complete(Json.obj("value" -&gt; "Hello, world!"))
+
+...
+					</code></pre>
+				</section>
+
+				<section>
+					<h3>Десериализация</h3>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+case class Data(value: String)
+object Data {
+  implicit val format: OFormat[Data] = Json.format[Data]
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+get {
+  complete(Data("Hello, world"))
+} ~ post {
+  // entity - Directive1
+  // as[Data] ищет implicit FromRequestUnmarshaller[T]
+  entity(as[Data]) { data =&gt;
+    complete(s"Got ${data.value}")
+  }
+}
+					</code></pre>
+				</section>
+
+
+
+				<section>
+					<p>Коды HTTP классифицируют ошибки<br>
+					(подробности - в теле ответа)
+				</section>
+
+				<section>
+					<p>Пример ошибкок клиента
+					<ul>
+						<li>400 Bad Request - некорректный запрос или ошибка валидации
+						<li>403 Forbidden - запрещено правами доступа
+						<li>404 Not Found - объект отсутствует на сервере
+						<li>409 Conflict - несовместимое изменение
+						<li>429 Too Many Requests - слишком много запросов
+					</ul>
+				</section>
+
+				<section>
+					<p>Ошибки сервера
+					<ul>
+						<li>500 Internal Server Error
+						<li>503 Service Unavailable
+					</ul>
+				</section>
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса:<br> <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
