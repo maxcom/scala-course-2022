@@ -34,6 +34,8 @@
 					<ol>
 						<li>REST API
 						<li>Akka HTTP
+						<li>Роутинг запросов
+						<li>Сериализация и десериализация
 					</ol>
 				</section>
 
@@ -48,10 +50,14 @@
 
 					<p class="fragment">Но это сложно и не позволяет использовать
 					полезные свойства протокола.
+
+					<p class="fragment">Используем если протокол не "ложится" на логику HTTP.
 				</section>
 
 				<section>
-					<p>REST - методика создания API поверх протокола HTTP
+					<p>REST - методика создания API поверх протокола HTTP.
+
+					<p>Используем "фичи" протокола по максимуму.
 				</section>
 
 				<section>
@@ -63,7 +69,8 @@
 					Обычно под REST понимают следующее:
 
 					<ul>
-						<li>Отсутствие состояния клиента на сервере
+						<li>Отсутствие состояния клиента на сервере,<br>
+						запросы независимы, нет "сессий"
 						<li class="fragment">URI, указывающие на объекты API
 						<li class="fragment">Методы HTTP - действия над объектами
 						<li class="fragment">Ошибки с кодами HTTP
@@ -80,6 +87,8 @@
 					<p>Совмененный асинхронный HTTP сервер и клиент.
 
 					<p>(основное использование - серверная сторона)
+
+					<p>Никаких сервлетов, "веб-приложений" и т.п.
 				</section>
 
 				<section>
@@ -214,11 +223,37 @@ type Route = RequestContext =&gt; Future[RouteResult]
 						<li>GET /users - получить список пользователей
 						<li>POST /users - создать нового
 						<li>GET /users/:login - получить свойства пользователя
-						<li>PUT /users/:login - создать/обновить пользователя
-						<li>PATCH /users/:login - модифицировать пользователя (или POST)
+						<li>PUT /users/:login - создать/обновить пользователя<br>
+						идемпотентен, все данные в теле
+						<li>PATCH /users/:login - модифицировать пользователя
 						<li>DELETE /users/:login - удалить пользователя
 					</ul>
 				</section>
+
+				<section>
+					<p>Коды HTTP классифицируют ошибки<br>
+					(подробности - в теле ответа)
+				</section>
+
+				<section>
+					<p>Пример ошибкок клиента
+					<ul>
+						<li>400 Bad Request - некорректный запрос или ошибка валидации
+						<li>403 Forbidden - запрещено правами доступа
+						<li>404 Not Found - объект отсутствует на сервере
+						<li>409 Conflict - несовместимое изменение
+						<li>429 Too Many Requests - слишком много запросов
+					</ul>
+				</section>
+
+				<section>
+					<p>Ошибки сервера
+					<ul>
+						<li>500 Internal Server Error
+						<li>503 Service Unavailable
+					</ul>
+				</section>
+
 
 				<section>
 					<h3>Роутинг</h3>
@@ -431,32 +466,6 @@ get {
   }
 }
 					</code></pre>
-				</section>
-
-
-
-				<section>
-					<p>Коды HTTP классифицируют ошибки<br>
-					(подробности - в теле ответа)
-				</section>
-
-				<section>
-					<p>Пример ошибкок клиента
-					<ul>
-						<li>400 Bad Request - некорректный запрос или ошибка валидации
-						<li>403 Forbidden - запрещено правами доступа
-						<li>404 Not Found - объект отсутствует на сервере
-						<li>409 Conflict - несовместимое изменение
-						<li>429 Too Many Requests - слишком много запросов
-					</ul>
-				</section>
-
-				<section>
-					<p>Ошибки сервера
-					<ul>
-						<li>500 Internal Server Error
-						<li>503 Service Unavailable
-					</ul>
 				</section>
 
 				<section>
