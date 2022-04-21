@@ -300,20 +300,8 @@ type Route = RequestContext =&gt; Future[RouteResult]
 				</section>
 
 				<section>
-					<p>Directive - элемент роутинга. 
-					<p>Функция роутинга,
-					оборачивающая<br> другую функцион роутинга.
-
-					<pre><code class="scala">
-abstract class Directive[L](implicit val ev: Tuple[L]) {
-  // tuple-apply, "низкий уровень"
-  def tapply(f: L =&gt; Route): Route
-
-  ... // функции модификации и композиции
-}
-					</code></pre>
-
-					<p>tapply извлекает аргументы из tuple
+					<p>Элементы роутина - директивы (Directive). 
+					<p>Функции, оборачивающие другие функции роутинга.
 				</section>
 
 				<section>
@@ -325,6 +313,19 @@ abstract class Directive[L](implicit val ev: Tuple[L]) {
 						<li class=fragment>Модифицировать ответ
 						<li class=fragment>Создавать ответ
 					</ul>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+abstract class Directive[L](implicit val ev: Tuple[L]) {
+  // tuple-apply, "низкий уровень"
+  def tapply(f: L =&gt; Route): Route
+
+  ... // функции модификации и композиции
+}
+					</code></pre>
+
+					<p>tapply извлекает аргументы из tuple
 				</section>
 
 				<section>
