@@ -402,7 +402,8 @@ val route =
 def complete(m: =&gt; ToResponseMarshallable): StandardRoute
 // implicit преобразование
 					</code></pre>
-					<p>typeclass напрямую не используется
+					<p>typeclass напрямую не используется<br>
+					(implicit параметры ломают "магию" routing DSL)
 				</section>
 
 				<section>
@@ -415,8 +416,7 @@ sealed abstract class Marshaller[-A, +B] {
   ...
 }
 					</code></pre>
-					<p>возможно несколько вариантов маршаллинга<br>
-					(content negitiation)
+					<p>список вариантов для content negitiation
 				</section>
 
 				<section>
@@ -440,6 +440,7 @@ sealed abstract class Marshaller[-A, +B] {
 libraryDependencies +=
   "de.heikoseeberger" %% "akka-http-play-json" % "1.39.2"
 					</code></pre>
+					<p>выходят очень часто - одна версия на все json библиотеки
 				</section>
 
 				<section>
@@ -452,19 +453,20 @@ import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport._
 
 ...
 					</code></pre>
+					<p>можно передать не JsObject, а то для чего есть Writes
 				</section>
 
 				<section>
 					<h3>Десериализация</h3>
-				</section>
 
-				<section>
 					<pre><code class="scala">
 case class Data(value: String)
 object Data {
   implicit val format: OFormat[Data] = Json.format[Data]
 }
 					</code></pre>
+					<p>Format в play-json - комбинация Reads и Writes<br>
+					OFormat - комбинация Reads и OWrites
 				</section>
 
 				<section>
