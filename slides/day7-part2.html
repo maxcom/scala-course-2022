@@ -84,7 +84,7 @@
 				</section>
 
 				<section>
-					<p>Современенный асинхронный HTTP сервер и клиент.
+					<p>Современный асинхронный HTTP сервер и клиент.
 
 					<p>(основное использование - серверная сторона)
 
@@ -300,7 +300,7 @@ type Route = RequestContext =&gt; Future[RouteResult]
 				</section>
 
 				<section>
-					<p>Элементы роутина - директивы (Directive). 
+					<p>Элементы роутинга - директивы (Directive). 
 					<p>Функции, оборачивающие другие функции роутинга.
 				</section>
 
@@ -367,7 +367,7 @@ path("order" / IntNumber) { id =&gt;
 
 				<section>
 					<pre><code class="scala">
-// собрем custom директиву
+// соберем custom директиву
 val orderGetOrPutWithMethod =
   path("order" / IntNumber) &amp; (get | put) &amp; extractMethod
 
@@ -416,7 +416,7 @@ sealed abstract class Marshaller[-A, +B] {
   ...
 }
 					</code></pre>
-					<p>список вариантов для content negitiation
+					<p>список вариантов для content negotiation
 				</section>
 
 				<section>
