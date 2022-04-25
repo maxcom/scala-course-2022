@@ -25,7 +25,7 @@
 		<div class="reveal">
 			<div class="slides">
 				<section>
-					<h3>Сервис классификации (домашнее задание)</h3>
+					<h3>Сервис классификации<br> (домашнее задание)</h3>
 					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
 				</section>
 
@@ -46,6 +46,15 @@
 
 				<section>
 					<p>Используем HTML шаблоны <a target="_blank" href="https://www.playframework.com/documentation/2.8.x/ScalaTemplates">Twirl</a>
+					<p>project/plugins.sbt
+					<pre><code class="scala">
+addSbtPlugin("com.typesafe.sbt" % "sbt-twirl" % "1.5.1")
+					</code></pre>
+
+					<p>build.sbt
+					<pre><code class="scala">
+enablePlugins(SbtTwirl)
+					</code></pre>
 				</section>
 
 				<section>
@@ -56,7 +65,7 @@
 
 <h1>Классификатор</h1>
 
-<form action="/classify" method="GET">
+<form action="/classify" method="POST">
     <textarea name="text">@text</textarea>
     <button type="submit">Классифицировать</button>
 </form>
@@ -71,17 +80,20 @@
 				<section>
 					<p>В контроллере возвращаем HTML:
 					<pre><code class="scala">
-def showForm() = Action {
-  Ok(views.html.form(None, None, None))
-}
+implicit val twirlMarshaller: ToEntityMarshaller[Html] =
+  Marshaller.withFixedContentType(`text/html(UTF-8)`) { html =&gt;
+    HttpEntity(`text/html(UTF-8)`, html.body)
+  }
 					</code></pre>
+					<pre><code class="scala">
+complete(form(None, None, None))
+					</code></pre>
+
 				</section>
 
 				<section>
-					<p>Данные формы при методе GET передаются параметрами в URL
-
-					<p>В функцию обработки запроса нужно добавить параметр,
-					Play передаст туда значение из URL.
+					<p>Добавляем обработку формы
+					<p>См. <a href="https://doc.akka.io/docs/akka-http/current/routing-dsl/directives/form-field-directives/formFields.html" target=_blank>документацию</a>
 				</section>
 
 				<section>
@@ -89,8 +101,6 @@ def showForm() = Action {
 
 					<div class="fragment">
 						<p>Можно легко исправить
-
-						<p><small>(опционально, если есть желание)</small>
 					</div>
 				</section>
 
@@ -104,15 +114,23 @@ def showForm() = Action {
 				<section>
 					<p>Его можно подключить как зависимость в sbt
 
-					<p>Пример - на сайте <a href="https://www.webjars.org/documentation#play2" target="_blank">webjars</a>
+					<pre><code class="scala">
+libraryDependencies ++= Seq(
+  "org.webjars.npm" % "bootstrap" % "5.1.3",
+  "org.mdedetrich" %% "akka-http-webjars" % "0.5.0")
+					</code></pre>
 
-					<p class="fragment">Использование - в документации на Bootstrap
+					<p><a href="https://github.com/mdedetrich/akka-http-webjars" target=_blank">документация на akka-http-webjars</a>
+				</section>
+
+				<section>
+					<p>/webjars/bootstrap.min.css
 				</section>
 
 				<section>
 					<p>Напоминаю:
 					<ul>
-						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+						<li>Страничка курса:<br> <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
 					</ul>
 				</section>
 			</div>
