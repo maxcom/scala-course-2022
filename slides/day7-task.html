@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Сервис классификации (домашнее задание)</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h3>Сервис классификации (домашнее задание)</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<p>Будем делать "классический" сайт, а не приложение.
+
+					<p>(не будем писать код на front-end)
+				</section>
+
+				<section>
+					<p>Задание:
+
+					<p>Сделаем HTML форму для ввода текста.
+
+					<p class="fragment">Обработчик вернет класс текста (позитив/негатив)
+					и исходный текст с диагностикой.
+				</section>
+
+				<section>
+					<p>Используем HTML шаблоны <a target="_blank" href="https://www.playframework.com/documentation/2.8.x/ScalaTemplates">Twirl</a>
+				</section>
+
+				<section>
+					<p>src/main/twirl/views/form.scala.html
+
+					<pre><code class="scala">@(text: Option[String], category: Option[String], 
+        debug: Option[String])
+
+<h1>Классификатор</h1>
+
+<form action="/classify" method="GET">
+    <textarea name="text">@text</textarea>
+    <button type="submit">Классифицировать</button>
+</form>
+
+@if(category.nonEmpty) {
+    <p>Результат: @category</p>
+    
+    <p>@debug</p>
+}</code></pre>
+				</section>
+
+				<section>
+					<p>В контроллере возвращаем HTML:
+					<pre><code class="scala">
+def showForm() = Action {
+  Ok(views.html.form(None, None, None))
+}
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Данные формы при методе GET передаются параметрами в URL
+
+					<p>В функцию обработки запроса нужно добавить параметр,
+					Play передаст туда значение из URL.
+				</section>
+
+				<section>
+					<p>Страшный "программистский" дизайн?
+
+					<div class="fragment">
+						<p>Можно легко исправить
+
+						<p><small>(опционально, если есть желание)</small>
+					</div>
+				</section>
+
+				<section>
+					<p>Используем готовый CSS шаблон
+
+					<p class="fragment">Популярный вариант:
+					<a target="_blank" href="https://getbootstrap.com/">Bootstrap</a>
+				</section>
+
+				<section>
+					<p>Его можно подключить как зависимость в sbt
+
+					<p>Пример - на сайте <a href="https://www.webjars.org/documentation#play2" target="_blank">webjars</a>
+
+					<p class="fragment">Использование - в документации на Bootstrap
+				</section>
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
