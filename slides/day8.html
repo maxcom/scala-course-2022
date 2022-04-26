@@ -318,8 +318,9 @@ object Main extends App {
 				<section>
 					<p>Пример актора: классификатор с обучением
 
-					<p class="fragment">Один актор на классификацию и обучение - просто, не эффективно
-					<p class="fragment">Актор для обучения, get запрос для модели - нужна immutable модель или функция копирования
+					<p class="fragment">Один актор на классификацию и обучение - просто, но не эффективно
+					<p class="fragment">Актор для обучения, get запрос для модели<br>
+					(нужна immutable модель или функция копирования)
 				</section>
 
 				<section>
@@ -383,7 +384,7 @@ val counterF: Future[ActorRef[Counter.Protocol]] =
 					<h3>Диспетчеры под задачи</h3>
 					<ul>
 						<li>Интерактивные задачи vs фоновая пакетная обработка.
-						<li class="fragment">Блокирующиеся вызовы (JDBC, файловый ввод-вывод, вычисления на CPU).
+						<li class="fragment">Блокирующиеся вызовы (JDBC, файловый ввод-вывод, долгие вычисления).
 						<li class="fragment">Свой «отсек» на каждую подсистему (bulkheading).
 						<li class="fragment">Своя JVM и свой сервер на каждую подсистему (Akka Remote / Cluster).
 					</ul>
