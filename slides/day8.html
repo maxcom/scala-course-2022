@@ -330,18 +330,11 @@ object Main extends App {
 
 				<section>
 					<p>Взаимодействие акторов по сети не похоже на RPC (Remote Procedure Call).
-				</section>
 
-				<section>
 					<ul>
-						<li>Классический RPC — удаленные вызовы подобны локальным
+						<li class="fragment">Классический RPC — удаленные вызовы подобны локальным
 						<li class="fragment">Акторы — локальные «вызовы» подобны удаленным
 					</ul>
-				</section>
-
-				<section>
-					<p>Асинхронная логика больше похожа на взаимодействие по сети, чем
-					на цепочку вызовов в одном потоке.
 				</section>
 
 				<section>
@@ -349,37 +342,21 @@ object Main extends App {
 					<ul>
 						<li>Актор может запустить дочерние акторы
 <pre><code class="scala">context.spawn(HelloWorld(), "greeter")</code></pre>
+						(об этом позже)
 						<li>На верхнем уровне - SpawnProtocol
 					</ul>
 				</section>
 
 				<section>
 					<p>SpawnProtocol - актор, порождающий акторы
-				</section>
 
-				<section>
 					<pre><code class="scala">
 implicit val system: ActorSystem[SpawnProtocol.Command] = 
   ActorSystem(SpawnProtocol(), "root")
 
 val counterF: Future[ActorRef[Counter.Protocol]] =
   system.ask(Spawn(Counter.behavior, "counter", Props.empty, _))
-					</code></pre>
-				</section>
-
-				<section>
-					<pre><code class="scala">
-// для foreach
-implicit val ec: ExecutionContext = system.executionContext
-
-counterF.foreach { counter =&gt;
-  counter ! Counter.Incr(1)
-
-  val result: Future[Long] = counter ? Counter.Get
-  println(Await.result(result, 1.minutes))
-
-  system.terminate()
-}
+// _ для replyTo, иногда нужно явно указать тип
 					</code></pre>
 				</section>
 
@@ -414,6 +391,7 @@ counterF.foreach { counter =&gt;
 				</section>
 
 				<section>
+					<p>Указываем диспетчер при создании актора
 					<pre><code class="scala">
 context.spawn(yourBehavior, "BlockingDispatcher", 
   DispatcherSelector.blocking())
@@ -423,6 +401,7 @@ context.spawn(yourBehavior, "DispatcherFromConfig",
 				</section>
 
 				<section>
+					<p>application.conf</p>
 <pre><code>
 default-blocking-io-dispatcher {
   type = "Dispatcher"
