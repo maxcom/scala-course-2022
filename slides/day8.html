@@ -29,7 +29,7 @@
 			<!-- Any section element inside of this container is displayed as a slide -->
 			<div class="slides">
 				<section>
-					<h3>Часть 8. Акторы Akka</h3>
+					<h3>Акторы Akka</h3>
 					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
 				</section>
 
@@ -40,7 +40,6 @@
 						<li>Диспетчеры.</li>
 						<li>Future и акторы</li>
 						<li>Stash</li>
-						<li>Статус по практическому заданию
 						<li>Таймеры и deadline
 					 	<li>Обработка исключительных ситуаций.</li>
 						<li>Death watch и death pact
@@ -49,6 +48,10 @@
 
 				<section>
 					<h2>Akka и акторы</h2>
+				</section>
+
+				<section>
+					<p>Akka - набор библиотек.<br> Сегодня рассмотрим ядро - акторы Akka.
 				</section>
 
 				<section>
@@ -62,12 +65,13 @@
 				</section>
 
 				<section>
-					<p>Популярность модель получила благодаря Erlang:<br>
-					функциональному языку программирования и платформе,
+					<p>Популярность получила благодаря Erlang:<br>
+					языку программирования и платформе,
 					разработанной Ericsson (1987 г.)
 				</section>
 
 				<section>
+					<p>Erlang динамический + другая модель многопоточности
 					<p>Дальше будем говорить про реализацию модели
 					в библиотеке <a target="_blank" href="https://akka.io/">Akka</a>.
 				</section>
@@ -77,20 +81,19 @@
 
 					<pre><code class="scala">
 libraryDependencies += 
-  "com.typesafe.akka" %% "akka-actor-typed" % "2.6.3"
+  "com.typesafe.akka" %% "akka-actor-typed" % "2.6.19"
 libraryDependencies += // или другой backend Slf4j
-  "ch.qos.logback" % "logback-classic" % "1.2.3"
+  "ch.qos.logback" % "logback-classic" % "1.2.11"
 					</code></pre>
-
-					<p><small>в Play! зависимость уже и так есть</small>
 				</section>
 
 				<section>
 					<p>Два варианта API:
 					<ul>
 						<li>«Классический» - копия Erlang, без типов
-						<li class=fragment>«Typed» - типы и много улучшений
+						<li>«Typed» - типы и много улучшений
 					</ul>
+					<p><small>"Классические" акторы в лекции 2018 года.</small>
 				</section>
 
 				<section>
@@ -100,6 +103,7 @@ libraryDependencies += // или другой backend Slf4j
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 					</code></pre>
+					<p><small>Не перепутайте с javadsl и "классическими" api</small>
 				</section>
 
 				<section>
@@ -115,9 +119,11 @@ import akka.actor.typed.{ActorRef, Behavior}
 
 					<ul>
 						<li class="fragment">Приватное изменяемое состояние
-						<li class="fragment">Mailbox - входящая очередь сообщений
-						<li class="fragment">Логика обработки сообщений (behavior) 
-						<li class="fragment">и др. (об этом позже)
+						<li class="fragment">Mailbox - входящая очередь сообщений,<br>
+						вместо явного вызова методов
+						<li class="fragment">Логика обработки сообщений (behavior),<br>
+						вместо реализации методов
+						<li class="fragment">Логика обработки ошибок
 					</ul>
 				</section>
 
@@ -131,14 +137,13 @@ import akka.actor.typed.{ActorRef, Behavior}
 							<tr class="fragment">
 								<td>Вызов</td>
 								<td>counter.incr(n)</td>
-								<td>counter ! Incr(n)<br>
-								counter.tell(Incr(n))</td>
+								<td>counter ! Incr(n)</td>
 
 							</tr>
 							<tr class="fragment">
 								<td>Запрос</td>
 								<td>counter.get()<br>⇒ Int</td>
-								<td>counter ? Get<br>
+								<td><s>counter ? Get</s><br>
 								counter.ask(Get)<br>⇒ Future[Int]</td>
 							</tr>
 						</thead>
@@ -166,7 +171,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 				<section>
 					<p>У актора обработка сообщений строго последовательна.
 
-					<p class="fragment">Акторы работают независимо в разных потоках.
+					<p class="fragment">Разные акторы работают независимо в разных потоках.
 
 					<p class="fragment">Общение двух акторов последовательно<br> (очередь не
 					перемешивается).
@@ -176,7 +181,8 @@ import akka.actor.typed.{ActorRef, Behavior}
 					<p>Пример: актор счетчика
 					<pre><code class="scala">
 object Counter {
-  trait Protocol
+  sealed trait Protocol
+
   case class Incr(n: Long) extends Protocol
   case class Get(replyto: ActorRef[Long]) extends Protocol
 
@@ -189,12 +195,13 @@ object Counter {
 					<p>Актор с изменяемым состоянием
 					<pre><code class="scala">
 def behavior: Behavior[Protocol] = Behaviors.setup { ctx =&gt;
+  // изменяемое состояние
   var value: Long = 0
 
   Behaviors.receiveMessage {
     case Incr(n) =&gt;
       value += n
-      Behaviors.same
+      Behaviors.same // не меняем behavior
     case Get(replyto) =&gt;
       replyto ! value
       Behaviors.same
@@ -209,7 +216,7 @@ def behavior: Behavior[Protocol] = Behaviors.setup { ctx =&gt;
 private def counter(value: Long): Behavior[Protocol] = 
   Behaviors.receiveMessage {
     case Incr(n) =&gt;
-      counter(value + n)
+      counter(value + n) // новый behavior
     case Get(replyto) =&gt;
       replyto ! value
       Behaviors.same
@@ -218,29 +225,35 @@ private def counter(value: Long): Behavior[Protocol] =
 def behavior: Behavior[Protocol] = counter(0)
 					</code></pre>
 				</section>
-	
+				
+				<section>
+					<p>"Immutable"  предпочтительнее, но не всегда эффективен
+					<p><small>mutable.Queue и многие другие структуры эффективнее immutable</small>
+				</section>
 
 				<section>
+					<p>Запускаем Akka
 					<pre><code class="scala">
 object Main extends App {
   val system: ActorSystem[Counter.Protocol] = // корневой актор
-    ActorSystem(Counter.behavior, "counter")
+    ActorSystem(Counter.behavior, "counter") // "counter" - имя
 
+  // оправка в system это отправка корневому актору
   system ! Counter.Incr(1)
 
   system.terminate()
 }
 					</code></pre>
+					<p><small>запуск множества акторов будет дальше</small>
 				</section>
 
 				<section>
 					<p>Используем Ask
-					<pre><code class="scala">
-import akka.actor.typed.scaladsl.AskPattern._
+					<pre><code class="scala">import akka.actor.typed.scaladsl.AskPattern._
 
 object Main extends App {
   implicit val system: ActorSystem[Counter.Protocol] = ???
-// ^^^^^^
+// ^^^^^^ ask создаем временные акторы
 
   system ! Counter.Incr(1)
 
@@ -263,6 +276,12 @@ object Main extends App {
 						<li class="fragment">данные во внешнем хранилище.
 						<li class="fragment">и др.
 					</ul>
+				</section>
+
+				<section>
+					<p>Актор должен иметь приватное состояние
+					<p>Исключение - отказоустойчивость или балансировка
+					нагрузки
 				</section>
 
 				<section>
@@ -420,32 +439,6 @@ default-blocking-io-dispatcher {
                                 <section>
                                         <h2>Перерыв 5 минут</h2>
                                 </section>
-
-                                <section>
-                                        <h3>Статус по практическому заданию</h3>
-                                </section>
-
-                                <section>
-                                        <p>План задания
-                                        <ol>
-                                                <li>Классификатор текстов
-                                                <li>Reads для vk.com (только reads! writes не нужно)
-                                                <li>Стемминг и диагностика
-                                                <li>Получаем сообщения API vk.com
-                                                <li>Сервис категоризации<br>-------- мы находимся здесь -------
-                                                <li>Опрос новых записей
-						<li>Хранение состояния на диске
-                                                <li>Realtime обновление
-                                        </ol>
-                                </section>
-
-				<section>
-					<ul>
-						<li>Экранирование спецсимволов
-						<li>Классификация ленты: /newsfeed
-						<li>Нейтральный класс
-					</ul>
-				</section>
 
 				<section>
 					<h3>Работа с Future в акторе</h3>
