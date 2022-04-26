@@ -61,8 +61,8 @@ layout: default
   * Слайды домашнего задания: [Пишем классификатор](slides/classifier-1.html)
 5. Базовые примитивы многопоточности. 
   * Лекция: 6 апреля. Семинар: 13 апреля.
-  * Видео: [Введение в многопоточное и асинхронное программирование.](https://www.youtube.com/watch?v=BQ0KxwA1HFM)
-  * Видео: [Future и Promise](https://youtu.be/OTq-S78RbTk)
+  * Видео: [Часть 1. Введение в многопоточное и асинхронное программирование.](https://www.youtube.com/watch?v=BQ0KxwA1HFM)
+  * Видео: [Часть 2. Future и Promise](https://youtu.be/OTq-S78RbTk)
   * Слайды: [Базовые примитивы многопоточности](slides/day5.html)
   * Семинар: Практика по использованию Future/Promise. Планировщик. (ведущий - Роман)
   * Семинар: [Стартовый проект](https://gitlab.com/llgruff/solar-seminar-future). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson5](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson5) 
