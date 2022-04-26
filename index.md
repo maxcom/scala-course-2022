@@ -78,7 +78,7 @@ layout: default
   * Лекция: 20 апреля. Семинар: 27 апреля.
   * Видео: [Часть 1. Архитектура обработки запросов. Протокол HTTP.](https://youtu.be/QnqPX2cRdWA)
   * Видео: [Часть 2. REST и Akka HTTP.](https://youtu.be/G79mqYFIUnQ)
-  * Видео (в работе): Сервис классификации
+  * Видео: [Сервис классификации](https://youtu.be/QgKtdF3XtCY) (домашнее задание)
   * Слайды: [Часть 1. Архитектура обработки запросов. Протокол HTTP.](slides/day7-part1.html)
   * Слайды: [Часть 2. REST и Akka HTTP.](slides/day7-part2.html)
   * Слайды домашнего задания: [Сервис классификации.](slides/classifier-3.html)
