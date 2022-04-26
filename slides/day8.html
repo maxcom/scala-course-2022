@@ -406,7 +406,7 @@ context.spawn(yourBehavior, "DispatcherFromConfig",
 default-blocking-io-dispatcher {
   type = "Dispatcher"
   executor = "thread-pool-executor"
-  throughput = 1
+  throughput = 1 // переключение после N сообщений
 
   thread-pool-executor {
     fixed-pool-size = 16
@@ -416,7 +416,7 @@ default-blocking-io-dispatcher {
 				</section>
 
                                 <section>
-                                        <h2>Перерыв 5 минут</h2>
+                                        <h2>Конец первой части</h2>
                                 </section>
 
 				<section>
