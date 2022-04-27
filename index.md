@@ -83,6 +83,7 @@ layout: default
   * Слайды: [Часть 2. REST и Akka HTTP.](slides/day7-part2.html)
   * Слайды домашнего задания: [Сервис классификации.](slides/classifier-3.html)
   * Семинар: Практика по Akka Http. (ведущий - Марат)
+  * Семинар: [Стартовый проект](https://gitlab.com/m.kuzhagulov/scala-2022-courses-lesson7). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson7](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson7) 
 8. Акторы Akka, часть 1.
   * Лекция: 27 апреля. Семинар: 4 мая.
   * Семинар: Практика использования акторов Akka. (ведущий - Саша)
