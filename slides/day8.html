@@ -511,8 +511,15 @@ ctx.ask(sourceActor, Get) {
 
 				<section>
 					<h3>Stash</h3>
+					Механизм, позволяющий временно отложить сообщения
+				</section>
 
-					<p>Можно временно отложить сообщения:
+				<section>
+					<p>Пример: откладываем Get до окончания Refresh
+				</section>
+
+				<section>
+					<p>Задаем stash и state машину
 					<pre><code class="scala"> 
 def behavior(source: =&gt; Future[String]): Behavior[Protocol] = 
   Behaviors.setup { ctx =&gt;
