@@ -422,6 +422,7 @@ default-blocking-io-dispatcher {
 
 				<section>
 					<h3>Работа с Future в акторе</h3>
+					<p>Обращаемся к асинхронным API в акторе</p>
 				</section>
 
 				<section>
@@ -429,8 +430,14 @@ default-blocking-io-dispatcher {
 					<pre><code class="scala">
 object CacheActor {
   trait Protocol
-  case class Get(replyto: ActorRef[String]) extends Protocol
-  case class RefreshAndGet(replyto: ActorRef[String]) extends Protocol
+
+  // отдать из кеша
+  case class Get(replyto: ActorRef[String]) 
+    extends Protocol
+
+  // обновить кеш и отдать новое
+  case class RefreshAndGet(replyto: ActorRef[String]) 
+    extends Protocol
 
   def behavior(source: =&gt; Future[String]): Behavior[Protocol] = 
     ???
@@ -448,38 +455,39 @@ object CacheActor {
         replyto ! current
         Behaviors.same
       case RefreshAndGet(replyto) =&gt;
-        import ctx.executionContext
-      
+        import ctx.executionContext // для onComplete
         source.onComplete(???)
-      
         Behaviors.same
     }
   }</code></pre>
 				</section>
 
+				<section>
+					<p>Можно ли из onComplete менять state актора?
+				</section>
 
 				<section>
-					<pre><code class="scala">
-case RefreshAndGet(replyto) =&gt;
+  					<p>добавляем приватный Refresh(value)
+					<pre><code class="scala">case RefreshAndGet(replyto) =&gt;
   import ctx.executionContext
 
   source.onComplete {
     case Success(v) =&gt;
       ctx.self ! Refresh(v)
-      replyto ! v
+      replyto ! v 
+      // или Refresh(v, replyto) и отправка после Refresh
     case Failure(ex) =&gt; // handle failure
   }
 
   Behaviors.same
 case Refresh(value) =&gt;
   current = value
-  Behaviors.same
-					</code></pre>
+  Behaviors.same</code></pre>
 				</section>
 
 				<section>
 					<p>pipeTo: посылаем результат себе самому
-					<pre><code class="scala">
+					<pre><code class="scala">// преобразуем результат в протокол
 ctx.pipeToSelf(source) {
   case Success(v) =&gt;
     Refresh(v)
@@ -487,7 +495,18 @@ ctx.pipeToSelf(source) {
     RefreshFailed(ex)
 }
 					</code></pre>
-					<p>Для ask есть "ctx.ask"
+				</section>
+
+				<section>
+					<p>AskPattern внутри актора: "context.ask"
+					<pre><code class="scala">// преобразуем результат в протокол
+ctx.ask(sourceActor, Get) {
+  case Success(v) =&gt;
+    Refresh(v)
+  case Failure(ex) =&gt;
+    RefreshFailed(ex)
+}
+					</code></pre>
 				</section>
 
 				<section>
