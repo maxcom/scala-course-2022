@@ -86,6 +86,8 @@ layout: default
   * Семинар: [Стартовый проект](https://gitlab.com/m.kuzhagulov/scala-2022-courses-lesson7). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson7](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson7) 
 8. Акторы Akka, часть 1.
   * Лекция: 27 апреля. Семинар: 4 мая.
+  * Видео: [Часть 1. Акторы Akka](https://youtu.be/2tUHNoLb5Xk)
+  * Видео (в работе): Часть 2. Акторы и Future. Таймеры. Исключения
   * Семинар: Практика использования акторов Akka. (ведущий - Саша)
   * Слайды (в работе): [Акторы Akka](slides/day8.html)
 9. Акторы Akka, часть 2.
