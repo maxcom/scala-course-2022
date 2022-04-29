@@ -516,6 +516,8 @@ ctx.ask(sourceActor, Get) {
 
 				<section>
 					<p>Пример: откладываем Get до окончания Refresh
+
+					<p>В синхронном варианте проблемы нет.
 				</section>
 
 				<section>
@@ -526,8 +528,8 @@ def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
     var current = "undefined"
 
     Behaviors.withStash(capacity = 1000) { stash =&gt;
-      def waiting: Behavior[Protocol] = ???
-      def working: Behavior[Protocol] = ???
+      def working: Behavior[Protocol] = ??? // ждем запрос
+      def waiting: Behavior[Protocol] = ??? // ждем refresh
 
       working
     }
@@ -536,6 +538,7 @@ def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
 				</section>
 
 				<section>
+					<p>обработка запроса
 					<pre><code class="scala">def working: Behavior[Protocol] = 
   Behaviors.receiveMessagePartial {
     case Get(replyto) =&gt;
@@ -549,17 +552,18 @@ def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
           RefreshFailed(ex)
       }
 
-      waiting
+      waiting // переход в waiting
   }</code></pre>
 				</section>
 
 				<section>
+					<p>ожидание Refresh
 					<pre><code class="scala"> 
 def waiting: Behavior[Protocol] = Behaviors.receiveMessage {
   case Refresh(value) =&gt;
     current = value
     stash.unstashAll(working)
-  case RefreshFailed(ex) =&gt; // ...
+  case RefreshFailed(ex) =&gt; // нужна обработка
     stash.unstashAll(working)
   case other =&gt;
     // помним что stash может переполниться
@@ -570,19 +574,17 @@ def waiting: Behavior[Protocol] = Behaviors.receiveMessage {
 				</section>
 
 				<section>
-					<p>Пример: последовательная обработка и Future
+					<p>Какой размер Stash?
 
-					<ul>
-						<li>Запрашиваем Future, переходим в waiting
-						<li class="fragment">В waiting кладем запросы в Stash
-						<li class="fragment">При вычислении Future - unstash и обратно в ready
-						<li class="fragment">Не забываем про ошибки, таймауты и пр.
-					</ul>
+					<p class=fragment><s>Сколько не жалко</s>
+					<p class=fragment>Сколько имеет смысл накапливать
 				</section>
 
 				<section>
-					<p>Вместо Stash иногда эффективнее<br> накапливать запросы
-					в state
+					<p>Число операций O(N<sup>2</sup>)<br>
+					N - размер Stash
+					<p>Иногда эффективнее накапливать<br> запросы
+					в другой структуре
 				</section>
 
 				<section>
