@@ -592,20 +592,25 @@ def waiting: Behavior[Protocol] = Behaviors.receiveMessage {
 				</section>
 
 				<section>
+					Как реализовать таймауты в акторах?
+				</section>
+
+				<section>
 					<p>Deadline - точка во времени
 
 					<pre><code class="scala">
 import scala.concurrent.duration._
 
-val deadline: Deadline = 5 minutes fromNow
+val deadline: Deadline = 5.minutes.fromNow
 					</code></pre>
 				</section>
 
 				<section>
 					<ul>
-						<li>Использует монотонные часы
-						<li class="fragment">Используется в акторах для прерывания обработки запроса
-						<li class="fragment">Можно передавать внутри JVM, нельзя по сети и на диск</li>
+						<li>Использует монотонные часы:<br>
+						не зависят от системного времени
+						<li class="fragment">Можно передавать внутри JVM,<br>
+						нельзя по сети и на диск</li>
 					</ul>
 				</section>
 
@@ -614,9 +619,15 @@ val deadline: Deadline = 5 minutes fromNow
 deadline.hasTimeLeft() // проверки
 deadline.isOverdue()
 
-// величина таймаута
+// величина таймаута, например для ask
 val timeout: Duration = deadline.timeLeft
 					</code></pre>
+					<p>еще их можно использовать для вычисления длительности операций
+				</section>
+
+				<section>
+					<p>Совет: в REST передавайте таймаут в заголовке
+					<p class=fragment>Плохая ситуация: клиент делает retry раньше чем заканчивается обработка
 				</section>
 
 				<section>
@@ -625,15 +636,14 @@ val timeout: Duration = deadline.timeLeft
 Behaviors.withTimers { timers =&gt;
   // key для уникальности таймера
   // msg - отправляемое сообщение
-  timers.startSingleTimer(key = Tick, msg = Tick, 1 minute)
+  timers.startSingleTimer(key = CheckTimeout, 
+                          msg = CheckTimeout, 
+			  1.minute)
 
-  timers.startPeriodicTimer(key = Tick, msg = Tick, 1 minute)
+  timers.startPeriodicTimer(key = Tick, msg = Tick, 1.minute)
   
   timers.cancel(Tick)
-
   timers.cancelAll()
-
-  ...
 					</code></pre>
 				</section>
 
@@ -642,6 +652,7 @@ Behaviors.withTimers { timers =&gt;
 
 					<ul>
 						<li>Обработка таймаутов
+						<li>Сборка batch
 						<li>Периодическое обновление, очистка
 						<li>Печать статистики работы
 					</ul>
@@ -652,7 +663,7 @@ Behaviors.withTimers { timers =&gt;
 
 					<p class="fragment">Защитный механизм для коротокоживущих акторов
 
-					<pre class="fragment"><code class="scala">ctx.setReceiveTimeout(5 minutes, ReceiveTimeout)
+					<pre class="fragment"><code class="scala">ctx.setReceiveTimeout(5.minutes, ReceiveTimeout)
 
 // отправляет ReceiveTimeout при отсутствии активности
 					</code></pre>
