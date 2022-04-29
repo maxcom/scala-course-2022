@@ -673,10 +673,15 @@ Behaviors.withTimers { timers =&gt;
 
 				<section>
 					<h3>Обработка исключительных ситуаций</h3>
-					<p>Виды ошибок в автомате с газировкой:
+					<p>В ООП и ФП ошибки обрабатывает тот,<br> кто вызывает функцию.
+					<p>Правильно ли это?
+				</section>
+
+				<section>
+					<p>Пример: виды ошибок в автомате с газировкой:
 					<ul>
-						<li>«Не достаточно средств», «закончилась кола» — пользователю
-						<li>NullPointerException, CocaColaJam — владельцу (супервизору)
+						<li>«Не достаточно средств», «закончилась кола» — покупателю
+						<li>NullPointerException, CocaColaJamException — владельцу автомата (супервизору)
 					</ul>
 				</section>
 
@@ -686,31 +691,47 @@ Behaviors.withTimers { timers =&gt;
 						<li>Дублирование первичного ключа, нарушение foreign key — пользователю драйвера</li>
 						<li>«БД перезагружается», «Соединение разорвано» — супервизору</li>
 					</ul>
-					<p>Иерархия: DriverActor → ConnectionActor → TransactionActor
+				</section>
+
+				<section>
+					<p>Родитель - супервизор дочернего актора
+					<p>DriverActor → ConnectionActor → TransactionActor
 				</section>
 
 				<section>
 					<h3>Стратегии супервизора</h3>
 					<ul>
-						<li><strong>resume</strong> — игнорируем ошибку.
-						<li class="fragment"><strong>restart</strong> — незаметный перезапуск.
+						<li><strong>resume</strong> — игнорируем ошибку,<br>
+						сообщение теряется
+						<li class="fragment"><strong>restart</strong> — незаметный для клиента перезапуск,<br>
+						сообщение теряется, пересоздается state
 						<li class="fragment"><strong>restartWithBackoff</strong> — перезапуск с задержкой
-						<li class="fragment"><strong>stop</strong> — остановка (по-умолчанию)
+						<li class="fragment"><strong>stop</strong> — остановка
 					</ul>
 				</section>
 
 				<section>
+					<p>По-умолчанию: остановка.<br>
+					Не забываем про это!!!
+				</section>
+
+				<section>
+					При остановке и рестарте актора все его дочерние акторы останавливаются
+				</section>
+
+				<section>
+					<p>Задаем Supervisor
 					<pre><code class="scala">
 def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
   Behaviors
     .supervise[Protocol](...)
     .onFailure[Throwable](SupervisorStrategy.restart)
-
 					</code></pre>
+					<p>разная стратегия для разных исключений
 				</section>
 
 				<section>
-					<p>Пример для ConnectionActor</p>
+					<p>Пример: ConnectionActor</p>
 					<pre><code class=scala>
 Behaviors
   .supervise[Protocol](...)
@@ -742,7 +763,7 @@ context.watch(anotherActorRef)
 }.receiveSignal {
   case (ctx, Terminated(actor)) =&gt;
     Behaviors.same
-}					
+} // другие сигналы например: PostStop, PreRestart
 	</code></pre>
 				</section>
 
