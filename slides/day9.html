@@ -372,17 +372,29 @@ case (_, Failed(id, ex)) =&gt;
 				<section>
 					<h3>Регулировка скорости обработки</h3>
 					<p>Проблема: быстрый producer + медленный consumer = Out Of Memory</p>
-					<p class="fragment">Решение: выбрасываем то, что не успеваем обработать</p>
-					<p class="fragment">Решение: замедляем producer'а (back pressure)</p>
+					<ul>
+					<li class="fragment">выбрасываем то, что не успеваем обработать
+					<li class="fragment">замедляем producer'а (back pressure)
+					</ul>
+				</section>
+
+				<section>
+					<p>При синхронных вызовах проблемы нет
 				</section>
 
 				<section>
 					<h3>Back pressure</h3>
+					<p>Обратная связь от consumer к procuder.
+				</section>
+
+				<section>
 					<p>Раньше делали сами - считали подтверждения для 
 					оценки размера очереди.</p>
 
+					<p>Это сильно усложняет актор.
+
 					<p class="fragment">Сейчас используем Akka Streams:<br>
-					поговорим об этом на 8-м занятии.
+					поговорим об этом 10-й лекции.
 				</section>
 
 				<section>
