@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>Акторы Akka: отказоустойчивости и гарантии. Back pressure. Роутеры.</title>
+		<title>Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры.</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/moon.css">
@@ -29,8 +29,8 @@
 			<!-- Any section element inside of this container is displayed as a slide -->
 			<div class="slides">
 				<section>
-					<h3>Часть 9. Акторы Akka: отказоустойчивости и гарантии. Back pressure. Роутеры.</h3>
-					<p><small>Страничка курса:<br> <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+					<h3>Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры.</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
 				</section>
 
 				<section>
@@ -45,6 +45,12 @@
 
 				<section>
 					<h3>Гарантии доставки сообщений</h3>
+					<p>Что гарантирует Akka?
+				</section>
+
+				<section>
+					<p>"Доставку" в локальный mailbox
+					<p class=fragment>Получение "Terminated"
 				</section>
 
 				<section>
@@ -63,14 +69,17 @@
 
 				<section>
 					<p>Потеря сообщений - проблема "модели"?
+					<p>Нет, это часть модели отказоустойчивости.
 				</section>
 
 				<section>
-					<p>Пример: кофейня готовит кофе и принимает платежи
+					<p>Пример: кофейня готовит кофе и принимает платежи.
+					<p>Платежи со счета клиента,<br> счет хранится в БД кофейни.
 				</section>
 
 				<section>
-					<p>Наша кофейня<br> использует идеальную БД
+					<p>Наша кофейня использует идеальную БД,<br>
+					плюс нет параллельных запросов
 					<ul>
 						<li>A - Atomicity
 						<li>C - Consistency
@@ -82,7 +91,7 @@
 				<section>
 					<p>Счет каждого посетителя хранится в табличке
 
-					<p class="fragment">Списания - через UPDATE
+					<p>Списания - через UPDATE
 				</section>
 
 				<section>
@@ -112,7 +121,8 @@
 				</section>
 
 				<section>
-					Итог - при сбое мы не знаем, списали деньги или нет.
+					<p>Итог - при сбое мы не знаем, списали деньги или нет.
+					<p>Retry - возможно двойное списание, отказ от retry - возможна потеря денег
 				</section>
 
 				<section>
@@ -155,7 +165,6 @@
 				<section>
 					<p>Не нужно решать проблему ненадежной доставки. Вместо этого
 						нужно обеспечить требуемые гарантии при сбоях.</p>
-					<p class="fragment">А еще доставка внутри JVM гарантирована.</p>
 				</section>
 
 				<section>
