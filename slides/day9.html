@@ -1,4 +1,3 @@
-<!doctype html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
@@ -45,12 +44,6 @@
 
 				<section>
 					<h3>Гарантии доставки сообщений</h3>
-					<p>Что гарантирует Akka?
-				</section>
-
-				<section>
-					<p>"Доставку" в локальный mailbox
-					<p class=fragment>Получение "Terminated"
 				</section>
 
 				<section>
@@ -60,6 +53,14 @@
 						<li class=fragment>Переполнении ограниченного mailbox</li>
 						<li class=fragment>Сетевых проблемах</li>
 						<li class=fragment>...</li>
+					</ul>
+				</section>
+
+				<section>
+					<p>Что гарантирует Akka?
+					<ul>
+					  <li>"Доставку" в локальный mailbox
+					  <li class=fragment>Получение "Terminated"
 					</ul>
 				</section>
 
@@ -141,17 +142,20 @@
 				<section>
 					<p>Решение проблемы</p>
 					<ul>
-						<li>Всегда помним о таймаутах
-						<li class="fragment">Сбои допустимы
+						<li>Таймауты случаются. Нужно их обрабатывать.
+						<li class="fragment">Сбои допустимы, сбои всегда частичные.
 						<li class="fragment">Механизмы компенсации сбоев обязательны (например журналы у всех участников операции и процедуры сверки)
 					</ul>
 				</section>
 
 				<section>
-					<p>За одно отметим:
+					Компоненты распределенной системы<br>действуют независимо.
+				</section>
+
+				<section>
 					<ul>
-						<li>Блокировки охватывающие несколько подсистем не возможны
-						<li class="fragment">Глобальной консистентности нет пока идут операции
+						<li>Блокировки снижают производительность и доступность. Блокировки всегда локальны.
+						<li class="fragment">Глобальной консистентности нет пока идут операции.
 						<li class="fragment">Каждая операция консистентна только в конечном счете
 					</ul>
 				</section>
@@ -159,24 +163,26 @@
 				<section>
 					<h3>Вернемся к Akka</h3>
 					<p>Сбой нельзя детектировать (в общем случае).<p>
-					<p>Сбой и таймаут не отличимы.</p>
+					<p class=fragment>Сбой и таймаут не отличимы.<br>Таймаут это не конец операции.</p>
 				</section>
 
 				<section>
+					<p>Потеря сообщения при доставке - это вариант сбоя.
+
 					<p>Не нужно решать проблему ненадежной доставки. Вместо этого
 						нужно обеспечить требуемые гарантии при сбоях.</p>
 				</section>
 
 				<section>
-					<h3>Что обычно можно гарантировать</h3>
+					<h3>Что обычно можно гарантировать?</h3>
 					<p class="fragment">Положительный ответ только после записи в хранилище или выполнения действия</p>
-					<p class="fragment">Откладывание выполнения с гарантиями - передача "эстафетной палочки"
+					<p class="fragment">Откладывание выполнения с гарантиями - передача "эстафетной палочки". Похоже на передачу email.
 				</section>
 
 				<section>
 					<h3>Команды и события</h3>
 					<ul>
-						<li>Команда: сделай что-то. Выполняем её с гарантиями.
+						<li>Команда: сделай что-то. Выполняем её с гарантиями. Терять нельзя.
 						<li class="fragment">Событие: что-то произошло, реагируй на это. Можем пропустить,
 							если потом можем это компенсировать.
 					</ul>
@@ -187,6 +193,7 @@
 				</section>
 
 				<section>
+					<p>Повторяем запрос пока не получим подтверждение
 					<pre><code class="scala">
 object Requester {
   sealed trait Protocol
@@ -195,7 +202,6 @@ object Requester {
                      replyTo: ActorRef[String]) extends Protocol
 
   private implicit val timeout: Timeout = 10.seconds
-  private val recheck: FiniteDuration = 1.second
 
   def behavior(worker: ActorRef[Protocol]): Behavior[Protocol]
 }
@@ -203,84 +209,77 @@ object Requester {
 				</section>
 
 				<section>
-					<pre><code class="scala">
-private case object Tick extends Protocol
-
-Behaviors.withTimers { timers =&gt;
-  timers.startTimerWithFixedDelay(Tick, recheck)
-
-  ...
-}
-					</code></pre>
-				</section>
-
-				<section>
-					<pre><code class="scala">
-private case class Finished(request: Request, response: String) 
+					<pre><code class="scala">private case class Finished(request: Request, response: String) 
   extends Protocol
 private case class Failed(id: UUID, ex: Throwable) 
   extends Protocol
 
-def process(processing: Map[UUID, (Request, Deadline)]) = {
-  def start(ctx: ActorContext[Protocol])(rq: Request) = {
+Behaviors.setup { ctx =&gt;
+  def start(rq: Request) = {
     ctx.ask(worker, Request(rq.id, rq.query, _)) {
       case Success(r) =&gt; Finished(rq, r)
       case Failure(ex) =&gt; Failed(rq.id, ex)
     }
 
-    rq.id -&gt; (rq, timeout.duration.fromNow)
+    rq.id -&gt; rq
   }
-
-  ...
-					</code></pre>
+  ...</code></pre>
 				</section>
 
 				<section>
+					получение запроса
 					<pre><code class="scala">
-Behaviors.receive[Protocol] {
-  case (ctx, rq: Request) =&gt;
-    ctx.ask(worker, Request(rq.id, rq.query, _)) {
-      case Success(r) =&gt; Finished(rq, r)
-      case Failure(ex) =&gt; Failed(rq.id, ex)
-    }
-
-    process(processing + start(ctx)(rq))
+def process(processing: Map[UUID, Request]) = 
+  Behaviors.receive[Protocol] {
+    case (ctx, rq: Request) =&gt;
+      process(processing + start(ctx)(rq))
   ...
 					</code></pre>
 				</section>
 
 				<section>
+					обработка ответа
 					<pre><code class="scala">
 case (_, Finished(rq, response)) =&gt;
   rq.replyTo ! response
   process(processing - rq.id)
 case (_, Failed(id, ex)) =&gt;
+  process(start(processing(id))
   Behaviors.same // logging?
-case (ctx, Tick) =&gt;
-  val restarted = processing.values
-                            .filter(_._2.isOverdue()).map(_._1)
-
-  process(processing ++ restarted.map(start(ctx)))
 					</code></pre>
 				</section>
 
 				<section>
-					<p>Особенности реализации:
+					<p>Таймаут?
 					<ul>
-						<li>Могут быть дубли (идемпотентность или фильтрация дублей)
-						<li>Сообщения перемеживаются
-						<li>Нет общего таймаута на запрос
+						<li>Нет общего таймаута на запрос. 
+						<li>Нет "защиты" получателя.
 					</ul>
 				</section>
-
+	
 				<section>
-					<p>Нужено сохранить порядок?
-
-					<p class=fragment>пронумеруем сообщения
+					<p>Итог: "At least once delivery"
 				</section>
 
 				<section>
-					<p>Akka 2.6.4: <a href="https://doc.akka.io/docs/akka/current/typed/reliable-delivery.html" target=_blank>готовая реализация</a> для нескольких сценариев
+					<p>Проблема - дублирование действий.
+					<p>Хорошо когда действия идемпотентны.
+				</section>
+
+				<section>
+					<p>Другой вариант - добавляем идентификаторы действий.
+
+					<p>Фильтруем дубли в worker.
+
+					<p>Итог: "Exactly once delivery"
+				</section>
+
+				<section>
+					<p>Еще проблема - порядок не сохраняется
+				</section>
+
+				<section
+					<p>Akka 2.6.4+: <a href="https://doc.akka.io/docs/akka/current/typed/reliable-delivery.html" target=_blank>готовая реализация</a> для нескольких сценариев
 				</section>
 
 				<section>
