@@ -483,6 +483,28 @@ def calculator: Behavior[Calc] = Behaviors.setup[Calc] { ctx =&gt;
 				</section>
 
 				<section>
+					<p>В классической Akka есть еще интересные роутеры
+				</section>
+
+				<section>
+					<p>ScatterGatherFirstCompletedRouting
+
+					<p>Отправляем всем, используем первый ответ.
+
+					<p class="fragment">Улучшаем время отклика, но выполняем работу N раз
+				</section>
+
+				<section>
+					<p>TailChoppingRouting
+
+					<p>Отправляем первому, через короткий таймаут второму и продолжаем пока не
+					получим первый ответ.
+
+					<p class="fragment">Улучшаем худшие времена отклика.
+				</section>
+
+
+				<section>
 					<p>Напоминаю:
 					<ul>
 						<li>Страничка курса:<br> <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
