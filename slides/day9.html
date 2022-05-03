@@ -299,7 +299,13 @@ case (_, Failed(id, ex)) =&gt;
 				</section>
 
 				<section>
-					<p>Первый подход - нужна гарантированная очередь
+					<p>Первый подход - нужна гарантированная очередь.
+
+					<p>Это порождает массу проблем.
+				</section>
+
+				<section>
+					<p>Появление нового в БД - событие, а не команда.
 				</section>
 
 				<section>
@@ -310,13 +316,34 @@ case (_, Failed(id, ex)) =&gt;
 				</section>
 
 				<section>
+					В прошлом году была еще лекция<br>про Event Sourcing и CQRS.
+				</section>
+
+				<section>
 					<h3>Circuit Breaker</h3>
-					<p>«Предохранитель», которые можно вставлять между подсистемами.</p>
-					<p class="fragment">«Разрывает цепь» при частых ошибках.</p>
+					<p>Паттерн, реализованный в Akka.<br>Есть другие реализации.
+				</section>
+
+				<section>
+					<p>Проблема: каскадные сбои при перегрузках запросами. Безумные политики retry.
+					<p class=fragment>Проблема: медленное восстановление после нормализации потока.
+				</section>
+
+				<section>
+					Не только в акторах: очереди есть везде
+				</section>
+
+				<section>
+					<p>«Предохранитель», который можно вставлять между подсистемами.</p>
+					<p class="fragment">«Разрывает цепь» при серии сбоев</p>
 					<div class="fragment">
-					<p>«Замыкает цепь» после таймаута и после успешных пробных запросов.</p>
-					<p>Можно использовать вне Akka.</p>
+					<p>«Замыкает цепь» после паузы и успешных пробных запросов.</p>
 					</div>
+				</section>
+
+				<section>
+					<p>В Akka реализован для Future.
+					<p>Реализация требует ActorSystem
 				</section>
 
 				<section>
@@ -331,10 +358,15 @@ case (_, Failed(id, ex)) =&gt;
 
   def process(task: Task): Future[Result] = {
     breaker.withCircuitBreaker {
-      askAnotherService(task)
+      askAnotherService(task) // :Future[Result]
     }
   }
 	</code></pre>
+				</section>
+
+				<section>
+					<p>Это защитный механизм.
+					<p>Не используем для регулировки скорости!
 				</section>
 
 				<section>
