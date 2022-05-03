@@ -283,8 +283,27 @@ case (_, Failed(id, ex)) =&gt;
 				</section>
 
 				<section>
-					<h3>«Happy path &amp; self heal»</h3>
-					<p>Пример в сервисе индексации сообщений</p>
+					<h3>Пример дизайна сервиса индексации сообщений</h3>
+
+					<p>Перегоняем данные СУБД в Elasticsearch и Clickhouse
+				</section>
+
+				<section>
+					<p>Требования:
+					<ul>
+						<li>Индексация не мешает укладке
+						<li class=fragment>Когда все хорошо - индексируем новое сразу
+						<li class=fragment>Когда плохо - индексируем когда можем
+						<li class=fragment>Иногда нужна переиндексация
+					</ul>
+				</section>
+
+				<section>
+					<p>Первый подход - нужна гарантированная очередь
+				</section>
+
+				<section>
+					<p>«Happy path &amp; self heal»</p>
 					<p class="fragment">«Happy path» — новые сообщений индексируем сразу; игнорируем сбои</p>
 					<p class="fragment">«Self heal» – периодически проводим сверку и запускаем в обработку то, что
 					не смогли обработать ранее.</p>
