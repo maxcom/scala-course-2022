@@ -403,6 +403,8 @@ case (_, Failed(id, ex)) =&gt;
 
 				<section>
 					<p>Раздаем задачи пулу акторов
+
+					<p>Похожи на акторы, low level реализация
 				</section>
 
 				<section>
@@ -416,19 +418,20 @@ case (_, Failed(id, ex)) =&gt;
 				<section>
 					<p>Простые стратегии:
 					<ul>
-						<li>RoundRobinRouting
-						<li>RandomRouting
+						<li>RoundRobinRouting - для долгих задач
+						<li>RandomRouting - для коротких
 					</ul>
 				</section>
 
 				<section>
+					пример
 					<pre><code class="scala">
 object Calculator {
   case class Calc(x: Long, replyto: ActorRef[Long])
 
   private def worker: Behavior[Calc] = Behaviors.receiveMessage {
     case Calc(x, replyto) =&gt;
-      replyto ! x*x
+      replyto ! doWork(x) 
       Behaviors.same
   }
 
@@ -439,6 +442,7 @@ object Calculator {
 				<section>
 					<pre><code class="scala">
 def calculator: Behavior[Calc] = Behaviors.setup[Calc] { ctx =&gt;
+  // round-robin по умолчанию
   val pool = Routers.pool(poolSize = 16)(
     Behaviors.supervise(worker)
       .onFailure[Exception](SupervisorStrategy.restart))
@@ -455,6 +459,17 @@ def calculator: Behavior[Calc] = Behaviors.setup[Calc] { ctx =&gt;
 
 				<section>
 					<p>Проблема - сообщения перемешиваются
+					<p>Актор - это не только вычисления, но и модель доступа
+					к данным.
+				</section>
+
+				<section>
+					<p>Пример - хранилище данных учетных записей
+					<ul>
+						<li>Один актор на всех - медленно
+						<li>Каждому по актору - слишком много акторов
+						<li>Группа акторов - случайное распределение задач
+					</ul>
 				</section>
 
 				<section>
@@ -463,34 +478,14 @@ def calculator: Behavior[Calc] = Behaviors.setup[Calc] { ctx =&gt;
 					<ul>
 						<li class="fragment">сохраняет порядок для сообщений с одним ключем
 						<li class="fragment">сохраняет обработчика для сообщений с одним ключем
+						<li class="fragment">Consistent - определенная логика resize пула
 					</ul>
-				</section>
-
-				<section>
-					<p>В классической Akka есть еще интересные роутеры
-				</section>
-
-				<section>
-					<p>ScatterGatherFirstCompletedRouting
-
-					<p>Отправляем всем, используем первый ответ.
-
-					<p class="fragment">Улучшаем время отклика, но выполняем работу N раз
-				</section>
-
-				<section>
-					<p>TailChoppingRouting
-
-					<p>Отправляем первому, через короткий таймаут второму и продолжаем пока не
-					получим первый ответ.
-
-					<p class="fragment">Улучшаем худшие времена отклика.
 				</section>
 
 				<section>
 					<p>Напоминаю:
 					<ul>
-						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+						<li>Страничка курса:<br> <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
 					</ul>
 				</section>
 			</div>
