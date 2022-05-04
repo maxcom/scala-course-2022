@@ -130,7 +130,7 @@
 					<p>В асинхронной системе похожие проблемы:
 					<ul>
 						<li class="fragment">Переполненные очереди
-						<li class="fragment">Медленые обработчики
+						<li class="fragment">Медленные обработчики
 						<li class="fragment">Плохо обработанные сбои и ошибки
 					</ul>
 				</section>
@@ -144,7 +144,7 @@
 					<ul>
 						<li>Таймауты случаются. Нужно их обрабатывать.
 						<li class="fragment">Сбои допустимы, сбои всегда частичные.
-						<li class="fragment">Механизмы компенсации сбоев обязательны (например журналы у всех участников операции и процедуры сверки)
+						<li class="fragment">Механизмы компенсации сбоев обязательны (например, журналы у всех участников операции и процедуры сверки)
 					</ul>
 				</section>
 
@@ -155,15 +155,15 @@
 				<section>
 					<ul>
 						<li>Блокировки снижают производительность и доступность. Блокировки всегда локальны.
-						<li class="fragment">Глобальной консистентности нет пока идут операции.
+						<li class="fragment">Глобальной консистентности нет, пока идут операции.
 						<li class="fragment">Каждая операция консистентна только в конечном счете
 					</ul>
 				</section>
 
 				<section>
-					<h3>Вернемся к Akka</h3>
+					<h3>Вернемся к акторам</h3>
 					<p>Сбой нельзя детектировать (в общем случае).<p>
-					<p class=fragment>Сбой и таймаут не отличимы.<br>Таймаут это не конец операции.</p>
+					<p class=fragment>Сбой и таймаут не отличимы.<br>Таймаут — не конец операции.</p>
 				</section>
 
 				<section>
@@ -193,7 +193,7 @@
 				</section>
 
 				<section>
-					<p>Повторяем запрос пока не получим подтверждение
+					<p>Повторяем запрос, пока не получим подтверждение
 					<pre><code class="scala">
 object Requester {
   sealed trait Protocol
@@ -263,7 +263,7 @@ case (_, Failed(id, ex)) =&gt;
 
 				<section>
 					<p>Проблема - дублирование действий.
-					<p>Хорошо когда действия идемпотентны.
+					<p>Хорошо, когда действия идемпотентны.
 				</section>
 
 				<section>
@@ -293,7 +293,7 @@ case (_, Failed(id, ex)) =&gt;
 					<ul>
 						<li>Индексация не мешает укладке
 						<li class=fragment>Когда все хорошо - индексируем новое сразу
-						<li class=fragment>Когда плохо - индексируем когда можем
+						<li class=fragment>Когда плохо - индексируем, когда можем
 						<li class=fragment>Иногда нужна переиндексация
 					</ul>
 				</section>
@@ -310,7 +310,7 @@ case (_, Failed(id, ex)) =&gt;
 
 				<section>
 					<p>«Happy path &amp; self heal»</p>
-					<p class="fragment">«Happy path» — новые сообщений индексируем сразу; игнорируем сбои</p>
+					<p class="fragment">«Happy path» — новые сообщения индексируем сразу; игнорируем сбои</p>
 					<p class="fragment">«Self heal» – периодически проводим сверку и запускаем в обработку то, что
 					не смогли обработать ранее.</p>
 				</section>
@@ -394,7 +394,7 @@ case (_, Failed(id, ex)) =&gt;
 					<p>Это сильно усложняет актор.
 
 					<p class="fragment">Сейчас используем Akka Streams:<br>
-					поговорим об этом 10-й лекции.
+					об этом на 10-й лекции.
 				</section>
 
 				<section>
@@ -429,7 +429,7 @@ case (_, Failed(id, ex)) =&gt;
 object Calculator {
   case class Calc(x: Long, replyto: ActorRef[Long])
 
-  private def worker: Behavior[Calc] = Behaviors.receiveMessage {
+  def worker: Behavior[Calc] = Behaviors.receiveMessage {
     case Calc(x, replyto) =&gt;
       replyto ! doWork(x) 
       Behaviors.same
@@ -497,7 +497,7 @@ def calculator: Behavior[Calc] = Behaviors.setup[Calc] { ctx =&gt;
 				<section>
 					<p>TailChoppingRouting
 
-					<p>Отправляем первому, через короткий таймаут второму и продолжаем пока не
+					<p>Отправляем первому, через короткий таймаут второму и продолжаем, пока не
 					получим первый ответ.
 
 					<p class="fragment">Улучшаем худшие времена отклика.
