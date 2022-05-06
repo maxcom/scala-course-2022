@@ -30,11 +30,69 @@
 				</section>
 
 				<section>
-					TODO
+					<ul>
+						<li>Создаем бот Telegram, добавляем его в группу
+						<li>Читаем все сообщения
+						<li>Если определили позитив/негатив - постим в группу сообщение с классом и разметкой слов
+					</ul>
 				</section>
 
 				<section>
-					<p>Срок сдачи - .
+					<p>Регистрируем Telegram Bot
+					<ul>
+						<li>Находим BotFather
+						<li>/newbot для создания нового бота<br>
+						(по имени должно быть понятно чей это бот)
+						<li>Сохраните токен для API
+						<li>/setprivacy для отключения privacy mode
+					</ul>
+				</section>
+
+				<section>
+					<p>Читаем все сообщения
+
+					<p>Используем клиент Akka Http (Http().singleRequest)
+
+					<p><a href="https://doc.akka.io/docs/akka-http/current/client-side/index.html" target=_blank">https://doc.akka.io/docs/akka-http/current/client-side/index.html</a>
+				</section>
+
+				<section>
+					<a href="https://core.telegram.org/bots/api#getting-updates" target=_blank>https://core.telegram.org/bots/api#getting-updates</a>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val uri = Uri(s"https://api.telegram.org/bot$token/getUpdates")
+            .withQuery(Uri.Query("timeout" -&gt; "100"))
+Http().singleRequest(HttpRequest(uri = uri)).map { response =&gt;
+  ???
+}
+					</code></pre>
+					<p>Проверяем статус ответа, парсим результат<br> (только нужные поля)
+				</section>
+
+				<section>
+					<p>Создаем актор получающий обновления.
+					<p>В каждом ответе есть "update_id". Нужно его увеличить на 1 и передать в offset. Старт с 0.
+				</section>
+
+				<section>
+					<p>Смотрим только текст, классифицируем.
+				</section>
+
+				<section>
+					<p>Постим в чат
+					<p><a href="https://core.telegram.org/bots/api#sendmessage" target=_blank">https://core.telegram.org/bots/api#sendmessage</a>
+					<p>chat_id берем в сообщении,<br> режим форматирования html
+					<p>нейтральные не постим, но логгируем
+				</section>
+
+				<section>
+					<p>Пришлите имя вашего бота в чат слушателей курса - добавим его в специальную тестовую группу.
+				</section>
+
+				<section>
+					<p>Срок сдачи - 18 мая.
 				</section>
 			</div>
 
