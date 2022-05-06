@@ -94,9 +94,9 @@ layout: default
 9. Акторы Akka, часть 2.
   * Лекция: 4 мая. Семинар: 11 мая.
   * Видео: [Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры](https://youtu.be/quh7qRlxSHU)
-  * Видео (в работе): Классификация сообщений Telegram чата (домашнее задание)
+  * Видео: [Классификация сообщений Telegram чата](https://www.youtube.com/watch?v=kGXiiy4VGGI) (домашнее задание)
   * Слайды: [Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры](slides/day9.html)
-  * Слайды домашнего задания (в работе): [Классификация сообщений Telegram чата](slides/classifier-4.html)
+  * Слайды домашнего задания: [Классификация сообщений Telegram чата](slides/classifier-4.html)
   * Семинар: Akka Patterns. (ведущая - Наташа)
 10. Akka Streams и реактивные потоки.
   * Видео (в работе): Akka Streams и реактивные потоки
