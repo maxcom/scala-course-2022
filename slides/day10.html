@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Akka Streams и реактивные потоки</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h3>Часть 10. Akka Streams и реактивные потоки</h3>
+					<p><small>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</small></a>
+				</section>
+
+				<section>
+					<h2>План</h2>
+                                        <ol>
+						<li>Реактивные потоки
+						<li>Akka Streams: базовые элементы
+						<li>Обзор готовых операторов
+						<li>Обработка ошибок
+						<li>Интеграция
+					</ol>
+				</section>
+
+				<section>
+					<h3>Реактивные потоки</h3>
+				</section>
+
+				<section>
+					<p>Преобразования потоков данных.
+					<ul>
+						<li class=fragment>ETL - Extract, Transform, Load
+						<li class=fragment>Поточные запросы и ответы HTTP, прокси
+						<li class=fragment>Выборки, статистики, health check
+					</ul>
+				</section>
+
+				<section>
+					<p>Асинхронная обработка
+					<ul>
+						<li class=fragment>Возможности сложных схем
+						<li class=fragment>Работа со сбоями и отзывчивости
+						<li class=fragment>Эффективность
+					</ul>
+				</section>
+
+				<section>
+					<p>Возникает проблемы:
+					<ul>
+						<li class=fragment>Регулировка скорости producer
+						<li class=fragment>API для интеграции
+					</ul>
+				</section>
+
+				<section>
+					<p>При синхронной обработке скорость<br> регулируется автоматически.
+				</section>
+
+				<section>
+					<p>Back pressure можно делать на акторах, но сложно.
+				</section>
+
+				<section>
+					<p>Reactive streams - API для интеграции, не для
+					конечного пользователя.</p>
+
+					<p><a href="https://www.reactive-streams.org/" target=_blank>https://www.reactive-streams.org/</a>
+				</section>
+
+				<section>
+					<ul>
+						<li>Akka Streams и Akka HTTP (+Play)
+						<li>Netty - http клиенты, драйверы СУБД и очередей
+						<li>Spring 5, ряд сервлетных веб-серверов
+						<li>RxJava
+						<li>Vert.x
+					</ul>
+				</section>
+
+				<section>
+					<p>В идеальном мире нам нужно писать только преобразование.
+
+					<p class=fragment>Позже посмотрим интеграцию с другим
+					асинхронным кодом.
+				</section>
+
+				<section>
+					<h3>Akka Streams: базовые элементы</h3>
+					<ul>
+						<li>Source - источник (producer)
+						<li>Flow - цепочка преобразования
+						<li>Sink - назначение (consumer)
+					</ul>
+				</section>
+
+				<section>
+					<div style="background-color: grey">
+					<img src="compose_shapes.png" width="60%">
+					</div>
+					<p><a target=_blank href="https://doc.akka.io/docs/akka/current/stream/stream-composition.html">https://doc.akka.io/docs/akka/current/stream/stream-composition.html</a>
+				</section>
+
+				<section>
+					<p>Два API для сборки цепочек:
+					<ul>
+						<li>Обычный, похожий на API коллекций
+						<li class=fragment>GraphDSL для сложных схем<br> (не рассматриваем сегодня)
+					</ul>
+				</section>
+
+				<section>
+					<p>Пример - замена Future.sequence
+				</section>
+
+				<section>
+					<pre><code class="scala">
+def func(x: Int): Future[Int] = ???
+val input: Seq[Int] = Seq.range(1, 10000)
+
+val output: Future[Seq[Int]] = Future.sequence(input.map(func))
+					</code></pre>
+					<p class=fragment>проблема - неограниченный параллелизм, перегрузка ExecutionContext
+				</section>
+
+				<section>
+					Используем Akka Streams
+				</section>
+
+				<section>
+					<pre><code class="scala">
+libraryDependencies += 
+  "com.typesafe.akka" %% "akka-stream" % "2.6.4"
+					</code></pre>
+					<p>версия должна соответствовать версии Akka
+				</section>
+
+				<section>
+					<pre><code class="scala">
+// классическая ActorSystem (можно и typed)
+implicit val actorSystem: ActorSystem = ActorSystem()
+
+def func(x: Int): Future[Int] = ???
+val input: List[Int] = List.range(1, 10000)
+
+val output: Future[Seq[Int]] = 
+  Source(input).mapAsync(10)(func).runWith(Sink.seq)
+                      // 10 потоков
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Materialization - запуск интерпретации.
+					<p>Например runWith, но есть и другие варианты.
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val source: Source[Int, NotUsed] = Source(input)
+// final class Source[+Out, +Mat]
+					</code></pre>
+					<p>Mat - materialized value
+				</section>
+
+				<section>
+					<p>Пример Source с materialized value
+					<pre><code class="scala">
+val source: Source[Int, ActorRef] = 
+  Source.actorRef[Int](1000, OverflowStrategy.dropTail)
+					</code></pre>
+					<p>ActorRef возникает при материализации.
+				</section>
+
+				<section>
+					<pre><code class="scala">
+val flow: Flow[Int, Int, NotUsed] = Flow[Int].mapAsync(10)(func)
+val sink: Sink[Int, Future[Seq[Int]]] = Sink.seq
+
+val output: Future[Seq[Int]] = source.via(flow).runWith(sink)
+					</code></pre>
+				</section>
+
+				<section>
+					<h3>Обзор готовых операторов</h3>
+					<p>Более 100 операторов
+				</section>
+
+
+				<section>
+					<ul>
+						<li>map[T](f: Out =&gt; T)
+						<li>mapConcat[T](f: Out =&gt; immutable.Iterable[T])
+						<li>filter(p: Out =&gt; Boolean)
+					</ul>
+				</section>
+
+				<section>
+					<ul>
+						<li>mapAsync[T](parallelism: Int)(f: Out =&gt; Future[T])
+						<li>mapAsyncUnordered[T](parallelism: Int)(f: Out =&gt; Future[T])
+					</ul>
+				</section>
+
+				<section>
+					<p>flatMap?
+					<ul>
+						<li>flatMapConcat[T, M](f: Out =&gt; Graph[SourceShape[T], M])
+						<li>flatMapMerge[T, M](breadth: Int, f: Out =&gt; Graph[SourceShape[T], M])
+					</ul>
+				</section>
+
+				<section>
+					<p>Группировки
+					<ul>
+						<li>grouped(n: Int)
+						<li>groupedWithin(n: Int, d: FiniteDuration)
+					</ul>
+					<p>есть еще аналоги с "весом" элемента
+				</section>
+
+				<section>
+					<p>Группировка:
+					<pre><code class="scala">
+def processBatch(v: Seq[Int]): Future[Seq[Int]] = ???
+
+source
+  .groupedWithin(1000, 1 minute) // до 1000, в течении минуты
+  .mapAsync(16)(processBatch)
+  .mapConcat(identity) // поток Seq[Int] в поток Int
+  .runWith(Sink.ignore)
+					</code></pre>
+					<p>обработка "пачками" часто эффективнее
+				</section>
+
+
+				<section>
+					<p>Ограничение скорости
+					<p>throttle(elements: Int, per: FiniteDuration)</p>
+				</section>
+
+				<section>
+					<p>Несколько источников:
+					<pre><code class="scala">
+val source1 = Source(Seq.range(1, 1000))
+val source2 = Source(Seq.range(1, 1000))
+
+// один за другим
+source1.concat(source2)
+
+// по 10 из каждого по порядку
+source1.interleave(source2, 10)
+
+// в порядке готовности
+source1.intersperse(source2)
+					</code></pre>
+				</section>
+
+				<section>
+					<p>Sink
+					<ul>
+						<li>ignore: Sink[Any, Future[Done]]
+						<li class=fragment>seq[T]: Sink[T, Future[immutable.Seq[T]]]
+						<li class=fragment>foreach[T](f: T =&gt; Unit): Sink[T, Future[Done]]
+						<li class=fragment>fold[U, T](zero: U)(f: (U, T) =&gt; U): Sink[T, Future[U]]
+					</ul>
+				</section>
+
+				<section>
+					<h3>Обработка ошибок</h3>
+				</section>
+
+				<section>
+					<p>Stream завершается при возникновении ошибки.
+
+					<p class=fragment>Можно работать с Try в потоке.
+				</section>
+
+				<section>
+					<p>Рестарт при сбоях
+					<pre><code class="scala">
+RestartSource.onFailuresWithBackoff(
+  minBackoff = 100 millis, 
+  maxBackoff = 10 minutes, 
+  randomFactor = 0.2)(() =&gt; source)
+					</code></pre>
+					<p>бывают еще RestartFlow и RestartSink
+				</section>
+
+				<section>
+					<h3>Интеграция</h3>
+				</section>
+
+				<section>
+					<p>Интеграция через Source.queue
+					<pre><code class="scala">val source: Source[Int, SourceQueueWithComplete[Int]] =
+  Source.queue[Int](bufferSize = 1000, 
+                    OverflowStrategy.backpressure)
+// backpressure или выбрасываем элементы </code></pre>
+
+					<pre class="fragment"><code class="scala">val queue: SourceQueueWithComplete[Int] = source
+                  .to(Sink.foreach(println))
+                  .run() 
+// очередь - "материализованное" значение</code></pre>
+
+					<pre class="fragment"><code class="scala">val result: Future[QueueOfferResult] = queue.offer(1000)
+// при backpressure нужно ждать вычисления Future</code></pre>
+				</section>
+
+				<section>
+					<p>Source.unfold
+					<pre><code class="scala">
+// числа Фибоначчи
+val fib: Source[Int, NotUsed] = Source.unfold(0 -&gt; 1) {
+  case (a, _) if a &gt; 10000000 =&gt; None
+  case (a, b) =&gt; Some((b -&gt; (a + b)) -&gt; a)
+}
+					</code></pre>
+					<p>есть асинхронный аналог - unfoldAsync
+				</section>
+
+				<section>
+					<p>Интеграция с акторами
+					<pre><code class="scala">
+libraryDependencies += 
+  "com.typesafe.akka" %% "akka-stream-typed" % "2.6.4"
+					</code></pre>
+				</section>
+
+				<section>
+					<ul>
+						<li>ActorSource.actorRef - без backpressure, аналог очереди
+						<li>ActorSource.actorRefWithBackpressure
+						<li>ActorSink.actorRef
+						<li>ActorSink.actorRefWithBackpressure
+					</ul>
+				</section>
+
+				<section>
+					<pre><code class="scala">
+// T - тип значения
+// M - протокол актора
+// A - тип Ack
+def actorRefWithBackpressure[T, M, A](
+    ref: ActorRef[M],
+    messageAdapter: (ActorRef[A], T) =&gt; M,
+    onInitMessage: ActorRef[A] =&gt; M,
+    ackMessage: A,
+    onCompleteMessage: M,
+    onFailureMessage: Throwable =&gt; M): Sink[T, NotUsed]
+					</code></pre>	
+				</section>
+
+				<section>
+					<p>Напоминаю:
+					<ul>
+						<li>Страничка курса: <a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+					</ul>
+				</section>
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+                                controls: true,
+                                progress: true,
+                                history: true,
+                                center: true,
+
+                                transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+
+	</body>
+</html>
