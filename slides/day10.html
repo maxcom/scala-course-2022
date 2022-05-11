@@ -371,7 +371,7 @@ get {
 def dataOrFail[T]
     (source: Source[T, NotUsed]): Future[Source[T, NotUsed]] = {
   source
-    .prefixAndTail(1)
+    .prefixAndTail(1) // дает Source из одного элемента
     .runWith(Sink.head) 
     .map { case (first, rest) =&gt; // (Seq[T], Source[T, NotUsed]
       Source(first).concat(rest)
