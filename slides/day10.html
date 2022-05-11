@@ -373,31 +373,37 @@ val safeSource = RestartSource.onFailuresWithBackoff(
 					<pre><code class="scala">
 // числа Фибоначчи
 val fib: Source[Int, NotUsed] = Source.unfold(0 -&gt; 1) {
-  case (a, _) if a &gt; 10000000 =&gt; None
-  case (a, b) =&gt; Some((b -&gt; (a + b)) -&gt; a)
+  case (a, _) if a &gt; 10000000 =&gt; 
+    None
+  case (a, b) =&gt; 
+    Some((b -&gt; (a + b)) -&gt; a)
 }
 					</code></pre>
-					<p>есть асинхронный аналог - unfoldAsync
+					<p>есть асинхронный аналог - unfoldAsync<br>
+					(пример scroll запросы к Elasticsearch)
 				</section>
 
 				<section>
 					<p>Интеграция с акторами
 					<pre><code class="scala">
+// для typed акторов
+
 libraryDependencies += 
-  "com.typesafe.akka" %% "akka-stream-typed" % "2.6.4"
+  "com.typesafe.akka" %% "akka-stream-typed" % "2.6.19"
 					</code></pre>
 				</section>
 
 				<section>
 					<ul>
 						<li>ActorSource.actorRef - без backpressure, аналог очереди
-						<li>ActorSource.actorRefWithBackpressure
 						<li>ActorSink.actorRef
+						<li>ActorSource.actorRefWithBackpressure
 						<li>ActorSink.actorRefWithBackpressure
 					</ul>
 				</section>
 
 				<section>
+					<p>ActorSink
 					<pre><code class="scala">
 // T - тип значения
 // M - протокол актора
