@@ -416,6 +416,7 @@ def actorRefWithBackpressure[T, M, A](
     onCompleteMessage: M,
     onFailureMessage: Throwable =&gt; M): Sink[T, NotUsed]
 					</code></pre>	
+					<p>стрим наблюдает за жизнью актора
 				</section>
 
 				<section>
