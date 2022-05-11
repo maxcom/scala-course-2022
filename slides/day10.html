@@ -349,6 +349,40 @@ val safeSource = RestartSource.onFailuresWithBackoff(
 				</section>
 
 				<section>
+					<p>Пример: поточная отдача JSON в Akka HTTP
+
+					<p>(подробнее в 12-лекции курса 2020)
+				</section>
+
+				<section>
+					<pre><code class="scala">
+get {
+  val source: Source[Data, NotUsed] = getDatabaseStream(user)
+  
+  complete(source) // порождает Json массив
+}
+					</code></pre>
+					<p>что с ошибками?
+				</section>
+
+				<section>
+					<p>Ошибки вместо пустых ответов:
+					<pre><code class="scala">
+def dataOrFail[T]
+    (source: Source[T, NotUsed]): Future[Source[T, NotUsed]] = {
+  source
+    .prefixAndTail(1)
+    .runWith(Sink.head) 
+    .map { case (first, rest) =&gt; // (Seq[T], Source[T, NotUsed]
+      Source(first).concat(rest)
+    }
+}
+					</code></pre>
+					<p>(future падает при ошибке получения 1-го элемента)
+				</section>
+
+
+				<section>
 					<h3>Интеграция</h3>
 				</section>
 
