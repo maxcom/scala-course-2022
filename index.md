@@ -92,15 +92,16 @@ layout: default
   * Семинар: [Стартовый проект](https://gitlab.com/djattah/lessonactortyped.git). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson7](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson8) 
   * Слайды: [Акторы Akka](slides/day8.html)
 9. Акторы Akka, часть 2.
-  * Лекция: 4 мая. Семинар: 11 мая.
+  * Лекция: 4 мая. Семинар: 16 мая (*Внимание!* Семинар перенесен на понедельник 16 мая)
   * Видео: [Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры](https://youtu.be/quh7qRlxSHU)
   * Видео: [Классификация сообщений Telegram чата](https://www.youtube.com/watch?v=kGXiiy4VGGI) (домашнее задание)
   * Слайды: [Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры](slides/day9.html)
   * Слайды домашнего задания: [Классификация сообщений Telegram чата](slides/classifier-4.html)
   * Семинар: Akka Patterns. (ведущая - Наташа)
 10. Akka Streams и реактивные потоки.
-  * Видео (в работе): Akka Streams и реактивные потоки
-  * Слайды (в работе): [Akka Streams и реактивные потоки](slides/day10.html)
+  * Видео (в работе): Часть 1. Реактивные потоки и введение в Akka Streams
+  * Видео (в работе): Часть 2. Обзор операторов Akka Streams
+  * Слайды: [Akka Streams и реактивные потоки](slides/day10.html)
   * Лекция: 11 мая. Семинар: 18 мая.
   * Семинар: Akka Streams.
 11. Cats Effect и Http4s.
