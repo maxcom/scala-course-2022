@@ -387,6 +387,16 @@ def dataOrFail[T]
 				</section>
 
 				<section>
+					<ul>
+						<li>Ищем готовые решения, например<br>
+						<a href="https://github.com/akka/alpakka" target=_blank">Alpakka</a>
+						<li>HTTP клиент (Akka HTTP, play-ws и др.)
+						<li>Reactive Streams
+						<li>Самостоятельная реализация
+					</ul>
+				</section>
+
+				<section>
 					<p>Интеграция через Source.queue
 					<pre><code class="scala">val source: Source[Int, SourceQueueWithComplete[Int]] =
   Source.queue[Int](bufferSize = 1000, 
