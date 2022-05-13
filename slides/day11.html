@@ -1003,49 +1003,169 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 				<section>
 					<h3>Fiber</h3>
 					<pre><code class="scala">
- def start[A](io: IO[A]): IO[Fiber[IO, A]]
+trait Fiber[F[_], E, A] {
+  def join: F[Outcome[F, E, A]]
+  def cancel: F[Unit]
+}
 
- trait Fiber[F[_], A] {
-   def join: F[A]
-   def cancel: F[Unit]
- }
+abstract class IO[+A] {
+  def start[A](): IO[Fiber[IO, Throwable, A]]
+  def startOn(ec: ExecutionContext): IO[Fiber[IO, Throwable, A]]
+  def blocking[A](thunk: => A): IO[A]
+}
  </code></pre>
 
 					<aside class="notes">
 						В частности у IO-монады есть метод start, который описывает эффект старта этой монады.
 						Получая файбер мы можем к нему заджойниться либо отменить его.<p>
 						Но не забываем, что этот join является только семантической блокировкой,
-						поэтому он не блокирует JVM-тред и ничего плохого в нём нет.
+						поэтому он не блокирует JVM-тред и ничего плохого в нём нет.<p>
+						Данное вычисление будет запущено в текущем ExecutionContext-e.
+						Если необходимо вынести его в отдельный, то можно воспользоваться методом startOn.<p>
+						На практике чаще всего возникает необходимость выносить только блокирующие операции.<br>
+						Для этого можно использовать метод blocking.<br>
+						Он переносит указанное действие в отдельный пул потоков, чтобы избежать блокировки основного,
+						а затем возвращает его обратно.
 					</aside>
 				</section>
 
 
 				<section>
-					<h3>ContextShift</h3>
-					<pre><code class="scala"> import scala.concurrent.ExecutionContext
-
-  trait ContextShift[F[_]] {
-   def shift: F[Unit]
-   def evalOn[A](ec: ExecutionContext)(f: F[A]): F[A]
- }</code></pre>
+					<pre><code class="scala">
+ IO.println("current pool") >>
+   IO.blocking(println("blocking pool")) >>
+   IO.println("current pool")
+ </code></pre>
+					<p>Выполняем действие в блокирующем пуле и возвращаеся обратно</p>
 
 					<aside class="notes">
-						В некоторых методах мы можем увидеть в качестве параметра имплиситный ContextShift.
-						Это некий аналог ???
+						Например, можно написать что-то вроде такой конструкции.<p>
+						Обратите внимание, что так работает только начиная с Cats Effect версии 3.<p>
+						Сейчас заметно упроситил использование блокирующих операций и убрали трейт Blocker.
 					</aside>
 				</section>
+
+
+				<section>
+					<p>Так было в Cats Effect 2.x</p>
+					<pre><code class="scala">
+ trait Blocker {
+   def blockOn[F[_], A](fa: F[A])
+                       (implicit cs: ContextShift[F]): F[A]
+ }
+
+ blocker.blockOn(IO(readFile)) >>
+   IO(println("Shifted back to the pool that CS represents"))
+ </code></pre>
+					<p>Blocker убрали в Cats Effect 3.x</p>
+
+					<aside class="notes">
+						Раньше это выглядело так.<p>
+						Трейт Blocker - это такая абстракция для тред-пула, на котором выполнялись блокирущие операции.
+					</aside>
+				</section>
+
+
+				<section>
+					<p>Так было в Cats Effect 2.x</p>
+					<pre><code class="scala">
+ trait ContextShift[F[_]] {
+   def evalOn[A](ec: ExecutionContext)(fa: F[A]): F[A]
+   def shift: F[Unit]
+ }
+ </code></pre>
+					<p>ContextShift убрали в Cats Effect 3.x</p>
+
+					<aside class="notes">
+						Также был убран трейт ContextShift.<p>
+						Он работал похожим образом, но использовался для обычных операций, когда нужно было просто сменить тред-пул.<p>
+						Здесь появляется второй метод - shift.
+						Он работал похожим образом, но после перемещения контекста в другой пул, не возвращал его обратно.
+					</aside>
+				</section>
+
+				<section>
+					<p>Пример (Cats Effect 2.x)</p>
+					<pre><code class="scala"> CS.evalOn(blockingPool)(
+   IO(println("I run on the blocking pool"))
+ ) >>
+   IO(println("I am shifted onto the pool that CS represents"))
+</code></pre><pre><code class="scala"> IO(println("I run on some pool")) >>
+   CS.shift >>                 // можно использовать IO.shift
+   IO(println("I run on the pool that CS represents"))
+</code></pre>
+
+					<aside class="notes">
+						На слайде представлены примеры его использования.<p>
+						В первом случае мы что-то выполняем на отдельном пуле, а потом возвращаемся назад.<br>
+						Точно так, как это было для блокирующих операций.<p>
+						Во втором случае мы не возвращаемся назад.
+					</aside>
+				</section>
+
+
+
+				<section>
+					<h3>IO.shift</h3>
+					<small><ol>
+						<li>Переключение обратно из пула, не управляемого системой
+							(например, при срабатывании callback handler в клиенте Java HTTP)
+							<br><br>
+							<b class=fragment>Автоматизировано Cats Effect 3.x</b>
+						</li>
+						<br>
+						<li class=fragment>Перепланировать Fiber в том же ExecutionContext (дать другим Fiber-ам процессорное время)
+							<br><br>
+							<b class=fragment>IO.shift(implicit e: ExecutionContext) заменили на IO.cede</b>
+						</li>
+					</ol></small>
+
+					<aside class="notes">
+						Раньше shift использовался в двух случаях.<p>
+						Первый - по прямому назначению, для обратного переключения контекста, когда нужно было вернуться из колбека.
+						<hr>
+						Сейчас в этом нет необходимости, т.к. в асинхронных вычислениях теперь это делается автоматически.
+						<hr>
+						Второй случай - это когда есть долгая цепочка операций, находящихся в одном файбере.<p>
+						Как уже упоминалось ранее, файбер должен сам периодически отдавать процессорное время другим потокам.<p>
+						Shift как раз являлся такой границей, на которой приостанавливалось выполнение файбера,
+						а дальнейшие вычисления попадали в планировщик и ожидали пока им снова разрешат выполняться.<p>
+						В таком случае просто делался шифт на тот же самый тред-пул, что и был до этого.
+						<hr>
+						Чтобы сохранить такую функциональность в IO добавили метод cede ("сид").<p>
+						Только раньше в shift передавался явно или неявно ExecutionContext, а теперь этого не требуется.
+					</aside>
+				</section>
+
+
+				<section>
+					<p>Пример</p>
+					<pre><code class="scala"> def fib(n: Int, a: Long = 0, b: Long = 1): IO[Long] =
+   IO(a + b).flatMap { b2 =>
+     val next =
+       if (n > 0) fib(n - 1, b, b2)
+       else IO.pure(a)
+
+     // Triggering a logical fork every 100 iterations
+     if (n % 100 == 0)
+       IO.shift >> next
+     else
+       next
+   }</code></pre>
+					<aside class="notes">
+						Вспомним ещё раз наш пример с вычислением чисел Фибоначи.<p>
+						За счёт trampoline мы добились того, что всё вычисление происходит в одном файбере.<p>
+						И в качестве побочки получили, что вычисление будет занимать поток и не отдавать, пока не закончится.<p>
+						Для решения этой проблемы можно добавить принудительную приостановку вычислений с помощью cede после каждого 100-го шага.<p>
+						Пример на слайде.
+					</aside>
+				</section>
+
+
 
 				<!----------------------------------------------->
 				<!-------------------- DRAFT -------------------->
 				<!----------------------------------------------->
-
-
-				<section>
-					<h3>Thread Shifting</h3>
-					<small>
-						https://maxcom.github.io/scala-course-2020/io-monad.pdf (слайды 47-68, 79)
-					</small>
-				</section>
 
 				<section>
 					<h3>Fibers</h3>
@@ -1104,12 +1224,12 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 				<section>
 					<h3>Http4s</h3>
 					<p>Рассказать</p>
+					<small>
+						создать простой сервис
+						https://http4s.org/v0.23/docs/service.html
+					</small>
 				</section>
 
-				<section>
-					<h3>дать ссылки</h3>
-					<p>https://typelevel.org/cats-effect/</p>
-				</section>
 
 				<section>
 					<h3>???</h3>
@@ -1117,7 +1237,14 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 
 					<aside class="notes">
 						На ближайшем семинаре мы с вами попробуем построить сервер с использованием рассмотренных сегодня библиотек.
+						Там же попробуем посмотреть на примеры получения в роутах параметров и парсинга тела запросов.
 					</aside>
+				</section>
+
+				<section>
+					<h3>дать полезные ссылки</h3>
+					<p>https://typelevel.org/cats-effect/</p>
+					<p>https://http4s.org/</p>
 				</section>
 
 				<!----------------------------------------------->
