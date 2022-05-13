@@ -99,7 +99,7 @@ layout: default
   * Слайды домашнего задания: [Классификация сообщений Telegram чата](slides/classifier-4.html)
   * Семинар: Akka Patterns. (ведущая - Наташа)
 10. Akka Streams и реактивные потоки.
-  * Видео (в работе): Часть 1. Реактивные потоки и введение в Akka Streams
+  * Видео: [Часть 1. Реактивные потоки и введение в Akka Streams](https://youtu.be/gewUaVYQF14)
   * Видео (в работе): Часть 2. Обзор операторов Akka Streams
   * Слайды: [Akka Streams и реактивные потоки](slides/day10.html)
   * Лекция: 11 мая. Семинар: 18 мая.
