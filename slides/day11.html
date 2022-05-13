@@ -200,8 +200,9 @@
 						... который позволяет управлять эффектами и следить за жизненным циклом ресурсов, безопасно выделять и освобождать их.<p>
 						При этом эффекты могут быть как асинхронными (т.е. вызывать callback-функцию по окончании действия)
 						так и синхронными (т.е. непосредственно возвращающими значения).<p>
-						Параллелизму здесь способствует понятие "волокон" (в оригинале: Fiber),
+						Параллелизму здесь способствует понятие "волокон",
 						которые представляют собой легковесные прерываемые потоки, полностью управляемые средой выполнения.<p>
+						Это вольный перевод, в оригинале они называются: Fiber.<p>
 						Эти волокна намного дешевле, чем нативные потоки операционной системы, поэтому можно создавать их в огромном количестве.<p>
 						Интересной особенностью IO-монады является её способность не только выполнить какое-то действие и вернуть результат, но и выпоняться бесконечно.
 						Дальше мы увидим подобные примеры.<p>
@@ -349,10 +350,99 @@
 						Здесь используется рекурсия, но не хвостовая: последним действием здесь является flatMap.
 						Для Future это вызвало бы Stack Overflow, но для IO такая конструкция допустима.
 						<hr>
-						Такое поведение называется "трамплином" относительно flatMap.
+						Такое поведение называется "trampoline" относительно flatMap.
 					</aside>
 				</section>
-						
+
+
+
+
+				<section>
+					<h3>Trampolining</h3>
+					<p>Основная идея – сделать, чтобы функция возвращала continuation</p>
+
+					<aside class="notes">
+						Что же такое trampoline и как это вообще работает?<p>
+						Давайте вспомним, что при каждом вызове функции выделяется дополнительная память
+						(как минимум на переменные, передаваемые в функцию).<p>
+						При глубокой рекурсии в стеке вызовов оказывается гораздо больше информации, чем он может вместить.
+						В итоге это вызывает "переполнение стека".<p>
+						Хвостовая рекурсия решает эту проблему за счёт того, что последним действием вызывает сама себя
+						и это позволяет трансформировать её в цикл, а не создавать более глубокий стек.<p>
+						Здесь идея похожая. Нужно сделать так, чтобы функция в итоге возвращала либо окончательный результат вычислений,
+						либо continuation. Это должна быть функция без аргументов, содержащую оставшуюся часть вычислений.
+					</aside>
+				</section>
+
+
+				<section>
+					<pre><code class="scala">sealed abstract class IO[A]
+
+case class Pure[A](a: A) extends IO[A]
+case class Suspend[A](thunk: () => A) extends IO[A]
+case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
+
+					<aside class="notes">
+						Достигается это за счёт введения классов-наследников от IO.<p>
+						Реализуется 3 вида наследника:<br>
+						готовый результат (Pure),<br>
+						отложенное вычисление (Suspend)<br>
+						и FlatMap, который представляет из себя пару из вычисления и его продолжения.
+					</aside>
+				</section>
+
+				<section>
+					<pre><code class="scala"> sealed abstract class IO[A] {
+   def flatMap[B](f: A => IO[B]): IO[B] = FlatMap(this, f)
+
+   def unsafeRun(): A = this match {
+     case Pure(a) => a
+     case Suspend(thunk) => thunk()
+     case FlatMap(io, f) => f(io.unsafeRun()).unsafeRun()
+   }
+ }</code></pre>
+
+					<aside class="notes">
+						Теперь мы можем определить flatMap как метод, который всегда возвращает результат вычислений - объект класса FlatMap.<p>
+						А метод запуска вычисления итоговой IO тогда будет выглядеть как pattern-matching.<p>
+						На первый взгляд может показаться, что мы просто перенесли всю рекурсию из метода flatMap в метод run,
+						но если расписать внутренний вызов unsafeRun ...
+					</aside>
+				</section>
+
+				<section>
+					<pre><code class="scala"> def unsafeRun(): A = this match {
+   case Pure(a) => a
+   case Suspend(thunk) => thunk()
+   case FlatMap(ioA, f) => ioA match {
+     case Pure(a) =>
+       f(a).unsafeRun()
+     case Suspend(thunk) =>
+       thunk().flatMap(f).unsafeRun()
+     case FlatMap(ioB, g) =>
+       ioB.flatMap(g(_) flatMap f).unsafeRun()
+   }
+ }</code></pre>
+					<p>Получаем хвостовую рекурсию!</p>
+					<aside class="notes">
+						... то видно, что это не что иное как хвостовая рекурсия.<p>
+						Это можно наблюдать на текущем слайде.<p>
+						Разумеется, приведённый здесь код - это лишь упрощённый вариант реализации этих методов.
+						Здесь отсутствует обработка ошибок, не поддерживаются асинхронные эффекты и т.д.
+						Но он наглядно иллюстрирует как реализуется trampoline в Cats Effect.
+					</aside>
+				</section>
+
+
+				<section>
+					<h3>IO API</h3>
+
+					<aside class="notes">
+						Давайте теперь немного погрузимся в API, которое предоставляет библиотека.
+					</aside>
+				</section>
+
+
 				<section>
 					<pre><code class="scala"> object IO {
    //side effect is not thread-blocking:
@@ -574,7 +664,7 @@
 
 
 				<section>
-					<p>Outcome</p>
+					<h3>Outcome</h3>
 
 					<aside class="notes">
 						Так что же это такое?
@@ -761,28 +851,60 @@
 
 
 
+
+				<section>
+					<h3>Thread Model</h3>
+					<p>Fibers</p>
+
+					<aside class="notes">
+						Теперь поговорим подробнее о тред-пулах и файберах.<p>
+						Как уже упоминалось в начале лекции, в Cats Effect реализована концепция Fiber-ов.
+						Это такие легковесные потоки, управляемые средой выполнения.<p>
+						Чтобы понять их работу, необходимо вспомнить как устроены потоки в программах.
+					</aside>
+				</section>
+
+				<section>
+					<h3>Thread Model</h3>
+					<p>Fibers</p>
+
+					<aside class="notes">
+					</aside>
+				</section>
+
+
+
 				<!----------------------------------------------->
 				<!-------------------- DRAFT -------------------->
 				<!----------------------------------------------->
 
+
 				<section>
-					<h3>Рассказать</h3>
-					<ul>
-						<li>run-ы: runCancelable / unsafeRunCancelable</li>
-						<small>
-							https://typelevel.org/cats-effect/api/3.x/cats/effect/kernel/Async.html?search=run
-							def unsafeRunCancelable()(runtime: IORuntime): () => Future[Unit]
-							def unsafeRunAndForget()(runtime: IORuntime): Unit
-							def unsafeRunAsyncOutcome(cb: (Outcome[Id, Throwable, A]) => Unit)(runtime: IORuntime): Unit
-							def unsafeRunAsync(cb: (Either[Throwable, A]) => Unit)(runtime: IORuntime): Unit
-							def unsafeRunTimed(limit: FiniteDuration)(runtime: IORuntime): Option[A]
-							def unsafeRunSync()(runtime: IORuntime): A
-						</small>
+					<h3>Thread Model</h3>
+					TODO!!!!!!!!!!
+
+					<aside class="notes"><p>
+						Их существенное отличие от привычных тредов в том, что они проецируются на m:n треды уровня операционной системы.
+						<p>
+						Важно отметить, что волокна несут ответственность за предоставление контроля над центральным процессором
+						другим желающим и должны периодически приостанавливать свои вычисления.<p>
+						В противном случае они могут получить контроль над ядром надолго.<p>
+						На практие это редко является проблемой, но важно про это помнить и для долгих вычислений делать периодический тред-шифтинг. (????)
+						<p>
+
+						https://typelevel.org/cats-effect/docs/thread-model
+
+						Future vs IO: слайды 78-80
+
+						Потоки и файберы: слайды 47-62
+
 						<li>Thread Shifting</li>
-						<li>IOApp - https://typelevel.org/cats-effect/docs/tutorial#ioapp-for-our-final-program</li>
-					</ul>
+						<small>
+							https://maxcom.github.io/scala-course-2020/io-monad.pdf (слайды 47-68, 79)
+						</small>
+					</aside>
 				</section>
-				
+
 				<section>
 					<h3>Fibers</h3>
 					<p>https://typelevel.org/cats-effect/docs/concepts</p>
@@ -856,6 +978,26 @@
 				</section>
 
 
+				<section>
+					<h3>Рассказать</h3>
+					<ul>
+						<li>run-ы: runCancelable / unsafeRunCancelable</li>
+						<small>
+							https://maxcom.github.io/scala-course-2020/io-monad.pdf (слайды 19 - функциональные эффекты)
+							видео в районе 15 минуты
+							https://typelevel.org/cats-effect/api/3.x/cats/effect/kernel/Async.html?search=run
+							def unsafeRunCancelable()(runtime: IORuntime): () => Future[Unit]
+							def unsafeRunAndForget()(runtime: IORuntime): Unit
+							def unsafeRunAsyncOutcome(cb: (Outcome[Id, Throwable, A]) => Unit)(runtime: IORuntime): Unit
+							def unsafeRunAsync(cb: (Either[Throwable, A]) => Unit)(runtime: IORuntime): Unit
+							def unsafeRunTimed(limit: FiniteDuration)(runtime: IORuntime): Option[A]
+							def unsafeRunSync()(runtime: IORuntime): A
+						</small>
+						<li>IOApp - https://typelevel.org/cats-effect/docs/tutorial#ioapp-for-our-final-program</li>
+					</ul>
+				</section>
+
+
 
 				<section>
 					<h3>Http4s</h3>
@@ -877,7 +1019,7 @@
 				</section>
 
 				<!----------------------------------------------->
-				<!-------------------- DRAFT -------------------->
+				<!----------------------------------------------->
 				<!----------------------------------------------->
 
 				<section>
