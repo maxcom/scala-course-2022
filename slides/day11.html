@@ -1204,18 +1204,23 @@ abstract class IO[+A] {
 					<h3>Рассказать</h3>
 					<ul>
 						<li>run-ы: runCancelable / unsafeRunCancelable</li>
-						<small>
-							https://maxcom.github.io/scala-course-2020/io-monad.pdf (слайды 19 - функциональные эффекты)
-							видео в районе 15 минуты
-							https://typelevel.org/cats-effect/api/3.x/cats/effect/kernel/Async.html?search=run
-							def unsafeRunCancelable()(runtime: IORuntime): () => Future[Unit]
-							def unsafeRunAndForget()(runtime: IORuntime): Unit
-							def unsafeRunAsyncOutcome(cb: (Outcome[Id, Throwable, A]) => Unit)(runtime: IORuntime): Unit
-							def unsafeRunAsync(cb: (Either[Throwable, A]) => Unit)(runtime: IORuntime): Unit
-							def unsafeRunTimed(limit: FiniteDuration)(runtime: IORuntime): Option[A]
-							def unsafeRunSync()(runtime: IORuntime): A
-						</small>
-						<li>IOApp - https://typelevel.org/cats-effect/docs/tutorial#ioapp-for-our-final-program</li>
+						<small><ul>
+							<li>https://maxcom.github.io/scala-course-2020/io-monad.pdf (слайды 19 - функциональные эффекты)</li>
+							<li>видео в районе 15 минуты</li>
+							<li>https://typelevel.org/cats-effect/api/3.x/cats/effect/kernel/Async.html?search=run</li>
+							<li>def unsafeRunCancelable()(runtime: IORuntime): () => Future[Unit]</li>
+							<li>def unsafeRunAndForget()(runtime: IORuntime): Unit</li>
+							<li>def unsafeRunAsyncOutcome(cb: (Outcome[Id, Throwable, A]) => Unit)(runtime: IORuntime): Unit</li>
+							<li>def unsafeRunAsync(cb: (Either[Throwable, A]) => Unit)(runtime: IORuntime): Unit</li>
+							<li>def unsafeRunTimed(limit: FiniteDuration)(runtime: IORuntime): Option[A]</li>
+							<li>def unsafeRunSync()(runtime: IORuntime): A</li>
+						</ul></small>
+
+						<li>IOApp</li>
+						<small><ul>
+							<li>https://typelevel.org/cats-effect/docs/tutorial#ioapp-for-our-final-program</li>
+						</ul></small>
+
 					</ul>
 				</section>
 
