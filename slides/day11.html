@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>Cats и Circe</title>
+		<title>Cats Effect & Http4s</title>
 
 		<link rel="stylesheet" href="css/reveal.css">
 		<link rel="stylesheet" href="css/theme/moon.css">
@@ -867,7 +867,7 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 
 				<section>
 					<h3>Логический поток</h3>
-					<div><img src="CE-Threads-1.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
+					<div><img src="CE-Threads-1-colored.png" height="250" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						Допустим у нас есть некий процесс А, который состоит из некоторых дискретных шагов.
@@ -879,7 +879,7 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 
 				<section>
 					<h3>Асинхронный процесс</h3>
-					<div><img src="CE-Threads-4.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
+					<div><img src="CE-Threads-4-colored.png" height="300" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						Логический поток может быть разбит на две части некоторой асинхронной границей.<p>
@@ -895,7 +895,7 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 
 				<section>
 					<h3>Перемешивание</h3>
-					<div><img src="CE-Threads-2.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
+					<div><img src="CE-Threads-2-colored.png" height="400" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						Дискретность в логических потоках позволяет нам перемешивать несколко процессов и выполнять их на одном потоке более низкого уровня.
@@ -906,7 +906,7 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 
 				<section>
 					<h3>M:N Threading</h3>
-					<div><img src="CE-Threads-3.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
+					<div><img src="CE-Threads-3-colored.png" height="400" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						Если у нас есть несколько логических потоков и несколько потоков более низкого уровня,
@@ -918,8 +918,8 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 
 
 				<section>
-					<div><img src="CE-Threads-5.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
-					<p>Логический поток предоставляет синхронный интерфейс к асинхронному процессу</p>
+					<p><small>Логический поток предоставляет<br>синхронный интерфейс<br>к асинхронному процессу</small></p>
+					<div><img src="CE-Threads-5-colored.png" height="400" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						Также говорят о том, что логический поток предоставляет синхронный интерфейс к асинхронному процессу.<p>
@@ -931,7 +931,7 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 				</section>
 
 				<section>
-					<div><img src="CE-Threads-6.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
+					<div><img src="CE-Threads-6-colored.png" height="400" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						Более того, даже если у нас будет только один поток, то фрагменты логического потока А будут выполняться
@@ -941,7 +941,7 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 				</section>
 
 				<section>
-					<div><img src="CE-Threads-7.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
+					<div><img src="CE-Threads-7-colored.png" height="400" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						К чему все эти сложности?<p>
@@ -989,7 +989,7 @@ case class FlatMap[A, B](io: IO[B], f: B => IO[A]) extends IO[A]</code></pre>
 
 				<section>
 					<h3>Кооперативное планирование</h3>
-					<div><img src="CE-Threads-8.jpg" height="200" style="background: none; border: 0; box-shadow: none;"></div>
+					<div><img src="CE-Threads-8-colored.png" height="400" style="background: none; border: 0; box-shadow: none;"></div>
 
 					<aside class="notes">
 						Таким образом мы приходим к тому, что каждый файбер является отдельным потоком, в котором выполняется IO-шка.<p>
