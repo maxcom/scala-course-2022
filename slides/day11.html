@@ -1261,21 +1261,94 @@ abstract class IO[+A] {
 				</section>
 
 
-				<!----------------------------------------------->
-				<!-------------------- DRAFT -------------------->
-				<!----------------------------------------------->
-
 
 
 				<section>
 					<h3>Http4s</h3>
-					<p>Рассказать</p>
-					<small>
-						создать простой сервис
-						https://http4s.org/v0.23/docs/service.html
-					</small>
+
+					<aside class="notes">
+						Может показаться, что таким образом получится писать только программы,
+						которые завершаются после выполнения какого-то набора действий.<p>
+						То есть это будут всякие вспомогательные скрипты и тому подобное.<p>
+						А нам хотелось бы запустить какой-то сервис,
+						который будет постоянно существовать и реагировать на внешние запросы.<p>
+						Например, какой-нибудь вебсервер.<p>
+						И тут на помощь приходит IO.never, который запускает асинхронный процесс,
+						который сразу же завершается, но никогда не вызовет колбек.<p>
+						Давайте попробуем создать вебсервер на примере http4s.
+					</aside>
 				</section>
 
+
+				<section>
+					<pre><code class="scala">import cats.effect._
+
+object Main extends IOApp.Simple {
+  val server: ResourceIO[org.http4s.server.Server] = ???
+
+  val run = server.use(_ => IO.never)
+}</code></pre>
+
+					<aside class="notes">
+						Для начала создадим IOApp<p>.
+						Всё очень просто: нужно создать объект сервера как ресурс,
+						а затем использовать его в бесконечной IO-шке.
+					</aside>
+				</section>
+
+
+					<section>
+					<pre><code class="scala"> import com.comcast.ip4s._
+ import org.http4s.ember.server.EmberServerBuilder
+ import org.http4s._</code></pre>
+<pre><code class="scala"> val httpApp: HttpApp[IO] = ???
+
+ val server =
+   EmberServerBuilder
+     .default[IO]
+     .withHost(ipv4"0.0.0.0")
+     .withPort(port"8080")
+     .withHttpApp(httpApp)
+     .build</code></pre>
+
+					<aside class="notes">
+						Создаётся ресурс с помощью специального билдера, предоставляемого библиотекой http4s.<p>
+						Для него настраивается хост, порт.<p>
+						Весь роутинг настраивается и передаются роуты в виде объекта с типом HttpApp.
+					</aside>
+				</section>
+
+
+				<!----------------------------------------------->
+				<!-------------------- DRAFT -------------------->
+				<!----------------------------------------------->
+
+				<section>
+					<pre><code class="scala"> import org.http4s.HttpRoutes
+ import org.http4s.dsl.io._
+ import org.http4s.implicits._</code></pre>
+					<pre><code class="scala"> val httpApp: HttpApp[IO] =
+   HttpRoutes.of[IO] {
+     case GET -> Root / "hello" / name =>
+       Ok(s"Hello, $name.")
+   }.orNotFound</code></pre>
+
+					<p>https://http4s.org/v0.23/docs/service.html</p>
+
+					<aside class="notes">
+						Есть несколько способов создать HttpApp.<p>
+					</aside>
+				</section>
+
+
+
+
+
+				<section>
+					<h3>дать полезные ссылки</h3>
+					<p>https://typelevel.org/cats-effect/</p>
+					<p>https://http4s.org/</p>
+				</section>
 
 				<section>
 					<h3>???</h3>
@@ -1285,16 +1358,6 @@ abstract class IO[+A] {
 						На ближайшем семинаре мы с вами попробуем построить сервер с использованием рассмотренных сегодня библиотек.
 						Там же попробуем посмотреть на примеры получения в роутах параметров и парсинга тела запросов.
 					</aside>
-				</section>
-
-				<section>
-					<h3>дать полезные ссылки</h3>
-					<p>https://typelevel.org/cats-effect/</p>
-					<p>https://http4s.org/</p>
-				</section>
-
-				<section>
-					<h3>поменять цвет фона и размеры для картинок</h3>
 				</section>
 
 				<!----------------------------------------------->
