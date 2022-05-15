@@ -100,7 +100,7 @@ layout: default
   * Семинар: Akka Patterns. (ведущая - Наташа)
 10. Akka Streams и реактивные потоки.
   * Видео: [Часть 1. Реактивные потоки и введение в Akka Streams](https://youtu.be/gewUaVYQF14)
-  * Видео (в работе): Часть 2. Обзор операторов Akka Streams
+  * Видео: [Часть 2. Обзор операторов Akka Streams](https://www.youtube.com/watch?v=mo9XrYEIeM8)
   * Слайды: [Akka Streams и реактивные потоки](slides/day10.html)
   * Лекция: 11 мая. Семинар: 18 мая.
   * Семинар: Akka Streams.
