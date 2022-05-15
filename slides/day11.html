@@ -1265,6 +1265,7 @@ abstract class IO[+A] {
 
 				<section>
 					<h3>Http4s</h3>
+					<small><a href="https://http4s.org/">https://http4s.org</a></small>
 
 					<aside class="notes">
 						Может показаться, что таким образом получится писать только программы,
@@ -1291,8 +1292,13 @@ object Main extends IOApp.Simple {
 
 					<aside class="notes">
 						Для начала создадим IOApp<p>.
-						Всё очень просто: нужно создать объект сервера как ресурс,
-						а затем использовать его в бесконечной IO-шке.
+						Всё очень просто: нужно определить сервера как ресурс,
+						а затем использовать его в бесконечной IO-шке.<p>
+						Сам запуск сервера будет описан в функции инициализации для ресурса, а остановка в функии release.<p>
+						Напомнию, что в случае прерывания IO-шки из метода use
+						(т.е., например, когда мы остановим выполнение программы сочетанием ctrl+c),
+						у нас всегда отработает финалайзер.<p>
+						Таким образом с помощью ресурса можно контролировать запуски и остановки различных сторонных сервисов, сокетов и т.п.
 					</aside>
 				</section>
 
@@ -1312,64 +1318,103 @@ object Main extends IOApp.Simple {
      .build</code></pre>
 
 					<aside class="notes">
-						Создаётся ресурс с помощью специального билдера, предоставляемого библиотекой http4s.<p>
-						Для него настраивается хост, порт.<p>
-						Весь роутинг настраивается и передаются роуты в виде объекта с типом HttpApp.
+						Сам ресурс с сервером создаётся с помощью специального билдера, предоставляемого библиотекой http4s.<p>
+						Для него настраиваются желаемые параметры. Например, хост и порт.<p>
+						Также задаются роуты с помощью объекта, имеющего тип HttpApp.
 					</aside>
 				</section>
 
 
-				<!----------------------------------------------->
-				<!-------------------- DRAFT -------------------->
-				<!----------------------------------------------->
+				<section>
+					<pre><code class="scala">
+ type HttpApp[F[_]] = Kleisli[F, Request[F], Response[F]]
+
+ // Kleisli[F[_], A, B]
+ // is just a wrapper around the function
+ // A => F[B]
+ </code></pre>
+
+					<aside class="notes">
+						HttpApp от IO - это алиас для типа Kleisli,<br>
+						который в свою очередь является просто враппером для функции из Request в IO от Response.<p>
+						Таким образом, чтобы определить HttpApp необходимо описать функцию,<br>
+						которая преобразовывет любой полученный Request в Response.<p>
+						Под "описать" подразумевается именно сформировать IO-шку,
+						которая будет запускаться отдельным файбером для каждого полученного сервером запроса.
+					</aside>
+				</section>
+
 
 				<section>
 					<pre><code class="scala"> import org.http4s.HttpRoutes
  import org.http4s.dsl.io._
  import org.http4s.implicits._</code></pre>
-					<pre><code class="scala"> val httpApp: HttpApp[IO] =
+					<pre><code class="scala"> // Request[IO] => OptionT[IO, Response[IO]]
+ val routes: HttpRoutes[IO] =
    HttpRoutes.of[IO] {
      case GET -> Root / "hello" / name =>
        Ok(s"Hello, $name.")
-   }.orNotFound</code></pre>
+   }
 
-					<p>https://http4s.org/v0.23/docs/service.html</p>
+ val app: HttpApp[IO] = httpRoutes.orNotFound</code></pre>
 
 					<aside class="notes">
-						Есть несколько способов создать HttpApp.<p>
+						Думаю, все без труда представляют себе логику обработки запроса.<p>
+						Необходимо последовательно проверить все описанные роуты.<p>
+						Для перебора всех существующих роутов и их проверки прекрасно подходит Partial Function.<p>
+						В http4s есть удобная конструкция, которая преобразует partial function в роуты.<br>
+						Это HttpRoutes.of.<p>
+						Только нужно обратить внимание, что конструкция не гарантирует,
+						что найдётся подходящий роут,
+						поэтому она возвращает опциональное значение.<p>
+						Если ничего подходящего не найдётся, то нужно вернуть NotFound.<p>
+						Опять же, в http4s есть готовый метод, который делает это и заодно трансформирует опциональный типа kleisli в полный.
 					</aside>
 				</section>
 
 
-
-
-
 				<section>
-					<h3>дать полезные ссылки</h3>
-					<p>https://typelevel.org/cats-effect/</p>
-					<p>https://http4s.org/</p>
-				</section>
+					<pre><code class="scala">
+ val helloWorldService: HttpRoutes[IO] = ???
 
-				<section>
-					<h3>???</h3>
-					<p>???</p>
+ val whatsUpService: HttpRoutes[IO] = ???
+ val telegramService: HttpRoutes[IO] = ???
+
+ val messengers = whatsUpService <+> telegramService
+
+ val httpApp = Router(
+   "/" -> helloWorldService,
+   "/mes" -> messengers
+ ).orNotFound
+					</code></pre>
 
 					<aside class="notes">
-						На ближайшем семинаре мы с вами попробуем построить сервер с использованием рассмотренных сегодня библиотек.
-						Там же попробуем посмотреть на примеры получения в роутах параметров и парсинга тела запросов.
+						Синтаксис для описания роутов мы сейчас не будет рассматривать, вы легко найдёте его в официальной документации.<p>
+						Стоит, разве что, упомянуть наличие роутеров,
+						которые позволяют разделять описанные роуты на наборы по некоторому префиксу.<p>
+						Можно и наоборот, объединять два или более наборов роутов в один,
+						который будет последовательно искать подходящий роут в каждом из них.<p>
+						Для этого достаточно воспользоваться методом combine из cats.
 					</aside>
 				</section>
 
-				<!----------------------------------------------->
-				<!----------------------------------------------->
-				<!----------------------------------------------->
 
 				<section>
-					<p>Напоминаю:
-					<ul>
-						<li>Страничка курса: <br><a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
-					</ul>
+					<div><img src="Thats all cats.png" height="250" style="background: none; border: 0; box-shadow: none;"></div>
+					<small>
+						<p>
+						Страничка курса: <br>
+						<a href="https://maxcom.github.io/scala-course-2022/">https://maxcom.github.io/scala-course-2022/</a>
+						</p>
+					</small>
+
+					<aside class="notes">
+						На этом всё.<p>
+						Читайте документацию по cats effect и http4s, там отлично написано и есть много примеров.<p>
+						При чтении обращайте внимание на выбранную версию, потому что для версия cats effect 2 и 3 много отличий.
+					</aside>
 				</section>
+
 
 			</div>
 
