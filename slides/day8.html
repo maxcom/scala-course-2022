@@ -427,8 +427,7 @@ default-blocking-io-dispatcher {
 
 				<section>
 					<p>Пример
-					<pre><code class="scala">
-object CacheActor {
+					<pre><code class="scala">object CacheActor {
   trait Protocol
 
   // отдать из кеша
@@ -441,8 +440,7 @@ object CacheActor {
 
   def behavior(source: =&gt; Future[String]): Behavior[Protocol] = 
     ???
-}
-					</code></pre>
+}</code></pre>
 				</section>
 
 				<section>
@@ -516,6 +514,8 @@ ctx.ask(sourceActor, Get) {
 
 				<section>
 					<p>Пример: откладываем Get до окончания Refresh
+
+					<p>В синхронном варианте проблемы нет.
 				</section>
 
 				<section>
@@ -526,8 +526,8 @@ def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
     var current = "undefined"
 
     Behaviors.withStash(capacity = 1000) { stash =&gt;
-      def waiting: Behavior[Protocol] = ???
-      def working: Behavior[Protocol] = ???
+      def working: Behavior[Protocol] = ??? // ждем запрос
+      def waiting: Behavior[Protocol] = ??? // ждем refresh
 
       working
     }
@@ -536,6 +536,7 @@ def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
 				</section>
 
 				<section>
+					<p>обработка запроса
 					<pre><code class="scala">def working: Behavior[Protocol] = 
   Behaviors.receiveMessagePartial {
     case Get(replyto) =&gt;
@@ -549,20 +550,21 @@ def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
           RefreshFailed(ex)
       }
 
-      waiting
+      waiting // переход в waiting
   }</code></pre>
 				</section>
 
 				<section>
+					<p>ожидание Refresh
 					<pre><code class="scala"> 
 def waiting: Behavior[Protocol] = Behaviors.receiveMessage {
   case Refresh(value) =&gt;
     current = value
     stash.unstashAll(working)
-  case RefreshFailed(ex) =&gt; // ...
+  case RefreshFailed(ex) =&gt; // нужна обработка
     stash.unstashAll(working)
   case other =&gt;
-    // помним что stash может переполниться
+    // помним, что stash может переполниться
     stash.stash(other)
     Behaviors.same
 }
@@ -570,23 +572,25 @@ def waiting: Behavior[Protocol] = Behaviors.receiveMessage {
 				</section>
 
 				<section>
-					<p>Пример: последовательная обработка и Future
+					<p>Какой размер Stash?
 
-					<ul>
-						<li>Запрашиваем Future, переходим в waiting
-						<li class="fragment">В waiting кладем запросы в Stash
-						<li class="fragment">При вычислении Future - unstash и обратно в ready
-						<li class="fragment">Не забываем про ошибки, таймауты и пр.
-					</ul>
+					<p class=fragment><s>Сколько не жалко</s>
+					<p class=fragment>Сколько имеет смысл накапливать
 				</section>
 
 				<section>
-					<p>Вместо Stash иногда эффективнее<br> накапливать запросы
-					в state
+					<p>Число операций O(N<sup>2</sup>)<br>
+					N - размер Stash
+					<p>Иногда эффективнее накапливать<br> запросы
+					в другой структуре
 				</section>
 
 				<section>
 					<h3>Таймеры и Deadline</h3>
+				</section>
+
+				<section>
+					Как реализовать таймауты в акторах?
 				</section>
 
 				<section>
@@ -595,15 +599,16 @@ def waiting: Behavior[Protocol] = Behaviors.receiveMessage {
 					<pre><code class="scala">
 import scala.concurrent.duration._
 
-val deadline: Deadline = 5 minutes fromNow
+val deadline: Deadline = 5.minutes.fromNow
 					</code></pre>
 				</section>
 
 				<section>
 					<ul>
-						<li>Использует монотонные часы
-						<li class="fragment">Используется в акторах для прерывания обработки запроса
-						<li class="fragment">Можно передавать внутри JVM, нельзя по сети и на диск</li>
+						<li>Использует монотонные часы:<br>
+						не зависят от системного времени
+						<li class="fragment">Можно передавать внутри JVM,<br>
+						нельзя по сети и на диск</li>
 					</ul>
 				</section>
 
@@ -612,9 +617,15 @@ val deadline: Deadline = 5 minutes fromNow
 deadline.hasTimeLeft() // проверки
 deadline.isOverdue()
 
-// величина таймаута
+// величина таймаута, например для ask
 val timeout: Duration = deadline.timeLeft
 					</code></pre>
+					<p>еще их можно использовать для вычисления длительности операций
+				</section>
+
+				<section>
+					<p>Совет: в REST передавайте таймаут в заголовке
+					<p class=fragment>Плохая ситуация: клиент делает retry раньше, чем заканчивается обработка
 				</section>
 
 				<section>
@@ -623,15 +634,14 @@ val timeout: Duration = deadline.timeLeft
 Behaviors.withTimers { timers =&gt;
   // key для уникальности таймера
   // msg - отправляемое сообщение
-  timers.startSingleTimer(key = Tick, msg = Tick, 1 minute)
+  timers.startSingleTimer(key = CheckTimeout, 
+                          msg = CheckTimeout, 
+			  1.minute)
 
-  timers.startPeriodicTimer(key = Tick, msg = Tick, 1 minute)
+  timers.startPeriodicTimer(key = Tick, msg = Tick, 1.minute)
   
   timers.cancel(Tick)
-
   timers.cancelAll()
-
-  ...
 					</code></pre>
 				</section>
 
@@ -640,6 +650,7 @@ Behaviors.withTimers { timers =&gt;
 
 					<ul>
 						<li>Обработка таймаутов
+						<li>Сборка batch
 						<li>Периодическое обновление, очистка
 						<li>Печать статистики работы
 					</ul>
@@ -650,20 +661,25 @@ Behaviors.withTimers { timers =&gt;
 
 					<p class="fragment">Защитный механизм для коротокоживущих акторов
 
-					<pre class="fragment"><code class="scala">ctx.setReceiveTimeout(5 minutes, ReceiveTimeout)
+					<pre class="fragment"><code class="scala">ctx.setReceiveTimeout(5.minutes, ReceiveTimeout)
 
 // отправляет ReceiveTimeout при отсутствии активности
 					</code></pre>
 
-					<p class="fragment"><small>Игнорирует сообщения расширяющие NotInfluenceReceiveTimeout</small>
+					<p class="fragment"><small>Игнорирует сообщения, расширяющие NotInfluenceReceiveTimeout</small>
 				</section>
 
 				<section>
 					<h3>Обработка исключительных ситуаций</h3>
-					<p>Виды ошибок в автомате с газировкой:
+					<p>В ООП и ФП ошибки обрабатывает тот,<br> кто вызывает функцию.
+					<p>Правильно ли это?
+				</section>
+
+				<section>
+					<p>Пример: виды ошибок в автомате с газировкой:
 					<ul>
-						<li>«Не достаточно средств», «закончилась кола» — пользователю
-						<li>NullPointerException, CocaColaJam — владельцу (супервизору)
+						<li>«Недостаточно средств», «закончилась кола» — покупателю
+						<li>NullPointerException, CocaColaJamException — владельцу автомата (супервизору)
 					</ul>
 				</section>
 
@@ -673,31 +689,47 @@ Behaviors.withTimers { timers =&gt;
 						<li>Дублирование первичного ключа, нарушение foreign key — пользователю драйвера</li>
 						<li>«БД перезагружается», «Соединение разорвано» — супервизору</li>
 					</ul>
-					<p>Иерархия: DriverActor → ConnectionActor → TransactionActor
+				</section>
+
+				<section>
+					<p>Родитель - супервизор дочернего актора
+					<p>DriverActor → ConnectionActor → TransactionActor
 				</section>
 
 				<section>
 					<h3>Стратегии супервизора</h3>
 					<ul>
-						<li><strong>resume</strong> — игнорируем ошибку.
-						<li class="fragment"><strong>restart</strong> — незаметный перезапуск.
+						<li><strong>resume</strong> — игнорируем ошибку,<br>
+						сообщение теряется
+						<li class="fragment"><strong>restart</strong> — незаметный для клиента перезапуск,<br>
+						сообщение теряется, пересоздается state
 						<li class="fragment"><strong>restartWithBackoff</strong> — перезапуск с задержкой
-						<li class="fragment"><strong>stop</strong> — остановка (по-умолчанию)
+						<li class="fragment"><strong>stop</strong> — остановка
 					</ul>
 				</section>
 
 				<section>
+					<p>По умолчанию: остановка.<br>
+					Не забываем про это!!!
+				</section>
+
+				<section>
+					При остановке и рестарте актора все его дочерние акторы останавливаются
+				</section>
+
+				<section>
+					<p>Задаем Supervisor
 					<pre><code class="scala">
 def behavior(source: =&gt; Future[String]): Behavior[Protocol] =
   Behaviors
     .supervise[Protocol](...)
     .onFailure[Throwable](SupervisorStrategy.restart)
-
 					</code></pre>
+					<p>разная стратегия для разных исключений
 				</section>
 
 				<section>
-					<p>Пример для ConnectionActor</p>
+					<p>Пример: ConnectionActor</p>
 					<pre><code class=scala>
 Behaviors
   .supervise[Protocol](...)
@@ -729,7 +761,7 @@ context.watch(anotherActorRef)
 }.receiveSignal {
   case (ctx, Terminated(actor)) =&gt;
     Behaviors.same
-}					
+} // другие сигналы например: PostStop, PreRestart
 	</code></pre>
 				</section>
 
@@ -741,10 +773,10 @@ context.watch(anotherActorRef)
 				<section>
 					<p>В следующий раз:
 					<ul>
-						<li>Роутеры
 						<li>Гарантии доставки сообщений
-						<li>Стратегии обработки сбоев
+						<li>CircuitBreaker
 						<li>Back pressure
+						<li>Роутеры
 					</ul>
 				</section>
 

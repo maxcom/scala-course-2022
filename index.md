@@ -87,13 +87,21 @@ layout: default
 8. Акторы Akka, часть 1.
   * Лекция: 27 апреля. Семинар: 4 мая.
   * Видео: [Часть 1. Акторы Akka](https://youtu.be/2tUHNoLb5Xk)
-  * Видео (в работе): Часть 2. Акторы и Future. Таймеры. Исключения
+  * Видео: [Часть 2. Акторы и Future. Таймеры. Исключения](https://youtu.be/BTNRf42ohQo)
   * Семинар: Практика использования акторов Akka. (ведущий - Саша)
-  * Слайды (в работе): [Акторы Akka](slides/day8.html)
+  * Семинар: [Стартовый проект](https://gitlab.com/djattah/lessonactortyped.git). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson7](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson8) 
+  * Слайды: [Акторы Akka](slides/day8.html)
 9. Акторы Akka, часть 2.
-  * Лекция: 4 мая. Семинар: 11 мая.
-  * Семинар: Akka Patterns.
+  * Лекция: 4 мая. Семинар: 16 мая (*Внимание!* Семинар перенесен на понедельник 16 мая)
+  * Видео: [Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры](https://youtu.be/quh7qRlxSHU)
+  * Видео: [Классификация сообщений Telegram чата](https://www.youtube.com/watch?v=kGXiiy4VGGI) (домашнее задание)
+  * Слайды: [Акторы Akka: отказоустойчивость и гарантии. Back pressure. Роутеры](slides/day9.html)
+  * Слайды домашнего задания: [Классификация сообщений Telegram чата](slides/classifier-4.html)
+  * Семинар: Akka Patterns. (ведущая - Наташа)
 10. Akka Streams и реактивные потоки.
+  * Видео: [Часть 1. Реактивные потоки и введение в Akka Streams](https://youtu.be/gewUaVYQF14)
+  * Видео: [Часть 2. Обзор операторов Akka Streams](https://www.youtube.com/watch?v=mo9XrYEIeM8)
+  * Слайды: [Akka Streams и реактивные потоки](slides/day10.html)
   * Лекция: 11 мая. Семинар: 18 мая.
   * Семинар: Akka Streams.
 11. Cats Effect и Http4s.
