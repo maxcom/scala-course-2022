@@ -1157,7 +1157,7 @@ abstract class IO[+A] {
 
      // Triggering a logical fork every 100 iterations
      if (n % 100 == 0)
-       IO.shift >> next
+       IO.cede >> next
      else
        next
    }</code></pre>
