@@ -107,6 +107,7 @@ layout: default
   * Семинар: Akka Streams. (ведущая - Наташа)
 11. Cats Effect и Http4s.
   * Лекция: 18 мая. Семинар: 25 мая.
+  * Видео: [Cats Effect и Http4s](https://youtu.be/-jlGgEfkNB8)
   * Слайды: [Cats Effect и Http4s](slides/day11.html)
   * Семинар: Практика по Cats Effect и http4s (ведущий - Никита).
 12. Подведение итогов.
