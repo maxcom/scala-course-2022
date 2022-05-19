@@ -105,6 +105,7 @@ layout: default
   * Слайды: [Akka Streams и реактивные потоки](slides/day10.html)
   * Лекция: 11 мая. Семинар: 18 мая.
   * Семинар: Akka Streams. (ведущая - Наташа)
+  * Семинар: [Стартовый проект](https://gitlab.com/nsolely/akka-streams-seminar). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson10](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson10) 
 11. Cats Effect и Http4s.
   * Лекция: 18 мая. Семинар: 25 мая.
   * Видео: [Cats Effect и Http4s](https://youtu.be/-jlGgEfkNB8)
