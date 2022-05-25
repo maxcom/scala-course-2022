@@ -111,7 +111,7 @@ layout: default
   * Видео: [Cats Effect и Http4s](https://youtu.be/-jlGgEfkNB8)
   * Слайды: [Cats Effect и Http4s](slides/day11.html)
   * Семинар: Практика по Cats Effect и http4s (ведущий - Никита).
-  * Семинар: [Стартовый проект](https://gitlab.com/StyopinN/scala-course-2022-lesson11). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson10](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson11) 
+  * Семинар: [Стартовый проект](https://gitlab.com/StyopinN/scala-course-2022-lesson11). Сохраненная копия: [https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson11](https://github.com/maxcom/scala-course-2022/tree/gh-pages/seminar/lesson11) 
 12. Подведение итогов.
   * Семинар: 1 июня.
 
